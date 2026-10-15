@@ -13,6 +13,8 @@
 #   Substrate    cargo-contract (ink!)
 #   Sway/Fuel    forc, fuel-core (fuelup)
 #   NEAR         cargo-near
+#   Algorand     algokit (AlgoKit CLI), algokit-utils (Python test harness)
+#   Cardano      aiken (via aikup), plutus tooling
 #   Bitcoin      bitcoin-cli/bitcoind (regtest), rust-miniscript (crate)
 #
 # Build the full multi-chain image:
@@ -169,6 +171,8 @@ RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
     pipx install algokit; \
     # --- Cardano (Aiken / Plutus) -----------------------------------------
     curl -sSfL https://install.aiken-lang.org | bash; \
+    /home/auditor/.aiken/bin/aikup install; \
+    /home/auditor/.aiken/bin/aiken --version; \
     fi
 
 # Bitcoin Core (regtest) for Script/Miniscript testing.
