@@ -16,7 +16,7 @@ Thank you for your interest in contributing to Strix! This guide will help you g
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/usestrix/strix.git
+   git clone https://github.com/hashward-io/strix-web3.git
    cd strix
    ```
 
@@ -133,7 +133,7 @@ releases.
 ## 🤝 Community
 
 - **Discord**: [Join our community](https://discord.gg/strix-ai)
-- **Issues**: [GitHub Issues](https://github.com/usestrix/strix/issues)
+- **Issues**: [GitHub Issues](https://github.com/hashward-io/strix-web3/issues)
 
 ## ✨ Recognition
 

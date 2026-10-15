@@ -1619,48 +1619,33 @@ def test_http_exchange_id_limit_applies_after_deduplication() -> None:
     assert request_ids == ["1042"]
 
 
-async def test_http_exchange_ids_must_exist_in_current_proxy_project(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    async def existing_request_ids(
-        _ctx: Any,
-        _request_ids: list[str],
-    ) -> set[str]:
-        return {"1042"}
-
-    monkeypatch.setattr(reporting_tool, "existing_request_ids", existing_request_ids)
-
+async def test_http_exchange_ids_are_stored_as_opaque_evidence() -> None:
+    """In the Web3 engine the field holds opaque references — a tx hash, a
+    fork-test name, a block number. Nothing verifies them against a service."""
     request_ids, errors, warning = await _verify_http_exchange_ids(
         cast("Any", object()),
-        ["1042", "1088"],
+        ["0xdeadbeef", "testReentrancy()"],
     )
 
-    assert request_ids is None
-    assert errors == ["http_exchange_ids do not exist in the current proxy project: 1088"]
+    assert request_ids == ["0xdeadbeef", "testReentrancy()"]
+    assert errors == []
     assert warning is None
 
 
-async def test_http_exchange_ids_are_dropped_when_proxy_cannot_be_queried(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    async def existing_request_ids(
-        _ctx: Any,
-        _request_ids: list[str],
-    ) -> set[str]:
-        raise RuntimeError("Caido client is not available")
-
-    monkeypatch.setattr(reporting_tool, "existing_request_ids", existing_request_ids)
-
+async def test_http_exchange_ids_do_not_require_external_verification() -> None:
+    """References survive even with no chain access: storage never depends on a
+    live backend being reachable."""
     request_ids, errors, warning = await _verify_http_exchange_ids(
         cast("Any", object()),
-        ["1042", "1042", "1088"],
+        ["block-21000000", "testReentrancy()"],
     )
 
-    assert request_ids is None
+    assert request_ids == ["block-21000000", "testReentrancy()"]
     assert errors == []
-    assert warning is not None
-    assert "not stored" in warning
-    assert "update_vulnerability_report" in warning
+    assert warning is None
+    # The old proxy-project verifier is gone: there is no collaborator left to
+    # query a request against.
+    assert not hasattr(reporting_tool, "existing_request_ids")
 
 
 async def test_create_reports_persistence_failure_as_tool_error(
@@ -1679,20 +1664,12 @@ async def test_create_reports_persistence_failure_as_tool_error(
     assert report_state.vulnerability_reports == []
 
 
-async def test_evidence_only_update_reports_proxy_outage_as_retryable(
+async def test_evidence_only_update_records_opaque_references(
     report_state: ReportState,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """An update that only adds evidence references succeeds — there is no
+    external verifier to fail against."""
     _seed_weak_report(report_state)
-    original = dict(report_state.vulnerability_reports[0])
-
-    async def existing_request_ids(
-        _ctx: Any,
-        _request_ids: list[str],
-    ) -> set[str]:
-        raise RuntimeError("Caido client is not available")
-
-    monkeypatch.setattr(reporting_tool, "existing_request_ids", existing_request_ids)
 
     ctx = ToolContext(
         context={"agent_id": "root"},
@@ -1705,18 +1682,16 @@ async def test_evidence_only_update_reports_proxy_outage_as_retryable(
         json.dumps(
             {
                 "report_id": "vuln-0009",
-                "update_reason": "A replay produced a clearer proving exchange.",
-                "http_exchange_ids": ["204"],
+                "update_reason": "A fork test now proves the finding end to end.",
+                "http_exchange_ids": ["testReentrancy()"],
             }
         ),
     )
     result = json.loads(raw)
 
-    assert result["success"] is False
-    assert "No fields to update" not in result["error"]
-    assert "update_vulnerability_report" in result["error"]
-    assert result["report_id"] == "vuln-0009"
-    assert report_state.vulnerability_reports[0] == original
+    assert result["success"] is True
+    assert "No fields to update" not in json.dumps(result)
+    assert report_state.vulnerability_reports[0]["http_exchange_ids"] == ["testReentrancy()"]
 
 
 def test_update_reports_persistence_failure_as_tool_error(report_state: ReportState) -> None:

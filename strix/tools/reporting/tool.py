@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Any
 from agents import RunContextWrapper, function_tool
 
 from strix.tools.nullish import clean_optional
-from strix.tools.proxy.tools import existing_request_ids
 
 
 if TYPE_CHECKING:
@@ -181,11 +180,17 @@ def _validate_required_text(fields: dict[str, str]) -> list[str]:
 
 
 def _normalize_http_exchange_ids(raw: Any) -> tuple[list[str] | None, list[str]]:
-    """Return distinct proxy exchange ids in their original order."""
+    """Return distinct evidence references in their original order.
+
+    The field is reused from the engine as a place to attach opaque
+    references that prove a finding — a transaction hash, a fork-test
+    name, or a block number. References are stored as-is; nothing verifies
+    them against an external service.
+    """
     if raw is None:
         return None, []
     if not isinstance(raw, list):
-        return None, ["http_exchange_ids must be a list of proxy request ids"]
+        return None, ["http_exchange_ids must be a list of evidence references"]
 
     normalized: list[str] = []
     errors: list[str] = []
@@ -207,61 +212,31 @@ def _normalize_http_exchange_ids(raw: Any) -> tuple[list[str] | None, list[str]]
         if any(ord(char) < 0x21 or ord(char) > 0x7E for char in request_id):
             errors.append(f"http_exchange_ids[{index}] must contain only visible ASCII characters")
             continue
-        if not request_id.isdigit():
-            errors.append(f"http_exchange_ids[{index}] must be a numeric proxy request id")
-            continue
         if request_id not in seen:
             seen.add(request_id)
             normalized.append(request_id)
             if len(normalized) > _MAX_HTTP_EXCHANGE_IDS:
                 errors.append(
                     f"http_exchange_ids can contain at most "
-                    f"{_MAX_HTTP_EXCHANGE_IDS} distinct request ids"
+                    f"{_MAX_HTTP_EXCHANGE_IDS} distinct references"
                 )
                 break
     return normalized, errors
-
-
-_HTTP_EXCHANGE_DROPPED_WARNING = (
-    "http_exchange_ids were not stored: the proxy project could not be reached to verify "
-    "them. Attach them with update_vulnerability_report when the proxy responds again."
-)
 
 
 async def _verify_http_exchange_ids(
     ctx: RunContextWrapper,
     raw: Any,
 ) -> tuple[list[str] | None, list[str], str | None]:
-    """Verify proxy exchange IDs against the current Caido project.
+    """Normalize the finding's evidence references.
 
-    IDs the project does not know are rejected. When the proxy itself cannot be
-    queried the IDs are dropped and a warning is returned instead, so a proxy
-    outage never blocks a finding and unverified IDs are never recorded as
-    evidence.
+    In the Web3 engine these are opaque references (a transaction hash, a
+    fork-test name, a block number), so there is no external service to
+    verify them against — they are stored as given.
     """
     request_ids, errors = _normalize_http_exchange_ids(raw)
     if request_ids is None or errors or not request_ids:
         return request_ids, errors, None
-
-    try:
-        existing_ids = await existing_request_ids(ctx, request_ids)
-    except Exception:  # noqa: BLE001
-        logger.warning(
-            "Could not verify HTTP exchange IDs against the current Caido project",
-            exc_info=True,
-        )
-        return None, [], _HTTP_EXCHANGE_DROPPED_WARNING
-
-    missing_ids = [request_id for request_id in request_ids if request_id not in existing_ids]
-    if missing_ids:
-        return (
-            None,
-            [
-                "http_exchange_ids do not exist in the current proxy project: "
-                + ", ".join(missing_ids)
-            ],
-            None,
-        )
     return request_ids, [], None
 
 
@@ -312,8 +287,8 @@ def _validate_analysis_fields(
     if not str(counterevidence or "").strip():
         errors.append(
             "Counterevidence cannot be empty - state the strongest evidence against "
-            "this finding, or what you checked and found none (e.g. 'no input "
-            "validation, WAF, or authorization check found on this path')"
+            "this finding, or what you checked and found none (e.g. 'no modifier, "
+            "require, or access check on any path to the sink')"
         )
     if not str(severity_change_conditions or "").strip():
         errors.append(
@@ -1024,27 +999,25 @@ async def create_vulnerability_report(
 
     **Reporting and severity gate**:
 
-    - A reachable endpoint, unusual response, weak configuration, or
-      reconnaissance artifact is not by itself a vulnerability. File a
-      report only when the PoC demonstrates an unauthorized security
-      consequence or a realistic, fully validated path to one.
-    - Score only the reasonable final impact supported by the PoC. Do
-      not score speculative pivots or consequences that require another
-      unverified vulnerability.
-    - Network reachability and missing authentication affect
-      exploitability; neither creates Confidentiality, Integrity, or
-      Availability impact by itself.
-    - Public metadata, internal-looking names or addresses, software
-      versions, intended client-side code, and source maps without
-      secrets or restricted source normally have ``C:N``.
-    - Configuration and transport observations require a realistic
-      attacker-controlled exploit and direct security impact. Client
-      errors, compatibility issues, fingerprinting, and attack-surface
-      discovery alone should not be filed as vulnerabilities.
-    - Before filing, verify that the impact narrative, PoC, and every
+    - File a report only when a Foundry PoC, or a complete and reachable
+      source→control→sink→impact trace, demonstrates the impact. A scary
+      function name, an unguarded-looking write, or a scanner label is
+      not a vulnerability.
+    - Score only the impact the proof demonstrates. Do not score a chain
+      that depends on another unconfirmed bug.
+    - Bound the attacker explicitly: which actor, with what starting
+      funds/capabilities, reaching which state. Admin-only harm is
+      rejected unless the report names a concrete unprivileged amplifier
+      (a race, a retroactive sweep, an asymmetric formula, an access gap).
+    - Loss or lock of user funds is Integrity/Availability impact; a
+      reachable unauthorized state change is Integrity; a permanent DoS
+      of a value function is Availability. A mere code smell is not
+      impact.
+    - Before filing, verify that the impact narrative, the PoC, and every
       non-None CVSS impact metric describe the same demonstrated
-      consequence. When evidence is incomplete, lower the metric or
-      continue validation; never choose a higher value "to be safe."
+      consequence. When proof is incomplete, lower the metric, mark the
+      finding a lead, or continue validation — never choose a higher
+      value "to be safe."
 
     Automatic LLM-based **deduplication** rejects reports that describe
     the same root cause on the same asset as an existing report. If you
@@ -1068,24 +1041,23 @@ async def create_vulnerability_report(
     - No internal/system details: never mention paths like
       ``/workspace``, internal tools, agents, sandboxes, models, system
       prompts, internal errors / stack traces, or tester environment.
-      Never leak internal identifiers (proxy request IDs, internal
-      report IDs) into any field.
+      Never leak internal report IDs into any field.
     - Tone: formal, objective, third-person, vendor-neutral, concise.
       Avoid internal-guidance headings like "QUICK", "Approach", or
       "Techniques" that read like an engineering runbook rather than a
       client deliverable.
     - **Use markdown in every text field**: ``**bold**`` for emphasis,
       ``inline code`` for identifiers/values/parameters, and
-      language-tagged fenced code blocks for any code/payload/HTTP
+      language-tagged fenced code blocks for any code or trace
       excerpt. Never leave code bare/unformatted. When referencing a
       file, annotate the opening fence with
-      ``title=app.py startLineNumber=42 endLineNumber=50`` after the language.
+      ``title=Vault.sol startLineNumber=42 endLineNumber=47`` after the language.
     - Field discipline: ``poc_description`` is steps only — NO code (all
       code goes in ``poc_script_code``); ``remediation_steps`` is prose
       only — NO code/diffs (code fixes go in ``code_locations``).
     - Numbered steps allowed only in PoC and Remediation sections.
     - Avoid hedging language; be precise and non-vague.
-    - Follow a standard pentest report structure across the fields:
+    - Follow a standard smart-contract audit report structure across the fields:
       (1) overview (``description``), (2) severity & CVSS vector
       (``cvss_breakdown``), (3) affected asset(s) (``target`` /
       ``endpoint``), (4) technical details (``technical_analysis``),
@@ -1110,22 +1082,28 @@ async def create_vulnerability_report(
     - ``confidentiality`` / ``integrity`` / ``availability``: ``N`` /
       ``L`` / ``H``
 
-    Derive the vector from the demonstrated attack, not the finding
-    category or a scanner/template severity:
+    Derive the vector from the demonstrated on-chain attack, not the bug
+    class or a scanner label:
 
-    - ``C:L`` requires actual access to some restricted information.
-      Reconnaissance value alone is ``C:N``. ``C:H`` requires total
-      disclosure or limited disclosure with a direct serious impact,
-      such as a usable administrator credential or private key.
-    - ``I:L`` requires demonstrated unauthorized, limited modification;
-      ``I:H`` requires total or directly serious modification. Otherwise
-      use ``I:N``.
-    - ``A:L`` requires demonstrated performance degradation or service
-      interruption; ``A:H`` requires complete or directly serious
-      denial of the affected service. Otherwise use ``A:N``.
-    - Use ``S:C`` only when exploitation demonstrably crosses into a
-      component governed by a different security authority. A separate
-      backend, downstream effect, or third-party name is insufficient.
+    - ``attack_vector: N`` when any account can call the vulnerable
+      function on a public chain; ``A``/``L`` when it needs a co-located
+      contract or a specific role reachable only off-chain.
+    - ``attack_complexity: L`` for a straight call; ``H`` when the attack
+      needs a specific state, a precise block, or a multi-step setup.
+    - ``privileges_required: N`` for a permissionless attacker; ``L`` for
+      a legitimate low-privilege role; ``H`` for an admin/owner.
+    - ``user_interaction: N`` for a purely on-chain attack; ``R`` when a
+      victim must sign or call something.
+    - ``integrity: H`` when the attacker can move, mint, or destroy value
+      or state they do not own; ``L`` for a bounded/limited write.
+    - ``availability: H`` when a value function is permanently or
+      widely DoS'd (funds locked, contract bricked); ``L`` for a
+      bounded/temporary stall.
+    - ``confidentiality`` is rarely ``> N`` on-chain and only when
+      restricted data (a private key, a committed secret) is disclosed.
+    - Use ``scope: C`` only when the attack demonstrably crosses into a
+      contract governed by a different security authority (e.g. it drains
+      a *peer* protocol, not just this one).
 
     Example::
 
@@ -1143,26 +1121,17 @@ async def create_vulnerability_report(
     **CVSS calibration** — score the weakness you actually proved, not a
     hypothetical worst case. Most over-rating comes from these mistakes:
 
-    - **Don't presuppose a separate compromise.** If exploitation
-      requires the attacker to already hold a victim secret (a stolen
-      session cookie/token, a leaked one-time link, intercepted traffic),
-      that acquisition is not free. Do not score it as
-      ``privileges_required:N`` with ``attack_complexity:L`` as if
-      directly reachable, and do not rate a replay-of-captured-secret
-      issue High/Critical unless the *same* finding demonstrates a
-      concrete way to obtain that secret. Issues like a session that
-      survives logout or a replayable link are session-management /
-      defense-in-depth weaknesses — usually Low/Medium on their own.
-    - **Reserve ``H`` impact for demonstrated broad impact.** ``C:H`` /
-      ``I:H`` require proof of wide or systemic read/write. A single
-      user's data, a read-only information leak, or merely confirming
-      that an account / domain / software version *exists* (enumeration)
-      is ``C:L`` (often ``I:N``) — not ``C:H``.
-    - **Model required position and interaction honestly.** An
-      adversary-in-the-middle prerequisite (e.g. cleartext transmission)
-      or a required victim action is not guaranteed — reflect it in
-      ``attack_complexity`` / ``user_interaction`` instead of assuming the
-      ideal condition always holds.
+    - **Don't presuppose a separate compromise.** If the attack needs a
+      stolen key or a compromised admin account, that acquisition is not
+      free. Do not score it ``privileges_required:N`` /
+      ``attack_complexity:L`` as if directly reachable. Admin-key abuse
+      without a way to obtain the key is a centralization note, not a High.
+    - **Reserve ``H`` impact for demonstrated broad impact.** Draining one
+      user's dust is not ``I:H`` if the same path cannot drain more. A
+      grief that costs the attacker more than the victim is at most Low.
+    - **Count the profitable outcome, not the alarming one.** An exploit
+      that reverts on unwind, or whose flash-loan fee exceeds the gain, is
+      ``I:N``/``A:N`` with a Low/Informational severity — say so.
 
     **CVE / CWE rules**: pass the bare ID only (``CVE-2024-1234``,
     ``CWE-89``) — no name, no parenthetical. Be 100% certain; if
@@ -1175,65 +1144,86 @@ async def create_vulnerability_report(
     Common CWE references (use the ID only — names are listed here
     just for your lookup):
 
-    - **Injection**: CWE-79 XSS, CWE-89 SQLi, CWE-78 OS Command
-      Injection, CWE-94 Code Injection, CWE-77 Command Injection.
-    - **Auth / Access**: CWE-287 Improper Authentication, CWE-862
+    - **Access / Auth**: CWE-284 Improper Access Control, CWE-862
       Missing Authorization, CWE-863 Incorrect Authorization, CWE-306
-      Missing Auth for Critical Function, CWE-639 Authz Bypass via
-      User-Controlled Key.
-    - **Web**: CWE-352 CSRF, CWE-918 SSRF, CWE-601 Open Redirect,
-      CWE-434 Unrestricted File Upload.
-    - **Memory**: CWE-787 OOB Write, CWE-125 OOB Read, CWE-416 UAF,
-      CWE-120 Classic Buffer Overflow.
-    - **Data**: CWE-502 Deserialization of Untrusted Data, CWE-22
-      Path Traversal, CWE-611 XXE.
-    - **Crypto / Config**: CWE-798 Hard-coded Credentials, CWE-327
-      Broken / Risky Crypto, CWE-311 Missing Encryption, CWE-916 Weak
-      Password Hashing.
+      Missing Auth for Critical Function, CWE-285 Improper Authorization.
+    - **Arithmetic**: CWE-682 Incorrect Calculation, CWE-190 Integer
+      Overflow/Underflow, CWE-191 Integer Underflow, CWE-369 Divide By
+      Zero, CWE-1288 Improper Validation of Consistency Within Input.
+    - **Reentrancy / State**: CWE-841 Improper Enforcement of Behavioral
+      Workflow, CWE-662 Improper Synchronization, CWE-362 Race Condition,
+      CWE-665 Improper Initialization, CWE-670 State-machine flaw.
+    - **Validation**: CWE-20 Improper Input Validation, CWE-129 Improper
+      Validation of Array Index, CWE-1284 Improper Validation of Specified
+      Quantity, CWE-1173 Improper Use of Validation Framework.
+    - **Oracle / Trust**: CWE-345 Insufficient Verification of Data
+      Authenticity, CWE-347 Improper Verification of Cryptographic
+      Signature, CWE-350 Reliance on Reverse DNS (do not use for on-chain).
+      Prefer the SWC registry where it fits (``SWC-107`` Reentrancy,
+      ``SWC-100`` Function Default Visibility, ``SWC-106`` Unprotected
+      SELFDESTRUCT, ``SWC-115`` tx.origin, ``SWC-116`` block values).
+    - **Availability**: CWE-400 Uncontrolled Resource Consumption,
+      CWE-703 Improper Check or Handling of Exceptional Conditions,
+      CWE-833 Deadlock (revert loops / stuck funds).
 
     Example (abbreviated — mirror this structure)::
 
-        title: "Reflected XSS in /search q parameter"
+        title: "Reentrancy in Vault.withdraw drains user deposits"
         description:
-            The **`q`** parameter of `/search` reflects user input into
-            the HTML response without encoding, allowing script
-            injection.
+            **`Vault.withdraw`** sends ETH before it updates the caller's
+            balance, so a contract recipient can re-enter and withdraw
+            more than it deposited.
         technical_analysis:
-            The handler interpolates `q` directly into the page body:
+            The function performs the external call before the state
+            update:
 
-            ```python title=views.py startLineNumber=42 endLineNumber=44
-            html = f"<h2>Results for {q}</h2>"
-            return HttpResponse(html)
+            ```solidity title=Vault.sol startLineNumber=42 endLineNumber=47
+            function withdraw(uint256 amount) external {
+                require(balances[msg.sender] >= amount, "insufficient");
+                (bool ok, ) = msg.sender.call{value: amount}("");
+                require(ok, "send failed");
+                balances[msg.sender] -= amount;   // effects after interaction
+            }
             ```
 
-            No output encoding is applied, so `<script>` executes.
+            A re-entrant call re-reads the un-decremented balance.
         poc_description:
-            1. Navigate to `/search?q=<payload>`.
-            2. Observe the payload executes in the victim's browser.
+            1. Attacker deploys a contract that calls `withdraw` in its
+               `receive()`.
+            2. The attacker deposits 1 ETH and calls `withdraw(1 ether)`.
+            3. Each re-entry passes the balance check before it is reduced.
         poc_script_code:
-            ```
-            GET /search?q=<script>alert(document.domain)</script>
+            ```solidity
+            function test_reentrancy() public {
+                vm.deal(attacker, 1 ether);
+                vm.prank(attacker);
+                vault.deposit{value: 1 ether}();
+                vm.prank(attacker);
+                attackerContract.attack(address(vault));
+                assertGt(address(attackerContract).balance, 1 ether);
+            }
             ```
         evidence:
-            Response echoes the payload verbatim:
+            Foundry test output shows the attacker contract ending with
+            more ETH than deposited:
 
-            ```html
-            <h2>Results for <script>alert(document.domain)</script></h2>
+            ```
+            [PASS] test_reentrancy() (gas: 91234)
             ```
         assumptions:
-            Assumes a victim can be induced to open a crafted link.
+            The vault holds other users' funds and pays out in native ETH
+            (or an ERC-777/reentrant token).
         remediation_steps:
-            Context-encode all user input rendered into HTML; prefer the
-            template engine's auto-escaping over string interpolation.
+            Update state before the external call (checks-effects-interactions)
+            and add a `nonReentrant` guard to every state-sharing entry point.
         counterevidence:
-            No output encoding, CSP, or WAF observed on this response;
-            payload executed in a current browser. The parameter is
-            reflected on an unauthenticated route, so no privileged
-            position is required.
+            No reentrancy guard is present on `withdraw` or the sibling
+            `claim`; the PoC drains more than the deposit on a fork. Reachable
+            by any account, so no privileged position is required.
         confidence: "high"
         severity_change_conditions:
-            A restrictive CSP that blocks inline script execution would
-            reduce impact and lower the severity.
+            A `nonReentrant` guard on `withdraw`, or payment via a
+            pull pattern, would remove the exploit and lower the severity.
         fix_effort: "low"
 
     Nice to have: for code findings, if the checkout has git history, a quick
@@ -1243,72 +1233,72 @@ async def create_vulnerability_report(
     uncommitted or the command fails.
 
     Args:
-        title: Specific finding title (e.g.
-            ``"SQL Injection in /api/users login parameter"``). Don't
-            include the CVE number in the title.
+        title: Specific finding title, naming the bug class and location
+            (e.g. ``"Reentrancy in Vault.withdraw"``, ``"Rounding error
+            in Lending.borrow lets borrowers under-repay"``).
         description: Concise, non-technical TL;DR of the vulnerability
             (1-3 sentences) — it appears first in the report. Deep
             technical detail and root-cause analysis belong in
             ``technical_analysis``, not here.
-        impact: The unauthorized result demonstrated by the PoC, the
-            affected data or operation, and its scope. Keep plausible
-            but unverified follow-on risks separate; do not use them to
-            set CVSS metrics.
-        target: Affected URL / domain / repository.
-        technical_analysis: The mechanism and root cause.
+        impact: The unauthorized result demonstrated by the PoC — funds
+            lost or locked, state corrupted, protocol insolvency — the
+            affected assets, and its scope. Keep plausible but unverified
+            follow-on risks separate; do not use them to set CVSS metrics.
+        target: Affected target — a source file/contract, a deployed
+            contract address, or the protocol name.
+        technical_analysis: The mechanism and root cause, with the
+            vulnerable lines.
         poc_description: Step-by-step reproduction (steps only, no code).
-        poc_script_code: Working PoC (Python preferred).
+        poc_script_code: Working proof-of-concept — a Foundry test
+            (Solidity) preferred, or the exact `cast`/`forge` invocation.
         remediation_steps: Specific, actionable fix (prose, no code).
-        evidence: Concrete proof the issue is real and exploitable —
-            request/response excerpts, observed behavior, tool output.
-            Use fenced code blocks; no internal identifiers/paths.
+        evidence: Concrete proof the issue is real — the exploit
+            transaction hash, Foundry test output, a call trace, or a
+            verbatim code excerpt. Use fenced code blocks; no internal
+            identifiers/paths.
         assumptions: Short note on the assumptions/prerequisites that
-            make this finding impactful or exploitable (e.g. "assumes an
-            authenticated low-privilege user").
+            make this finding impactful or exploitable (e.g. "assumes the
+            pool accepts fee-on-transfer tokens").
         counterevidence: REQUIRED. The strongest case *against* this
-            finding, after actively looking for it — the guard you might
-            have missed, the deployment constraint, the precondition. If
-            you genuinely found nothing, say what you checked (e.g. "no
-            input validation, WAF, or authorization check found on this
-            path; tested authenticated and unauthenticated"), not just
-            "none". A generic trust claim ("the framework escapes this")
-            is not counterevidence unless you confirmed that specific
-            call in this context.
+            finding, after actively looking for it — the guard on the path,
+            the deployment constraint, the precondition the attacker
+            cannot meet. If you genuinely found nothing, say what you
+            checked (e.g. "no modifier, require, or access check on any
+            path to the sink; PoC drains funds on a fork"), not just
+            "none". "Probably safe" is not counterevidence; a named,
+            located control is.
         confidence: REQUIRED. Your calibrated confidence that this is a
-            real, exploitable issue: ``high`` (working PoC against the
-            live target, or a complete reachable source→sink trace),
-            ``medium`` (strong static evidence you could not fully
-            execute), or ``low`` (plausible with a material unresolved
-            gap). Do not inflate — an accurate ``medium`` is more useful
-            than a ``high`` that fails triage.
+            real, exploitable issue: ``high`` (working Foundry PoC or a
+            complete reachable source→control→sink→impact trace),
+            ``medium`` (strong static evidence you could not execute), or
+            ``low`` (plausible with a material unresolved gap). Do not
+            inflate — an accurate ``medium`` is more useful than a
+            ``high`` that fails triage.
         confidence_rationale: Required when ``confidence`` is not
-            ``high``. Name the specific gap (e.g. "static-only trace,
-            could not stand up the service to reproduce"; "reachability
-            of this route from unauthenticated traffic unconfirmed").
+            ``high``. Name the specific gap (e.g. "static-only trace, the
+            protocol could not be built/reproduced"; "the path depends on
+            a deployed oracle we could not fork").
         severity_change_conditions: REQUIRED. One concrete sentence on
-            what single piece of additional evidence would raise or
-            lower the severity (e.g. "confirmation this route is exposed
-            to unauthenticated internet traffic would raise this to
-            critical").
+            what single piece of additional evidence would raise or lower
+            the severity (e.g. "a fork PoC draining the vault on mainnet
+            would raise this to Critical").
         fix_effort: One of ``trivial`` / ``low`` / ``medium`` / ``high``.
         cvss_breakdown: 8-metric object per the format above.
-        endpoint: API path / Git path (e.g. ``/api/login``).
-        method: HTTP method when relevant.
+        endpoint: The entry point when relevant (e.g.
+            ``"Vault.withdraw"`` or a selector).
+        method: Omit for on-chain findings; there is no HTTP method.
         cve: ``CVE-YYYY-NNNNN`` if certain, else omit.
-        cwe: ``CWE-NNN`` (most specific child) if certain, else omit.
+        cwe: ``CWE-NNN`` / ``SWC-NNN`` (most specific) if certain, else omit.
         code_locations: White-box findings — list of location objects.
-        http_exchange_ids: Proxy request IDs that prove this finding.
-            Copy these IDs from ``list_requests`` or ``view_request``.
-            For a finding validated over HTTP, capture and inspect the
-            supporting exchanges and include their IDs here before filing.
-            Include relevant baseline/control requests as well as the exploit.
-            Omit only when the finding has no captured HTTP evidence (for
-            example a static-only code finding). Never invent IDs or drop
-            them to bypass a verification error; retry the capture instead.
-            If the result carries a ``warning`` that the IDs were not
-            stored, the finding is filed without them: attach them with
-            ``update_vulnerability_report`` once the proxy responds.
-            Keep IDs out of ``evidence`` and all other report text.
+        http_exchange_ids: Opaque references that prove this finding —
+            a transaction hash of the exploit, a Foundry fork-test name,
+            or a block number. Copy a tx hash exactly as ``cast tx`` /
+            the explorer shows it. Include the reference that
+            demonstrates the exploit as well as any baseline/control
+            reference it differs from. Omit only when the finding has no
+            on-chain evidence (a purely static finding). Never invent
+            references; a wrong reference is worse than none.
+            Keep references out of ``evidence`` and all other report text.
 
             **How ``fix_before`` / ``fix_after`` work**: they're used as
             literal GitHub/GitLab PR suggestion blocks. When a reviewer
@@ -1331,8 +1321,8 @@ async def create_vulnerability_report(
             ``fix_before`` / ``fix_after`` pair covers ONE contiguous
             block, create **separate location entries** for each
             non-contiguous part. Use ``label`` to describe each part's
-            role (``"Add escape helper import"``, ``"Sanitize input
-            before SQL"``). Order primary fix first, supporting
+            role (``"Add reentrancy guard import"``, ``"Apply checks-effects-interactions"``).
+            Order primary fix first, supporting
             changes (imports, config) after.
 
             **Informational vs actionable**:
@@ -1554,13 +1544,13 @@ async def update_vulnerability_report(
         fix_effort: ``trivial`` / ``low`` / ``medium`` / ``high``.
         cvss_breakdown: All 8 CVSS metrics. Replaces the score and the
             severity too.
-        endpoint: Replacement endpoint.
-        method: Replacement HTTP method.
+        endpoint: Replacement entry point when relevant.
+        method: Unused on-chain; leave unset.
         cve: Replacement CVE id.
-        cwe: Replacement CWE id.
+        cwe: Replacement CWE/SWC id.
         code_locations: Replacement code locations.
-        http_exchange_ids: Replacement proxy request ids. Pass an empty
-            list to remove all linked exchanges.
+        http_exchange_ids: Replacement evidence references (tx hashes,
+            test names). Pass an empty list to remove all of them.
         fix_verification: Verification statement for an applyable fix.
         fix_pr_body: Replacement fix PR body.
         contextual_cvss_reasoning: Dependency findings only. What you

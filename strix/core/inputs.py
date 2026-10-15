@@ -113,7 +113,8 @@ def build_root_task(scan_config: dict[str, Any]) -> str:
     sections: dict[str, list[str]] = {
         "Repositories": [],
         "Local Codebases": [],
-        "URLs": [],
+        "Deployed Contracts": [],
+        "Web Applications": [],
         "IP Addresses": [],
         "API Specifications": [],
     }
@@ -137,8 +138,16 @@ def build_root_task(scan_config: dict[str, Any]) -> str:
                 "this is the user's real directory, mounted live and writable — "
                 ".git/.agents/.codex are read-only)"
             )
+        elif ttype == "deployed_contract":
+            address = details.get("target_address", "")
+            chain = details.get("chain", "")
+            label = f"{address} (chain: {chain})" if chain else address
+            sections["Deployed Contracts"].append(
+                f"- {label} - fetch the verified source (Etherscan/chain explorer) "
+                "before analyzing; if only bytecode is available, say so as a gap"
+            )
         elif ttype == "web_application":
-            sections["URLs"].append(f"- {details.get('target_url', '')}")
+            sections["Web Applications"].append(f"- {details.get('target_url', '')}")
         elif ttype == "ip_address":
             sections["IP Addresses"].append(f"- {details.get('target_ip', '')}")
         elif ttype == "api_spec":
@@ -195,6 +204,7 @@ def build_scope_context(scan_config: dict[str, Any]) -> dict[str, Any]:
     value_keys = {
         "repository": "target_repo",
         "local_code": "target_path",
+        "deployed_contract": "target_address",
         "web_application": "target_url",
         "ip_address": "target_ip",
         "api_spec": "target_spec",
@@ -204,6 +214,8 @@ def build_scope_context(scan_config: dict[str, Any]) -> dict[str, Any]:
         details = target.get("details") or {}
         key = value_keys.get(ttype)
         value = details.get(key, "") if key is not None else target.get("original", "")
+        if ttype == "deployed_contract" and details.get("chain"):
+            value = f"{details['chain']}:{value}"
 
         workspace_subdir = details.get("workspace_subdir")
         workspace_path = f"/workspace/{workspace_subdir}" if workspace_subdir else ""

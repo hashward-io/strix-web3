@@ -12,16 +12,14 @@ strix (--target <target> | --target-list <path>) [options]
 ## Options
 
 <ParamField path="--target, -t" type="string">
-  Target to test. Accepts URLs, repositories, local directories, domains, IP addresses, API spec files (OpenAPI/Swagger `.json`/`.yaml`, a Postman collection export), or a live Postman collection by id (`postman://<collection-uuid>`). Can be specified multiple times. Fresh runs require at least one target source: `--target` or `--target-list`.
-
-  When the target is an API spec, Strix copies it into the agent's workspace and authorizes the base URLs it declares (including those resolved from a Postman environment) as in-scope hosts - so the agent reads the contract and tests the full declared surface instead of discovering endpoints by crawling. Pair the spec with the deployed base URL (e.g. `--target ./openapi.yaml --target https://api.example.com`) so the agent has a reachable host to attack.
+  Target to audit. Accepts a local Solidity / EVM project directory (Foundry or Hardhat), a Git repository URL, or a deployed contract address (`0x<40 hex>`, optionally prefixed with a chain such as `1:0x<40 hex>`). Can be specified multiple times. Fresh runs require at least one target source: `--target` or `--target-list`.
 
   <Note>
     A local directory is mounted into the sandbox live and **writable**, so the agent edits your real files (`.git` excepted). Commit or stash first.
   </Note>
 
   <Note>
-    Fetching a Postman collection by id requires `POSTMAN_API_KEY`. Add `?env=<environment-uuid>` to also pull a Postman environment, which resolves `{{baseUrl}}` / token variables the collection references (e.g. `postman://<collection-uuid>?env=<environment-uid>`).
+    For a deployed address, the agent fetches the verified source from the chain explorer before analyzing. Set `ETH_RPC_URL` to an archive RPC endpoint so it can also fork live state for a proof-of-concept.
   </Note>
 </ParamField>
 
@@ -30,7 +28,7 @@ strix (--target <target> | --target-list <path>) [options]
 </ParamField>
 
 <ParamField path="--instruction" type="string">
-  Custom instructions for the scan. Use for credentials, focus areas, or specific testing approaches.
+  Custom instructions for the audit. Use for focus areas (e.g., the oracle or share accounting), deployment details (proxy/implementation addresses), or a required proof (e.g., "write a Foundry fork test for each finding").
 </ParamField>
 
 <ParamField path="--instruction-file" type="string">
@@ -130,14 +128,17 @@ strix (--target <target> | --target-list <path>) [options]
 ## Examples
 
 ```bash
-# Basic scan
-strix --target https://example.com
+# Basic audit of a local project
+strix --target ./my-protocol
 
-# Authenticated testing
-strix --target https://app.com --instruction "Use credentials: user:pass"
+# Audit a repository
+strix --target https://github.com/org/protocol
 
-# Focused testing
-strix --target api.example.com --instruction "Focus on IDOR and auth bypass"
+# Audit a deployed contract (verified source fetched by address)
+strix --target 1:0x0123456789abcdef0123456789abcdef01234567
+
+# Focused audit
+strix --target ./my-protocol --instruction "Focus on the vault share accounting and oracle staleness"
 
 # CI/CD mode
 strix -n --target ./ --scan-mode quick
@@ -146,26 +147,20 @@ strix -n --target ./ --scan-mode quick
 strix -n --target ./ --scan-mode quick --fail-on high
 
 # Cap cost and per-agent turns
-strix --target https://example.com --max-budget 25 --max-turns 300
+strix --target ./my-protocol --max-budget 25 --max-turns 300
 
-# Force diff-scope against a specific base ref
-strix -n --target ./ --scan-mode quick --scope-mode diff --diff-base origin/main
+# Change-set review against a base ref
+strix -n --target ./my-protocol --scan-mode standard --scope-mode diff --diff-base origin/main
 
-# Multi-target white-box testing
-strix -t https://github.com/org/app -t https://staging.example.com
-
-# API spec + live target (OpenAPI/Swagger file or Postman collection)
-strix -t ./openapi.yaml -t https://api.example.com
-
-# Postman collection pulled live by id (+ optional environment)
-strix -t "postman://<collection-uuid>?env=<environment-uuid>"
+# Multi-target audit (e.g., a proxy and its implementation)
+strix -t ./src -t 0xProxyAddress
 
 # Targets from a file
 strix --target-list ./targets.txt
 
-# Extra files placed in the sandbox workspace
-strix --target ./my-project --workspace-file ./wordlist.txt
-strix --target https://app.com --workspace-file ./openapi.yaml:specs/openapi.yaml
+# Extra files placed in the sandbox workspace (e.g., a prior audit or a spec)
+strix --target ./my-protocol --workspace-file ./prior-audit.pdf
+strix --target ./my-protocol --workspace-file ./spec.pdf:docs/spec.pdf
 ```
 
 ## Exit Codes

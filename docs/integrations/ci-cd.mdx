@@ -1,51 +1,52 @@
 ---
 title: "CI/CD Integration"
-description: "Run Strix in any CI/CD pipeline"
+description: "Run Strix Web3 in any CI/CD pipeline"
 ---
 
-Strix runs in headless mode for automated pipelines.
+Strix Web3 runs in headless mode for automated pipelines.
 
 ## Headless Mode
 
 Use the `-n` or `--non-interactive` flag:
 
 ```bash
-strix -n --target ./app --scan-mode quick
+strix -n --target ./protocol --scan-mode quick
 ```
 
-For pull-request style CI runs, Strix automatically scopes quick scans to changed files. You can force this behavior and set a base ref explicitly:
+For pull-request style CI runs, scope the audit to the change set and set a base ref explicitly:
 
 ```bash
-strix -n --target ./app --scan-mode quick --scope-mode diff --diff-base origin/main
+strix -n --target ./protocol --scan-mode quick --scope-mode diff --diff-base origin/main
 ```
 
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
-| 0 | No vulnerabilities found (with `--fail-on`, none at or above the threshold) |
+| 0 | No findings (with `--fail-on`, none at or above the threshold) |
 | 1 | Execution error |
-| 2 | Vulnerabilities found (with `--fail-on`, at least one at or above the threshold) |
+| 2 | Findings filed (with `--fail-on`, at least one at or above the threshold) |
 
-To fail only on serious findings, pass `--fail-on` with a minimum severity. Lower findings are still reported but exit `0`, so a passing job does not mean the report is empty.:
+To fail only on serious findings, pass `--fail-on` with a minimum severity. Lower findings are still reported but exit `0`, so a passing job does not mean the report is empty:
 
 ```bash
-strix -n --target ./app --scan-mode quick --fail-on high
+strix -n --target ./protocol --scan-mode quick --fail-on high
 ```
 
 ## GitLab CI
 
 ```yaml .gitlab-ci.yml
-security-scan:
+contract-audit:
   image: docker:latest
   services:
     - docker:dind
   variables:
     STRIX_LLM: $STRIX_LLM
     LLM_API_KEY: $LLM_API_KEY
+    ETH_RPC_URL: $ETH_RPC_URL
   script:
     - curl -sSL https://strix.ai/install | bash
-    - strix -n -t ./ --scan-mode quick
+    - strix -n -t ./ --scope-mode diff --diff-base "$CI_MERGE_REQUEST_DIFF_BASE_SHA" --max-budget 15
 ```
 
 ## Jenkins
@@ -56,12 +57,13 @@ pipeline {
     environment {
         STRIX_LLM = credentials('strix-llm')
         LLM_API_KEY = credentials('llm-api-key')
+        ETH_RPC_URL = credentials('eth-rpc-url')
     }
     stages {
-        stage('Security Scan') {
+        stage('Contract Audit') {
             steps {
                 sh 'curl -sSL https://strix.ai/install | bash'
-                sh 'strix -n -t ./ --scan-mode quick'
+                sh 'strix -n -t ./ --scan-mode quick --fail-on high'
             }
         }
     }
@@ -73,7 +75,7 @@ pipeline {
 ```yaml .circleci/config.yml
 version: 2.1
 jobs:
-  security-scan:
+  contract-audit:
     docker:
       - image: cimg/base:current
     steps:
@@ -83,8 +85,8 @@ jobs:
           name: Install Strix
           command: curl -sSL https://strix.ai/install | bash
       - run:
-          name: Run Scan
-          command: strix -n -t ./ --scan-mode quick
+          name: Run Audit
+          command: strix -n -t ./ --scope-mode diff --diff-base origin/main --max-budget 15
 ```
 
 <Note>
@@ -92,5 +94,5 @@ All CI platforms require Docker access. Ensure your runner has Docker available.
 </Note>
 
 <Tip>
-If diff-scope fails in CI, fetch full git history (for example, `fetch-depth: 0` in GitHub Actions) so merge-base and branch comparison can be resolved.
+If diff-scope fails in CI, fetch full git history (for example, `fetch-depth: 0` in GitHub Actions) so the merge base can be resolved, or pass `--diff-base` explicitly.
 </Tip>

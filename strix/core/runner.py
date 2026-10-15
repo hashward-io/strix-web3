@@ -300,6 +300,7 @@ async def run_strix_scan(
     coordinator.root_finish_tool = root_finish_tool.name
 
     from strix.tools.coverage.tools import hydrate_coverage_from_disk
+    from strix.tools.invariants.tools import hydrate_invariants_from_disk
     from strix.tools.notes.tools import hydrate_notes_from_disk
     from strix.tools.threat_model.tools import hydrate_threat_models_from_disk
     from strix.tools.todo.tools import hydrate_todos_from_disk
@@ -308,6 +309,7 @@ async def run_strix_scan(
     hydrate_notes_from_disk(state_dir)
     hydrate_coverage_from_disk(state_dir)
     hydrate_threat_models_from_disk(state_dir)
+    hydrate_invariants_from_disk(state_dir)
 
     root_id: str | None = None
     if is_resume:
@@ -548,7 +550,6 @@ async def run_strix_scan(
         context: dict[str, Any] = {
             "coordinator": coordinator,
             "sandbox_session": bundle["session"],
-            "caido_client": bundle["caido_client"],
             "mcp_registry": mcp_registry,
             "agent_id": root_id,
             "parent_id": None,

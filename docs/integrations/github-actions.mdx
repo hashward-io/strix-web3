@@ -1,20 +1,20 @@
 ---
 title: "GitHub Actions"
-description: "Run Strix security scans on every pull request"
+description: "Run Strix Web3 contract audits on every pull request"
 ---
 
-Integrate Strix into your GitHub workflow to catch vulnerabilities before they reach production.
+Integrate Strix Web3 into your GitHub workflow to catch contract vulnerabilities before they reach production.
 
 ## Basic Workflow
 
-```yaml .github/workflows/security.yml
-name: Security Scan
+```yaml .github/workflows/audit.yml
+name: Contract Audit
 
 on:
   pull_request:
 
 jobs:
-  strix-scan:
+  strix-audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,11 +24,12 @@ jobs:
       - name: Install Strix
         run: curl -sSL https://strix.ai/install | bash
 
-      - name: Run Security Scan
+      - name: Run Contract Audit
         env:
           STRIX_LLM: ${{ secrets.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-        run: strix -n -t ./ --scan-mode quick
+          ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}   # optional, for fork PoCs
+        run: strix -n -t . --scope-mode diff --diff-base "origin/${{ github.base_ref }}" --max-budget 15
 ```
 
 ## Required Secrets
@@ -39,15 +40,17 @@ Add these secrets to your repository:
 |--------|-------------|
 | `STRIX_LLM` | Model name (e.g., `openrouter/z-ai/glm-5.3`) |
 | `LLM_API_KEY` | API key for your LLM provider |
+| `ETH_RPC_URL` | Optional archive RPC endpoint, so fork proofs run against live state |
 
 ## Exit Codes
 
-The workflow fails when vulnerabilities are found:
+The workflow fails when findings are filed:
 
 | Code | Result |
 |------|--------|
-| 0 | Pass — No vulnerabilities (with `--fail-on`, none at or above the threshold) |
-| 2 | Fail — Vulnerabilities found |
+| 0 | Pass — No findings (with `--fail-on`, none at or above the threshold) |
+| 2 | Fail — Findings filed |
+| 1 | Fatal error (setup, provider, or sandbox failure) |
 
 Add `--fail-on high` (or `critical`, `medium`, `low`) to fail only on findings at or above that severity. Lower findings still appear in the report, so a passing run is not necessarily finding-free.
 
@@ -55,14 +58,14 @@ Add `--fail-on high` (or `critical`, `medium`, `low`) to fail only on findings a
 
 | Mode | Duration | Use Case |
 |------|----------|----------|
-| `quick` | Minutes | Every PR |
+| `quick` | Minutes | Every PR (with `--scope-mode diff`) |
 | `standard` | ~30 min | Nightly builds |
-| `deep` | 1-4 hours | Release candidates |
+| `deep` | Hours | Release candidates, pre-deploy |
 
 <Tip>
-Use `quick` mode for PRs to keep feedback fast. Schedule `deep` scans nightly.
+Use `quick` mode with `--scope-mode diff` for PRs to keep feedback fast. Schedule `deep` audits nightly or before a deploy.
 </Tip>
 
 <Note>
-For pull_request workflows, Strix automatically uses changed-files diff-scope in CI/headless runs. If diff resolution fails, ensure full history is fetched (`fetch-depth: 0`) or set `--diff-base`.
+Strix Web3 audits the changed `.sol` files in diff scope and uses the rest of the repository only as context. Fetch full history (`fetch-depth: 0`) or pass `--diff-base` explicitly so the merge base resolves.
 </Note>

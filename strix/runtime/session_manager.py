@@ -19,8 +19,6 @@ from agents.sandbox.manifest import Environment, Manifest
 
 from strix.config import load_settings
 from strix.runtime.backends import backend_supports_bind_mounts, get_backend
-from strix.runtime.caido_bootstrap import bootstrap_caido
-from strix.runtime.caido_handle import CaidoBootstrapHandle
 from strix.runtime.deferred_session import DeferredSandboxClient, DeferredSandboxSession
 
 
@@ -33,10 +31,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
-
-# In-container Caido sidecar port (matches the image's caido-cli bind).
-_CONTAINER_CAIDO_PORT = 48080
 
 
 _SESSION_CACHE: dict[str, dict[str, Any]] = {}
@@ -309,12 +303,8 @@ async def create_or_reuse(
         bind_mounts = []
         entries = build_manifest_entries(local_sources)
 
-    # Caido runs as an in-container sidecar; HTTP(S) traffic from any
-    # process started via ``session.exec`` (the SDK's Shell tool, etc.)
-    # picks up these env vars automatically. ``NO_PROXY`` keeps the
-    # agent-browser CDP daemon's localhost traffic from looping back
-    # through Caido.
-    container_caido_url = f"http://127.0.0.1:{_CONTAINER_CAIDO_PORT}"
+    # The audit sandbox needs no network interception sidecar: tools run
+    # directly and reach the chain RPC via the environment.
     manifest = Manifest(
         entries=entries,
         environment=Environment(
@@ -322,10 +312,6 @@ async def create_or_reuse(
                 "PYTHONUNBUFFERED": "1",
                 "HOST_GATEWAY": "host.docker.internal",
                 **_host_identity_env(),
-                "http_proxy": container_caido_url,
-                "https_proxy": container_caido_url,
-                "ALL_PROXY": container_caido_url,
-                "NO_PROXY": "localhost,127.0.0.1",
             },
         ),
     )
@@ -343,7 +329,7 @@ async def create_or_reuse(
             backend(
                 image=image,
                 manifest=manifest,
-                exposed_ports=(_CONTAINER_CAIDO_PORT,),
+                exposed_ports=(),
                 bind_mounts=bind_mounts,
             )
         )
@@ -357,54 +343,33 @@ async def create_or_reuse(
             raise
         return client, session
 
-    async def _caido_url(session: Any) -> str:
-        report("Setting up the proxy")
-        caido_endpoint = await session.resolve_exposed_port(_CONTAINER_CAIDO_PORT)
-        scheme = "https" if caido_endpoint.tls else "http"
-        host_caido_url = f"{scheme}://{caido_endpoint.host}:{caido_endpoint.port}"
-        logger.debug("Caido host endpoint resolved: %s", host_caido_url)
-        return host_caido_url
-
-    def _caido(session: Any, host_caido_url: str) -> Any:
-        return bootstrap_caido(
-            session,
-            host_url=host_caido_url,
-            container_url=container_caido_url,
-        )
-
     if defer:
         bring_up = asyncio.create_task(_bring_up(), name=f"sandbox-bring-up-{scan_id}")
+        # Yield once so ``_bring_up`` reaches its first suspension point, where
+        # ``_create_or_discard`` has armed the shield/discard guard around the
+        # backend call. Without this, a teardown racing the very first event-loop
+        # step could cancel the task before that guard exists, leaking a sandbox
+        # that the backend is already bringing up.
+        await asyncio.sleep(0)
         deferred = DeferredSandboxSession(
             bring_up,
             manifest=manifest,
-            exposed_ports=(_CONTAINER_CAIDO_PORT,),
+            exposed_ports=(),
         )
-
-        async def _caido_when_up() -> Any:
-            session = await deferred.resolve()
-            return await _caido(session, await _caido_url(session))
 
         bundle = {
             "client": DeferredSandboxClient(deferred),
             "session": deferred,
-            "caido_client": CaidoBootstrapHandle(
-                asyncio.create_task(_caido_when_up(), name=f"caido-bootstrap-{scan_id}")
-            ),
         }
         _SESSION_CACHE[scan_id] = bundle
         logger.info("Sandbox session for scan %s deferred and cached", scan_id)
         return bundle
 
     client, session = await _bring_up()
-    host_caido_url = await _caido_url(session)
-    caido_client = CaidoBootstrapHandle(
-        asyncio.create_task(_caido(session, host_caido_url), name=f"caido-bootstrap-{scan_id}")
-    )
 
     bundle = {
         "client": client,
         "session": session,
-        "caido_client": caido_client,
     }
     _SESSION_CACHE[scan_id] = bundle
     logger.info("Sandbox session for scan %s ready and cached", scan_id)
@@ -451,13 +416,6 @@ async def cleanup(scan_id: str) -> None:
     if bundle is None:
         logger.debug("cleanup(%s): no cached session", scan_id)
         return
-
-    caido_client = bundle.get("caido_client")
-    if caido_client is not None:
-        try:
-            await caido_client.aclose()
-        except Exception:  # noqa: BLE001
-            logger.debug("cleanup(%s): caido_client.aclose() raised", scan_id, exc_info=True)
 
     client = bundle["client"]
     try:

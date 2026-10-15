@@ -1,83 +1,80 @@
-# 📚 Strix Skills
+# 📚 Strix Web3 Skills
 
 ## 🎯 Overview
 
-Skills are specialized knowledge packages that enhance Strix agents with deep expertise in specific vulnerability types, technologies, and testing methodologies. Each skill provides advanced techniques, practical examples, and validation methods that go beyond baseline security knowledge.
+Skills are specialized knowledge packages that give Strix audit agents deep expertise in a specific discipline: an EVM bug class, a protocol type, a tool, or a reasoning method. They are the knowledge layer of the Web3 engine — the part that teaches an agent how a senior smart-contract auditor actually works.
+
+This fork audits **Solidity / EVM** protocols only.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ How skills work
 
-### How Skills Work
-
-When an agent is created, it can load up to 5 specialized skills relevant to the specific subtask and context at hand:
+When an agent is created it can load up to **5** skills relevant to its subtask:
 
 ```python
-# Agent creation with specialized skills
 create_agent(
-    task="Test authentication mechanisms in API",
-    name="Auth Specialist",
-    skills="authentication_jwt,business_logic"
+    task="Audit the vault's share accounting",
+    name="Vault Math",
+    skills="hacking_agents/math-precision,protocols/vaults-erc4626,analysis/finding-contract"
 )
 ```
 
-The skills are dynamically injected into the agent's system prompt, allowing it to operate with deep expertise tailored to the specific vulnerability types or technologies required for the task at hand.
+The loaded skills are injected into the agent's system prompt. Skills are addressed either bare (`math-precision`) or qualified by category (`hacking_agents/math-precision`).
 
 ---
 
-## 📁 Skill Categories
+## 📁 Categories
 
 | Category | Purpose |
 |----------|---------|
-| **`/vulnerabilities`** | Advanced testing techniques for core vulnerability classes like authentication bypasses, business logic flaws, and race conditions |
-| **`/frameworks`** | Specific testing methods for popular frameworks e.g. Django, Express, FastAPI, and Next.js |
-| **`/technologies`** | Specialized techniques for third-party services such as Supabase, Firebase, Auth0, and payment gateways |
-| **`/protocols`** | Protocol-specific testing patterns for GraphQL, WebSocket, OAuth, and other communication standards |
-| **`/tooling`** | Command-line playbooks for core sandbox tools (nmap, nuclei, httpx, ffuf, subfinder, naabu, katana, sqlmap) |
-| **`/cloud`** | Cloud provider security testing for AWS, Azure, GCP, and Kubernetes environments |
-| **`/reconnaissance`** | Advanced information gathering and enumeration techniques for comprehensive attack surface mapping |
-| **`/custom`** | Community-contributed skills for specialized or industry-specific testing scenarios |
+| **`hacking_agents/`** | The twelve specialist attack lenses — each a distinct *method*, not a bug class (math-precision, access-control, economic-security, execution-trace, invariant, periphery, first-principles, asymmetry, boundary, numerical-gap, trust-gap, flow-gap) |
+| **`vulnerabilities/`** | EVM bug classes — reentrancy, access control, oracle/price manipulation, precision & rounding, accounting & conservation, flash loans, signatures, upgradeability, unchecked returns, ERC-4626 inflation, token integration, DoS/griefing, MEV, governance, cross-contract consistency, logic flaws |
+| **`protocols/`** | Protocol-type playbooks — AMM/DEX, lending, vaults/ERC-4626, staking/restaking, perps, bridges/messaging, governance, oracles |
+| **`tooling/`** | Tool playbooks — Foundry, cast/anvil, Slither, Echidna, Medusa, Halmos, Aderyn, Solidity language, Python |
+| **`reconnaissance/`** | Pre-audit reconnaissance — the x-ray playbook, protocol mapping, and git-history analysis |
+| **`analysis/`** | Internal reasoning skills — finding contract, judging gates, counterevidence, severity calibration, invariant discovery, fix verification, report language, report formatting, senior-auditor mindset |
+| **`coordination/`** | Internal orchestration — the root (orchestrator) agent, the white-box playbook, agent prompts, and dedup/assembly |
+| **`scan_modes/`** | Internal scan definitions — quick, standard, deep, and the diff overlay (`--scope-mode diff`) |
+| **`custom/`** | Invariant fuzzing (fizz) and the Foundry proof-of-concept builder |
 
-Notable source-aware skills:
-- `source_aware_whitebox` (coordination): white-box orchestration playbook
-- `source_aware_sast` (custom): semgrep/AST/secrets/supply-chain static triage workflow
-- `dependency_cve_scanning` (custom): trivy-based SCA workflow for reporting known dependency CVEs via `create_dependency_report`
-- `npx_confusion` (custom): npx/npm exec/bunx fallback and adjacent package-runner identity confusion, with runner-specific registry and reporting gates
-- `semantic_confusion` (vulnerabilities): cross-boundary parser, normalization, and representation mismatch analysis
-- `agentic_system_security` (vulnerabilities): effective-authority and MCP/tool ecosystem security testing
-- `browser_security` (vulnerabilities): browsing-context, postMessage, XS-Leaks, service-worker, and cross-origin state-machine testing
-- `azure` (cloud): Azure and Microsoft Entra privilege, PIM, workload identity, and cross-plane escalation analysis
-- `infrastructure_lifecycle` (reconnaissance): abandoned or mutable external dependencies such as update endpoints, MX, storage, and control domains
-- `argument_injection` (vulnerabilities): shell-free CLI option smuggling, secondary argument-file parsing, and platform-specific argv transformation boundaries
-- `electron_desktop_apps` (technologies): Electron renderer-to-native trust boundaries, preload/IPC exposure, and navigation analysis
-
-Notable LLM security skills:
-- `llm_applications` (technologies): end-to-end OWASP 2026 LLM01-LLM10 coverage across models, RAG, vectors, agents, tools, outputs, supply chain, and resource controls
-- `llm_prompt_injection` (vulnerabilities): deep direct, indirect, multimodal, memory, and tool-result prompt-injection testing
+`scan_modes/`, `coordination/`, and `analysis/` are **internal** categories: the engine selects them automatically and they are not offered as user-selectable skills.
 
 ---
 
-## 🎨 Creating New Skills
+## 🔬 The twelve lenses
 
-### What Should a Skill Contain?
+The hacking-agents are attack *methods*. The orchestrator spawns one child per lens over the core subsystem set; the lenses deliberately overlap, and the dedup pass reconciles them.
 
-A good skill is a structured knowledge package that typically includes:
-
-- **Advanced techniques** - Non-obvious methods specific to the task and domain
-- **Practical examples** - Working payloads, commands, or test cases with variations
-- **Validation methods** - How to confirm findings and avoid false positives
-- **Context-specific insights** - Environment and version nuances, configuration-dependent behavior, and edge cases
-- **YAML frontmatter** - `name` and `description` fields for skill metadata
-
-Skills focus on deep, specialized knowledge to significantly enhance agent capabilities. They are dynamically injected into agent context when needed.
+- `math-precision` — rounding, precision loss, scale/decimal mixing, unchecked casts
+- `access-control` — permission-model gaps, escalation, broken initialization
+- `economic-security` — value flows, token misbehavior, incentive misalignment (unlimited capital assumed)
+- `execution-trace` — parameter divergence, value leaks, encoding mismatch, sentinel bypass
+- `invariant` — conservation laws, state couplings, equivalence relationships
+- `periphery` — libraries, helpers, encoders, base contracts the core trusts
+- `first-principles` — unnamed logic bugs; no pattern matching
+- `asymmetry` — mismatches between paired functions, branches, and writers/readers
+- `boundary` — corner cases at every call site, payable function, and sentinel branch
+- `numerical-gap` — bugs at the seam of precision, invariants, and boundaries
+- `trust-gap` — bugs at the seam of access control, economics, and asymmetry
+- `flow-gap` — bugs at the seam of execution trace, periphery, and protocol intent
 
 ---
 
-## 🤝 Contributing
+## 🎨 Writing a skill
 
-Community contributions are more than welcome — contribute new skills via [pull requests](https://github.com/usestrix/strix/pulls) or [GitHub issues](https://github.com/usestrix/strix/issues) to help expand the collection and improve extensibility for Strix agents.
+A good skill contains:
+
+- **When to use it** — the trigger that makes this skill the right one to load
+- **What to look for** — concrete Solidity-specific surfaces, not generic advice
+- **An attack plan** — the sequence an auditor follows
+- **Proof guidance** — what evidence makes a finding confirmed
+- **Fix guidance** — the idiomatic correction
+- **YAML frontmatter** — `name` and `description` (used by the loader to list the skill)
+
+Skills add depth. The engine's kill-the-noise discipline lives in `analysis/` — read those before filing anything.
 
 ---
 
 > [!NOTE]
-> **Work in Progress** - We're actively expanding the skills collection with specialized techniques and new categories.
+> The knowledge here adapts **Pashov Audit Group**'s public Web3 audit methodology (the twelve lenses, the senior-auditor mindset, invariant synthesis, and finding contract) into the Strix engine.

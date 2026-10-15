@@ -37,33 +37,35 @@ def _resolve_skills(
     2. ``scan_modes/<mode>`` (always), plus ``scan_modes/diff`` when the
        run is scoped to a change set — diff scope overlays the depth
        mode rather than replacing it.
-    3. ``tooling/agent_browser`` (always — every agent has shell + the
-       agent-browser CLI).
-    4. ``tooling/python`` (always — Python runs through ``exec_command``;
-       sandbox scripts can import ``caido_api`` for Caido automation).
+    3. ``tooling/python`` (always — Python runs through ``exec_command``
+       for decoding, boundary math, and harness generation).
+    4. ``tooling/foundry`` and ``custom/foundry-poc`` (always — the PoC
+       standard for the whole engine).
     5. ``analysis/counterevidence`` and ``analysis/severity_calibration``
        (always — closure discipline and severity rubric apply to every
        agent that can open or close a candidate, or file a report).
     6. ``coordination/root_agent`` for the root agent only — orchestration
        guidance for delegating to specialist subagents.
-    7. Whitebox-specific skills if applicable, including
+    7. Whitebox-specific skills if applicable: ``coordination/audit_whitebox``
+       (the source-available playbook), ``analysis/invariant-discovery``
+       (the invariant catalog the audit is structured around), and
        ``analysis/fix_verification`` (only whitebox agents can attach an
-       applyable ``fix_after``) and ``analysis/source_aware_discovery``.
+       applyable ``fix_after``).
     """
     ordered: list[str] = list(requested or [])
     ordered.append(f"scan_modes/{scan_mode}")
     if is_diff_scoped:
         ordered.append("scan_modes/diff")
-    ordered.append("tooling/agent_browser")
     ordered.append("tooling/python")
+    ordered.append("tooling/foundry")
+    ordered.append("custom/foundry-poc")
     ordered.append("analysis/counterevidence")
     ordered.append("analysis/severity_calibration")
     if is_root:
         ordered.append("coordination/root_agent")
     if is_whitebox:
-        ordered.append("coordination/source_aware_whitebox")
-        ordered.append("custom/source_aware_sast")
-        ordered.append("analysis/source_aware_discovery")
+        ordered.append("coordination/audit_whitebox")
+        ordered.append("analysis/invariant-discovery")
         ordered.append("analysis/fix_verification")
 
     deduped: list[str] = []

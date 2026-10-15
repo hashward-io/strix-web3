@@ -61,6 +61,6 @@ def test_artifacts_still_land_when_coverage_is_empty(state: ReportState) -> None
     state._save_artifacts()
 
     run_dir = state.get_run_dir()
-    assert (run_dir / "penetration_test_report.md").is_file()
+    assert (run_dir / "audit_report.md").is_file()
     document = json.loads((run_dir / "coverage.json").read_text(encoding="utf-8"))
     assert document["entries"] == []

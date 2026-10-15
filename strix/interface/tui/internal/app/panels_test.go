@@ -390,13 +390,12 @@ func TestTargetsBoxDropsOnShortTerminal(t *testing.T) {
 }
 
 // The targets box only takes rows the agent tree would otherwise grow into, so
-// the stats panel keeps the Caido URL and the other panels keep their heights.
+// the stats panel keeps its content and the other panels keep their heights.
 func TestTargetsBoxNeverSqueezesPanels(t *testing.T) {
 	for height := 19; height <= 40; height++ {
 		m := panelsModel(t)
 		m.height = height
 		m.snapshot.Usage = map[string]any{"total_tokens": 1234, "cost": 0.5}
-		m.snapshot.CaidoURL = "http://127.0.0.1:8080"
 		m.resizeViewport()
 		stats, vuln, mcp, _ := m.sidebarHeights()
 		m.snapshot.Targets = []string{"a", "b", "c", "d", "e"}

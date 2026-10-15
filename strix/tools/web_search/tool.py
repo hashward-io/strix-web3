@@ -64,7 +64,7 @@ def _perplexity_content(api_key: str, query: str) -> str:
 _EXA_PAGE_MAX_CHARS = 20000
 _EXA_MAX_CONTENT_URLS = 10
 _EXA_SUMMARY_PROMPT = (
-    "Summarize this page for a penetration tester. Keep concrete technical detail: "
+    "Summarize this page for a smart-contract auditor. Keep concrete technical detail: "
     "affected products and exact versions, CVE and CWE identifiers, CVSS scores, "
     "exploitation preconditions, payloads or commands, and mitigations. "
     "Leave out marketing copy and navigation text."

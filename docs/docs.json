@@ -57,8 +57,7 @@
             "group": "Tools",
             "pages": [
               "tools/overview",
-              "tools/browser",
-              "tools/proxy",
+              "tools/foundry",
               "tools/terminal",
               "tools/sandbox"
             ]
@@ -72,25 +71,13 @@
             ]
           }
         ]
-      },
-      {
-        "tab": "Cloud",
-        "groups": [
-          {
-            "group": "Strix Cloud",
-            "pages": [
-              "cloud/overview",
-              "cloud/cli"
-            ]
-          }
-        ]
       }
     ],
     "global": {
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/usestrix/strix",
+          "href": "https://github.com/hashward-io/strix-web3",
           "icon": "github"
         },
         {
@@ -105,14 +92,14 @@
     "links": [],
     "primary": {
       "type": "button",
-      "label": "Try Strix Cloud",
-      "href": "https://app.strix.ai"
+      "label": "GitHub",
+      "href": "https://github.com/hashward-io/strix-web3"
     }
   },
   "footer": {
     "socials": {
       "x": "https://x.com/strix_ai",
-      "github": "https://github.com/usestrix",
+      "github": "https://github.com/hashward-io",
       "discord": "https://discord.gg/strix-ai"
     }
   },

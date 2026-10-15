@@ -1,19 +1,19 @@
 ---
 title: "Scan Modes"
-description: "Choose the right scan depth for your use case"
+description: "Choose the right audit depth for your use case"
 ---
 
-Strix offers three scan modes to balance speed and thoroughness.
+Strix Web3 offers three scan modes to balance speed and thoroughness. A separate `--scope-mode` narrows the run to a change set.
 
 ## Quick
 
 ```bash
-strix --target ./app --scan-mode quick
+strix --target ./my-protocol --scan-mode quick
 ```
 
-Fast checks for obvious vulnerabilities. Best for:
+The x-ray recon pass plus the core attack lenses over the main subsystems. Best for:
 - CI/CD pipelines
-- Pull request validation
+- Pull-request validation
 - Rapid smoke tests
 
 **Duration**: Minutes
@@ -21,42 +21,46 @@ Fast checks for obvious vulnerabilities. Best for:
 ## Standard
 
 ```bash
-strix --target ./app --scan-mode standard
+strix --target ./my-protocol --scan-mode standard
 ```
 
-Balanced testing for routine security reviews. Best for:
-- Regular security assessments
+The full lens set over the core subsystems plus the bug-class specialists the code shape warrants. Best for:
+- Routine audits
 - Pre-release validation
 - Development milestones
 
-**Duration**: 30 minutes to 1 hour
-
-**White-box behavior**: Uses source-aware mapping and static triage to prioritize dynamic exploit validation paths.
+**Duration**: 30 minutes to a few hours, depending on the protocol size.
 
 ## Deep
 
 ```bash
-strix --target ./app --scan-mode deep
+strix --target ./my-protocol --scan-mode deep
 ```
 
-Thorough penetration testing. Best for:
-- Comprehensive security audits
-- Pre-production reviews
-- Critical application assessments
+Exhaustive: every lens over every subsystem, protocol specialists, invariant fuzzing with Echidna/Medusa, and formal checks with Halmos. Best for:
+- Comprehensive audits
+- Pre-production / pre-mainnet reviews
+- Critical protocol assessments
 
-**Duration**: 1-4 hours depending on target complexity
-
-**White-box behavior**: Runs broad source-aware triage (`semgrep`, AST structural search, secrets, supply-chain checks) and then systematically validates top candidates dynamically.
+**Duration**: Hours, depending on target complexity.
 
 <Note>
 Deep mode is the default. It explores edge cases, chained vulnerabilities, and complex attack paths.
 </Note>
 
+## Change-Set Scope
+
+`--scope-mode diff` narrows any depth to the changed `.sol` files, using the rest of the repository only as context. It is an overlay, not a fourth depth.
+
+```bash
+strix -n --target ./my-protocol --scan-mode standard --scope-mode diff --diff-base origin/main
+```
+
 ## Choosing a Mode
 
 | Scenario | Recommended Mode |
 |----------|------------------|
-| Every PR | Quick |
-| Weekly scans | Standard |
-| Before major release | Deep |
-| Bug bounty hunting | Deep |
+| Every PR | Quick (+ `--scope-mode diff`) |
+| Periodic audit | Standard |
+| Before a major release or mainnet deploy | Deep |
+| A high-value protocol, or contest prep | Deep |

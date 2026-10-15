@@ -95,10 +95,6 @@ class _Client:
         self.deleted.append(session)
 
 
-async def _no_caido(*_args: Any, **_kwargs: Any) -> None:
-    return None
-
-
 class _Backend:
     def __init__(self, *, fail: bool = False) -> None:
         self.gate = asyncio.Event()
@@ -120,7 +116,6 @@ def backend(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> 
     name = f"deferred-{request.node.name}"
     fake = _Backend(fail="fail" in request.node.name)
     register_backend(name, fake, supports_bind_mounts=True)
-    monkeypatch.setattr(session_manager, "bootstrap_caido", _no_caido)
     monkeypatch.setattr(
         session_manager, "load_settings", lambda: _Settings(runtime=_RuntimeSettings(backend=name))
     )
@@ -194,8 +189,6 @@ async def test_failed_bring_up_surfaces_on_first_io(backend: _Backend) -> None:
         with pytest.raises(RuntimeError, match="bring-up exploded"):
             await asyncio.wait_for(session.exec("true"), timeout=1)
         assert not await session.running()
-        with pytest.raises(RuntimeError, match="bring-up exploded"):
-            await bundle["caido_client"].get()
     finally:
         await session_manager.cleanup(scan_id)
     assert backend.client.deleted == []

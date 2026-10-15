@@ -1,109 +1,36 @@
 ---
 name: python
-description: Run Python through exec_command in the SDK sandbox. Use the image-baked caido_api module for Caido proxy automation from Python scripts.
+description: Python in the sandbox — scripting, web3/eth-abi, decoding transactions, and computing exploit inputs
 ---
 
-# Python In The Sandbox
+# Python (Web3 Scripting)
 
-Use `exec_command` for Python. There is no separate Python executor.
+Python in the sandbox is for arithmetic, decoding, and orchestration the shell tools do not cover. All heavy lifting should end in a Foundry PoC; Python gets you there faster.
 
-Prefer writing reusable scripts to a `.py` file and running them with
-`python3 <name>.py`. For short one-off transformations, `python3 -c` or a
-small here-document is fine.
+## Common libraries
 
-The `shell` parameter on `exec_command` is for swapping POSIX shells
-(`bash`/`zsh`/`sh`), not for picking interpreters. Put the interpreter
-invocation in `cmd` instead: `cmd="python3 -c '...'"`, not
-`shell=python3, cmd="..."`. The `shell=<interpreter>` shortcut breaks
-in subtle ways — `python3` works only with `login=False` (because the
-SDK adds `-l`/`-i`), and other interpreters (`node`, `ruby`, `perl`)
-take `-e` not `-c` so they fail even with `login=False`.
+- `web3` (`from web3 import Web3`) — `Web3.to_checksum_address`, `Web3.keccak`, `w3.eth.call`, `w3.eth.get_storage_at`, contract ABIs.
+- `eth_abi` — `decode(['uint256','address'], data)`, `encode(...)`.
+- `eth_utils` — `to_wei`, `from_wei`, `keccak`, `to_hex`.
+- `vyper`/`solc-select` — only if the target uses them.
+- Standard library for math: use Python's arbitrary-precision ints to compute exact values a Solidity division would truncate.
 
-## Proxy Automation From Python
+## Useful tasks
 
-The sandbox image includes an installed `caido_api` module. Import it
-explicitly when Python code needs Caido traffic or replay access:
+- **Decode a transaction** — fetch calldata with `cast tx`/`cast receipt`, split the selector, decode with `eth_abi`; identify which function and with what args an exploit used.
+- **Compute a boundary** — find the exact input where a rounding error flips (e.g. the smallest `x` with `x * totalSupply / totalAssets == 0`) using Python ints, then feed it to a Foundry test.
+- **Storage inspection** — read raw slots (`cast storage`), apply the layout from `forge inspect storageLayout`, and reconstruct internal accounting.
+- **Batch RPC** — pull logs/events across a range to reconstruct a historical exploit.
+- **Generate handlers** — emit Solidity handler functions from the invariant catalog for the fizz suite.
 
-```python
-from caido_api import (
-    list_requests,
-    list_sitemap,
-    repeat_request,
-    scope_rules,
-    view_request,
-    view_sitemap_entry,
-)
-```
+## Rules
 
-All helpers are async. Use them inside `asyncio.run(...)` or an async
-function:
+- **Do not run network calls against the target protocol as the "test."** Reproduce in a Foundry fork; Python is for analysis and input generation.
+- Print exact integers (no floats) when reasoning about on-chain math.
+- Write scripts under the run's working directory so they are part of the evidence.
 
-```python
-import asyncio
+## Pitfalls
 
-from caido_api import list_requests, view_request
-
-
-async def main():
-    posts = await list_requests(
-        httpql_filter='req.method.eq:"POST" AND req.path.cont:"/api/"',
-        first=50,
-    )
-    candidates = []
-    for edge in posts.edges:
-        request_id = edge.node.request.id
-        body = await view_request(request_id, part="request")
-        raw = body.request.raw.decode("utf-8", errors="replace")
-        if "id=" in raw or "user=" in raw:
-            candidates.append(request_id)
-
-    print(f"{len(candidates)} candidates")
-    print(candidates[:10])
-
-
-asyncio.run(main())
-```
-
-Available helpers:
-
-- `list_requests(httpql_filter=, first=50, after=, sort_by=, sort_order=, scope_id=)` returns a cursor-paginated Caido SDK `Connection`.
-- `view_request(request_id, part="request")` returns a Caido SDK request object with raw request/response bytes.
-- `repeat_request(request_id, modifications={...})` replays a captured request after modifying `url`, `params`, `headers`, `body`, or `cookies`.
-- `list_sitemap(scope_id=, parent_id=, depth="DIRECT", page=1)` walks Caido's request-tree view of the discovered surface. Omit `parent_id` for root domains; pass an entry id with `depth="DIRECT"` or `"ALL"` to drill in.
-- `view_sitemap_entry(entry_id)` returns one entry plus its 30 most recent related requests.
-- `scope_rules(action, allowlist=, denylist=, scope_id=, scope_name=)` manages Caido scopes.
-
-For one-off arbitrary requests (e.g. probing a fresh endpoint, hitting an
-external API), use `exec_command` with `curl` / `httpx` / `requests`. The
-sandbox's `HTTP_PROXY` env routes all such traffic through Caido
-automatically, so it shows up in `list_requests` and you can use
-`repeat_request` to replay-and-modify any of it.
-
-## Workflow
-
-For iterative exploit work, put code in a file:
-
-```text
-1. Create or edit a task-unique script (e.g. `poc_<task-id>.py`, so it can't
-   clobber a project file or another agent's script) with `apply_patch`.
-2. Run it with `exec_command`: `python3 poc_<task-id>.py`.
-3. Edit and rerun until the proof-of-concept is reliable.
-```
-
-## Installing extra packages
-
-The sandbox's Python lives in `/app/.venv`, and it is the active virtualenv
-(`python3` / `pip` already resolve to it). The following common libraries are
-**pre-installed** — import them directly, no install step needed:
-`requests`, `httpx`, `beautifulsoup4` (`bs4`), `lxml`, `pyjwt` (`jwt`),
-`cryptography`.
-
-To add a one-off dependency for an exploit script, use `uv` (already in the
-image and much faster than pip):
-
-```bash
-uv pip install --python /app/.venv/bin/python <package>
-```
-
-Plain `pip install <package>` also works because the venv is active. Install
-before you import, so scripts don't fail with `ModuleNotFoundError`.
+- `float` in Python does not match fixed-point on-chain; use `int` everywhere.
+- Checksum addresses matter for `web3`; use `Web3.to_checksum_address`.
+- RPC rate limits; batch and cache.

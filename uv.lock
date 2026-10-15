@@ -221,15 +221,6 @@ wheels = [
 ]
 
 [[package]]
-name = "backoff"
-version = "2.2.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/47/d7/5bbeb12c44d7c4f2fb5b56abce497eb5ed9f34d85701de869acedd602619/backoff-2.2.1.tar.gz", hash = "sha256:03f829f5bb1923180821643f8753b0502c3b682293992485b0eef2807afa5cba", size = 17001, upload-time = "2022-10-05T19:19:32.061Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/73/b6e24bd22e6720ca8ee9a85a0c4a2971af8497d8f3193fa05390cbd46e09/backoff-2.2.1-py3-none-any.whl", hash = "sha256:63579f9a0628e06278f7e47b7d7d5b6ce20dc65c5e96a6f3ca99a6adca0396e8", size = 15148, upload-time = "2022-10-05T19:19:30.546Z" },
-]
-
-[[package]]
 name = "bandit"
 version = "1.9.4"
 source = { registry = "https://pypi.org/simple" }
@@ -270,32 +261,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7c/37/da9e7f6ca73ac73afd7f0bb7f238aa5daba35c081e98d7f48a7c399599c0/botocore-1.43.36.tar.gz", hash = "sha256:4cae47d1b2d426316b85a0087d9e69e048f13bc003b5177d74639fe9dfd28205", size = 15625488, upload-time = "2026-06-23T02:47:03.192Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5c/19/934f81592527a3f7f9b943c893e334c721a4644948642bc33885d584e9ec/botocore-1.43.36-py3-none-any.whl", hash = "sha256:3c65fdc39ed01d8dfde1e961b34038aed03c459f8ddf80717a12ac006475e49d", size = 15313630, upload-time = "2026-06-23T02:46:59.327Z" },
-]
-
-[[package]]
-name = "caido-sdk-client"
-version = "0.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "caido-server-auth" },
-    { name = "gql", extra = ["aiohttp", "websockets"] },
-    { name = "pydantic" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/62/d7/5381d8d94fec799bec7004decbf33a4c5581a8374941fe784e730e01cf80/caido_sdk_client-0.2.0.tar.gz", hash = "sha256:39988fe07b3fa9c69adbd49662db660d7707d60d9245109b1623def97b39bac8", size = 57436, upload-time = "2026-04-12T22:25:12.084Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/ae/3530caa6a79bafb8049374ca09515686d98532aca73c4fdbd0f6e06de5c9/caido_sdk_client-0.2.0-py3-none-any.whl", hash = "sha256:bc573651681c093ee9663c7924d38d522a89cea60e2ce00d34ba9b02942b1da1", size = 96207, upload-time = "2026-04-12T22:25:11.168Z" },
-]
-
-[[package]]
-name = "caido-server-auth"
-version = "0.1.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "gql", extra = ["aiohttp", "websockets"] },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/69/be/58cc2eaf97f729124b8939a9ea1c1a664b2d96dce0448788df073fca3ac9/caido_server_auth-0.1.2.tar.gz", hash = "sha256:eb2c25e9de15062760b68112f5d8e9ad63eeb1322518b90c1a0119a69a7524a4", size = 6559, upload-time = "2026-03-14T20:41:55.119Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/7b/14d192151bcc3c1624cfb488c59ec03e96c1009d015089d729c1aecd26e9/caido_server_auth-0.1.2-py3-none-any.whl", hash = "sha256:40c6cd3728e24cdff402c4efa5d8f55bf6e6cc73ac0169bdea1ad1e34faff8ff", size = 10197, upload-time = "2026-03-14T20:41:54.091Z" },
 ]
 
 [[package]]
@@ -720,38 +685,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a3/6f/f3f4ac177c67bbee8fe8e88f2ab4f36af88c44a096e165c5217accf6e5d3/google_auth-2.55.1.tar.gz", hash = "sha256:fb2d9b730f2c9b8d326ec8d7222f21aef2ead15bf0513793d6442485d87af0a1", size = 349527, upload-time = "2026-06-25T23:39:27.182Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e8/1d/f6d3ca1ad0725f2e08a1c6915640748a52de2e66596160a4d53b010cccf0/google_auth-2.55.1-py3-none-any.whl", hash = "sha256:eada68dfd52b3b81191827601e2a0c3fa12540c818534b630ddc5355769c3995", size = 252349, upload-time = "2026-06-25T23:38:52.946Z" },
-]
-
-[[package]]
-name = "gql"
-version = "4.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "anyio" },
-    { name = "backoff" },
-    { name = "graphql-core" },
-    { name = "yarl" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/06/9f/cf224a88ed71eb223b7aa0b9ff0aa10d7ecc9a4acdca2279eb046c26d5dc/gql-4.0.0.tar.gz", hash = "sha256:f22980844eb6a7c0266ffc70f111b9c7e7c7c13da38c3b439afc7eab3d7c9c8e", size = 215644, upload-time = "2025-08-17T14:32:35.397Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/94/30bbd09e8d45339fa77a48f5778d74d47e9242c11b3cd1093b3d994770a5/gql-4.0.0-py3-none-any.whl", hash = "sha256:f3beed7c531218eb24d97cb7df031b4a84fdb462f4a2beb86e2633d395937479", size = 89900, upload-time = "2025-08-17T14:32:34.029Z" },
-]
-
-[package.optional-dependencies]
-aiohttp = [
-    { name = "aiohttp" },
-]
-websockets = [
-    { name = "websockets" },
-]
-
-[[package]]
-name = "graphql-core"
-version = "3.2.11"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4d/90/f2aff026ab4aebd80eb71905106a0885f4cfde85dcf965543f45bed0d9ee/graphql_core-3.2.11.tar.gz", hash = "sha256:e7e156d10beb127cab5c89ff0da71416fc73d27c484a4757d3b2d35633774802", size = 528407, upload-time = "2026-06-05T13:45:22.915Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/15/b92b4e1d88d02c6eff9733c9eea21846ab435cc4d813d84ccc5d335955df/graphql_core-3.2.11-py3-none-any.whl", hash = "sha256:0b3e35ff41e9adba53021ab0cef475eb18f57c7f53f0f2ca55567fbf3c537ea0", size = 214879, upload-time = "2026-06-05T13:45:21.245Z" },
 ]
 
 [[package]]
@@ -2390,7 +2323,6 @@ version = "1.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
-    { name = "caido-sdk-client" },
     { name = "cryptography" },
     { name = "cvss" },
     { name = "docker" },
@@ -2424,7 +2356,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "boto3", specifier = ">=1.28.0" },
-    { name = "caido-sdk-client", specifier = ">=0.2.0" },
     { name = "cryptography", specifier = ">=48.0.1,<49" },
     { name = "cvss", specifier = ">=3.2" },
     { name = "docker", specifier = ">=7.1.0" },

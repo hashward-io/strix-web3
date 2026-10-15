@@ -150,7 +150,6 @@ def bounded_state_projection(state: dict[str, Any]) -> dict[str, Any]:
         key: state["usage"][key] for key in ("total_tokens", "cost") if key in state["usage"]
     }
     state["error"] = terminal_projection(state["error"], max_string=512)
-    state["caido_url"] = terminal_projection(state["caido_url"], max_string=256)
     state["viewer_url"] = terminal_projection(state["viewer_url"], max_string=256)
     if encoded_size(state) <= STATE_TARGET_BYTES:
         return state
@@ -172,7 +171,6 @@ def bounded_state_projection(state: dict[str, Any]) -> dict[str, Any]:
         "scope_mode": state["scope_mode"],
         "diff_base": state["diff_base"],
         "model": state["model"],
-        "caido_url": None,
         "messages": [],
         "usage": state["usage"],
         "subscription": state["subscription"],

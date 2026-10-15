@@ -1,23 +1,23 @@
 ---
 title: "Introduction"
-description: "Open-source AI hackers to secure your apps"
+description: "Open-source AI smart-contract auditors for Solidity / EVM"
 ---
 
-Strix are autonomous AI agents that act like real hackers—they run your code dynamically, find vulnerabilities, and validate them with proof-of-concepts. Built for developers and security teams who need fast, accurate security testing without the overhead of manual pentesting or the false positives of static analysis tools.
+Strix Web3 is a team of autonomous AI agents that audit Solidity / EVM protocols like a senior auditor: they read the source, derive the protocol's invariants, run the specialist attack lenses, and prove every real finding with a Foundry proof-of-concept instead of a static-analysis alert.
 
 <Frame>
-  <img src="/images/screenshot.png" alt="Strix Demo" />
+  <img src="/images/screenshot.png" alt="Strix Web3" />
 </Frame>
 
 <CardGroup cols={2}>
   <Card title="Quick Start" icon="rocket" href="/quickstart">
-    Install and run your first scan in minutes.
+    Install and run your first audit in minutes.
   </Card>
   <Card title="CLI Reference" icon="terminal" href="/usage/cli">
     Learn all command-line options.
   </Card>
   <Card title="Tools" icon="wrench" href="/tools/overview">
-    Explore the security testing toolkit.
+    Explore the audit toolkit.
   </Card>
   <Card title="GitHub Actions" icon="github" href="/integrations/github-actions">
     Integrate into your CI/CD pipeline.
@@ -26,50 +26,50 @@ Strix are autonomous AI agents that act like real hackers—they run your code d
 
 ## Use Cases
 
-- **Application Security Testing** — Detect and validate critical vulnerabilities in your applications
-- **Rapid Penetration Testing** — Get penetration tests done in hours, not weeks
-- **Bug Bounty Automation** — Automate research and generate PoCs for faster reporting
-- **CI/CD Integration** — Block vulnerabilities before they reach production
+- **Pre-deployment audit** — Review a protocol before it ships
+- **Second opinion / contest prep** — A systematic pass over the code with proof
+- **Fork-based exploit validation** — Prove an oracle, price, or accounting bug on live state
+- **CI gate** — A diff-scoped audit on every Solidity pull request
 
 ## Key Capabilities
 
-- **Full hacker toolkit** — Browser automation, HTTP proxy, terminal, Python runtime
-- **Real validation** — PoCs, not false positives
-- **Multi-agent orchestration** — Specialized agents collaborate on complex targets
+- **Full EVM toolkit** — Foundry, Slither, Aderyn, Echidna, Medusa, Halmos, and a Python/`web3` runtime
+- **Real validation** — Foundry proof-of-concept, not false positives
+- **Multi-agent orchestration** — Twelve attack lenses and protocol specialists collaborate
 - **Developer-first CLI** — Interactive TUI or headless mode for automation
 
-## Security Tools
+## Audit Toolkit
 
-Strix agents come equipped with a comprehensive toolkit:
+Strix Web3 agents come equipped with a complete Solidity toolchain:
 
 | Tool | Purpose |
 |------|---------|
-| HTTP Proxy | Full request/response manipulation and analysis |
-| Browser Automation | Multi-tab browser for XSS, CSRF, auth flow testing |
-| Terminal | Interactive shells for command execution |
-| Python Runtime | Custom exploit development and validation |
-| Reconnaissance | Automated OSINT and attack surface mapping |
-| Code Analysis | Static and dynamic analysis capabilities |
+| Foundry | forge/cast/anvil for build, test, fuzz, invariant, and fork tests |
+| Slither / Aderyn | Static analysis to seed leads (not a verdict) |
+| Echidna / Medusa | Property-based and coverage-guided invariant fuzzing |
+| Halmos | Symbolic execution / bounded model checking |
+| Python Runtime | Custom exploit and decoding scripts (`web3`, `eth-abi`) |
+| Invariant catalog | The protocol's must-hold properties and their enforcement status |
 
 ## Vulnerability Coverage
 
 | Category | Examples |
 |----------|----------|
-| Access Control | IDOR, privilege escalation, auth bypass |
-| Injection | SQL, NoSQL, command injection |
-| Server-Side | SSRF, XXE, deserialization |
-| Client-Side | XSS, prototype pollution, DOM vulnerabilities |
-| Business Logic | Race conditions, workflow manipulation |
-| Authentication | JWT vulnerabilities, session management |
-| Infrastructure | Misconfigurations, exposed services |
+| Reentrancy | Single/cross-function/cross-contract, read-only, callback |
+| Access Control | Missing modifiers, broken initialization, privilege escalation |
+| Price & Oracle | Spot/TWAP manipulation, staleness, decimals, single-source feeds |
+| Precision | Rounding direction, truncation, decimal/scale mixing |
+| Accounting | Conservation, solvency, share accounting, aggregate drift |
+| DeFi-specific | Flash loans, ERC-4626 inflation, MEV, governance, token integration |
+| Upgradeability | Proxy layout, delegatecall context, initializer front-running |
 
 ## Multi-Agent Architecture
 
-Strix uses a graph of specialized agents for comprehensive security testing:
+Strix Web3 uses a graph of specialized agents for a thorough audit:
 
-- **Distributed Workflows** — Specialized agents for different attacks and assets
-- **Scalable Testing** — Parallel execution for fast comprehensive coverage
-- **Dynamic Coordination** — Agents collaborate and share discoveries
+- **Distributed workflows** — Recon, per-lens specialists, and validation agents
+- **Scalable coverage** — Parallel execution across the protocol's subsystems
+- **Dynamic coordination** — Agents share the threat model, invariant catalog, and findings
 
 ## Quick Example
 
@@ -80,9 +80,10 @@ curl -sSL https://strix.ai/install | bash
 # Configure
 export STRIX_LLM="openrouter/z-ai/glm-5.3"
 export LLM_API_KEY="your-api-key"
+export ETH_RPC_URL="https://your-archive-rpc"   # optional, for fork PoCs
 
-# Scan
-strix --target ./your-app
+# Audit
+strix --target ./my-protocol
 ```
 
 ## Community
@@ -91,11 +92,11 @@ strix --target ./your-app
   <Card title="Discord" icon="discord" href="https://discord.gg/strix-ai">
     Join the community for help and discussion.
   </Card>
-  <Card title="GitHub" icon="github" href="https://github.com/usestrix/strix">
+  <Card title="GitHub" icon="github" href="https://github.com/hashward-io/strix-web3">
     Star the repo and contribute.
   </Card>
 </CardGroup>
 
 <Warning>
-Only test applications you own or have explicit permission to test.
+Only audit code and contracts you own or have explicit permission to audit.
 </Warning>

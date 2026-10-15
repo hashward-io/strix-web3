@@ -1,0 +1,31 @@
+---
+title: "Foundry"
+description: "The build, test, fuzz, and fork toolchain behind every proof-of-concept"
+---
+
+Foundry is the primary toolchain of the Strix Web3 sandbox. Every High/Critical finding is proven with a Foundry test.
+
+## What the sandbox ships
+
+- **forge** — build, test, fuzz, invariant, and fork tests
+- **cast** — read chain state, decode calldata, simulate calls
+- **anvil** — a local fork of a chain for manual exploration
+- **solc** — the Solidity compiler (pinned per project via `foundry.toml` / `solc-select`)
+
+## How the agents use it
+
+```bash
+forge build                     # establish a green tree before trusting any tool
+forge test -vvv                 # baseline; failures may be in-scope bugs
+forge inspect Vault storageLayout   # diff storage on a proxy upgrade
+forge test --fork-url $ETH_RPC_URL --fork-block-number <N>   # deterministic fork PoC
+```
+
+## Proof-of-concept standard
+
+- A finding needs a PoC or a complete reachable source→control→sink→impact trace — anything less is a lead.
+- Fork tests pin `--fork-block-number` for determinism and read the RPC URL from `ETH_RPC_URL`.
+- A flash-loan exploit must be net-positive after the loan fee.
+- After applying a fix, the PoC is re-run and must no longer succeed.
+
+See the `tooling/foundry` and `custom/foundry-poc` skills for the full workflow.

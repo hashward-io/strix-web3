@@ -145,8 +145,11 @@ When remote vars are set, Strix dual-writes telemetry to both local JSONL and th
 
 ## Docker Configuration
 
-<ParamField path="STRIX_IMAGE" default="ghcr.io/usestrix/strix-sandbox:1.3.0" type="string">
-  Docker image to use for the sandbox container.
+<ParamField path="STRIX_IMAGE" default="ghcr.io/hashward-io/strix-web3-sandbox:1.7.0" type="string">
+  Docker image to use for the sandbox container. Strix Web3's sandbox is a
+  Foundry-first image built from `containers/Dockerfile`. Build it locally with
+  `./scripts/docker.sh` and point `STRIX_IMAGE` at your tag if you are not
+  pulling a published image.
 </ParamField>
 
 <ParamField path="DOCKER_HOST" type="string">
@@ -172,7 +175,7 @@ When remote vars are set, Strix dual-writes telemetry to both local JSONL and th
 Strix stores configuration in `~/.strix/cli-config.json`. You can also specify a custom config file:
 
 ```bash
-strix --target ./app --config /path/to/config.json
+strix --target ./my-protocol --config /path/to/config.json
 ```
 
 **Config file format:**

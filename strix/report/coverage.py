@@ -68,75 +68,134 @@ _RISK_SKILL_CATEGORY = "vulnerabilities"
 #: How each vulnerability skill can legitimately appear in a ledger row.
 #:
 #: Matching a skill to a row is textual, and a skill's filename is not how a
-#: pentester writes the class down: an agent carrying ``path_traversal_lfi_rfi``
-#: records "Path Traversal", and one carrying ``weak_password_detection``
-#: records "weak password policy". A row matches when it contains every word
-#: of *any one* phrasing here. Skills absent from this map fall back to their
-#: own words, so a new skill is merely matched strictly, never crashed on —
-#: but add an entry, because a false gap asserts something untrue in a report.
+#: auditor writes the class down: an agent carrying ``oracle-manipulation``
+#: records "oracle price manipulation", and one carrying ``erc4626-inflation``
+#: records "first-depositor share inflation". A row matches when it contains
+#: every word of *any one* phrasing here. Skills absent from this map fall back
+#: to their own words, so a new skill is merely matched strictly, never crashed
+#: on — but add an entry, because a false gap asserts something untrue in a
+#: report.
 _SKILL_PHRASINGS: dict[str, tuple[str, ...]] = {
-    "agentic_system_security": (
-        "agentic",
-        "agent tool",
-        "mcp",
-        "confused deputy",
-        "tool invocation",
-    ),
-    "argument_injection": ("argument injection", "option injection", "argv"),
-    "authentication_jwt": ("authentication", "jwt", "session"),
-    "broken_function_level_authorization": (
-        "function level authorization",
-        "authorization",
+    "access-control": (
         "access control",
+        "authorization",
         "privilege escalation",
+        "permission",
+        "ownership",
+        "missing modifier",
     ),
-    "browser_security": (
-        "browser",
-        "postmessage",
-        "xs leak",
-        "service worker",
-        "cross origin state",
+    "accounting-conservation": (
+        "accounting",
+        "conservation",
+        "solvency",
+        "insolvency",
+        "share accounting",
+        "balance invariant",
     ),
-    "business_logic": ("business logic", "logic flaw"),
-    "csrf": ("csrf", "cross site request forgery"),
-    "header_injection": ("header injection", "host header", "crlf"),
-    "http_request_smuggling": ("request smuggling", "desync"),
-    "idor": ("idor", "object level authorization", "bola", "direct object reference"),
-    "information_disclosure": (
-        "information disclosure",
-        "information leak",
-        "sensitive data",
-        "data exposure",
+    "cross-contract-consistency": (
+        "cross contract",
+        "consistency",
+        "integration mismatch",
+        "assumption mismatch",
     ),
-    "insecure_deserialization": ("deserialization",),
-    "insecure_file_uploads": ("file upload",),
-    "llm_prompt_injection": ("prompt injection",),
-    "mass_assignment": ("mass assignment", "parameter binding"),
-    "nosql_injection": ("nosql",),
-    "open_redirect": ("redirect",),
-    "path_traversal_lfi_rfi": (
-        "path traversal",
-        "directory traversal",
-        "file inclusion",
-        "lfi",
-        "rfi",
+    "dos-griefing": (
+        "denial of service",
+        "dos",
+        "griefing",
+        "unbounded loop",
+        "blocked withdrawal",
     ),
-    "prototype_pollution": ("prototype pollution",),
-    "race_conditions": ("race condition", "toctou"),
-    "rce": ("rce", "remote code execution", "code execution", "command injection"),
-    "semantic_confusion": (
-        "semantic confusion",
-        "parser differential",
-        "normalization",
-        "validator sink mismatch",
+    "erc4626-inflation": (
+        "erc4626",
+        "inflation",
+        "share inflation",
+        "first depositor",
+        "donation attack",
     ),
-    "sql_injection": ("sql injection", "sqli"),
-    "ssrf": ("ssrf", "server side request forgery"),
-    "ssti": ("ssti", "template injection"),
-    "subdomain_takeover": ("subdomain takeover",),
-    "weak_password_detection": ("password", "credential", "brute force"),
-    "xss": ("xss", "cross site scripting", "script injection"),
-    "xxe": ("xxe", "xml external entity", "xml entity"),
+    "flash-loan-attacks": (
+        "flash loan",
+        "flashloan",
+        "uncollateralized",
+        "atomic capital",
+    ),
+    "governance-attacks": (
+        "governance",
+        "voting",
+        "proposal",
+        "quorum",
+        "timelock",
+    ),
+    "logic-flaws": (
+        "logic flaw",
+        "business logic",
+        "state machine",
+        "logic error",
+    ),
+    "mev-frontrunning": (
+        "mev",
+        "frontrunning",
+        "front run",
+        "sandwich",
+        "backrun",
+    ),
+    "oracle-manipulation": (
+        "oracle",
+        "price feed",
+        "twap",
+        "stale price",
+        "chainlink",
+    ),
+    "precision-rounding": (
+        "precision",
+        "rounding",
+        "truncation",
+        "fixed point",
+        "integer division",
+        "scaling",
+    ),
+    "price-manipulation": (
+        "price manipulation",
+        "spot price",
+        "price oracle",
+        "amm price",
+    ),
+    "reentrancy": (
+        "reentrancy",
+        "reentrant",
+        "callback",
+        "checks effects interactions",
+    ),
+    "signature-replay": (
+        "signature",
+        "replay",
+        "ecrecover",
+        "permit",
+        "nonce",
+        "eip 712",
+    ),
+    "token-integration": (
+        "token integration",
+        "fee on transfer",
+        "rebasing",
+        "nonstandard erc20",
+        "weird erc20",
+        "double entry point",
+    ),
+    "unchecked-returns": (
+        "unchecked return",
+        "unchecked call",
+        "return value",
+        "low level call",
+        "silent failure",
+    ),
+    "upgradeability-proxy": (
+        "upgradeability",
+        "proxy",
+        "initializer",
+        "storage collision",
+        "implementation",
+        "delegatecall",
+    ),
 }
 
 

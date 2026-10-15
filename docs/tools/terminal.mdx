@@ -1,9 +1,9 @@
 ---
 title: "Terminal"
-description: "Bash shell for running commands and security tools"
+description: "Bash shell for running the audit toolchain"
 ---
 
-Strix has access to a persistent bash terminal running inside the Docker sandbox. This gives the agent access to all [pre-installed security tools](/tools/sandbox).
+Strix Web3 has access to a persistent bash terminal running inside the Docker sandbox. This gives the agent access to all [pre-installed audit tools](/tools/sandbox).
 
 ## Capabilities
 
@@ -16,50 +16,60 @@ Strix has access to a persistent bash terminal running inside the Docker sandbox
 
 ## Common Uses
 
-### Running Security Tools
+### Building & Testing
 
 ```bash
-# Subdomain enumeration
-subfinder -d example.com
+# Build the project and run its existing tests
+forge build
+forge test -vvv
 
-# Vulnerability scanning
-nuclei -u https://example.com
+# Fuzz a target function
+forge test --match-test testFuzz_Deposit -vvv
 
-# SQL injection testing
-sqlmap -u "https://example.com/page?id=1"
+# Stateful invariant campaign
+forge test --match-test invariant_ -vvv
 ```
 
-### Code Analysis
+### Static Analysis & Fuzzing
 
 ```bash
-# Fast SAST triage
-semgrep --config auto ./src
+# Static analyzers seed leads, not verdicts
+slither .
+aderyn .
 
-# Structural AST search
-sg scan ./src
+# Property-based and coverage-guided invariant fuzzing
+echidna . --contract CryticTester
+medusa fuzz
 
-# Secret detection
-gitleaks detect --source ./
-trufflehog filesystem ./
+# Symbolic execution / bounded model checking
+halmos
+```
 
-# Supply-chain and misconfiguration checks
-trivy fs ./
+### Fork Proof-of-Concept
+
+```bash
+# Prove a bug against live mainnet state
+forge test --match-test testExploit --fork-url "$ETH_RPC_URL" -vvvv
+
+# Read or decode on-chain state directly
+cast call 0xToken "balanceOf(address)(uint256)" 0xHolder --rpc-url "$ETH_RPC_URL"
+cast 4byte-calldata 0xabcdef12
 ```
 
 ### Custom Scripts
 
 ```bash
-# Run Python exploits
-python3 exploit.py
+# Run a Foundry script
+forge script script/Exploit.s.sol --fork-url "$ETH_RPC_URL"
 
-# Execute shell scripts
-./test_auth_bypass.sh
+# Run a Python analysis / decoding script (web3, eth-abi)
+python3 analyze.py
 ```
 
 ## Session Management
 
 The agent can run multiple terminal sessions concurrently, for example:
 
-- Main session for primary testing
-- Secondary session for monitoring
-- Background processes for servers or watchers
+- Main session for the build and test loop
+- A secondary session for a long-running fuzzing campaign
+- Background processes for an Anvil fork node or a watcher

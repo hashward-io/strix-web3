@@ -204,18 +204,24 @@ def test_build_root_task_repository_target() -> None:
     assert "https://example.com/repo.git" in task
 
 
-def test_build_root_task_web_application_with_instructions() -> None:
+def test_build_root_task_deployed_contract_with_instructions() -> None:
     config = {
         "targets": [
-            {"type": "web_application", "details": {"target_url": "https://app.example.com"}},
+            {
+                "type": "deployed_contract",
+                "details": {
+                    "target_address": "0x0123456789abcdef0123456789abcdef01234567",
+                    "chain": "1",
+                },
+            },
         ],
-        "user_instructions": "Focus on auth.",
+        "user_instructions": "Focus on access control.",
     }
     task = build_root_task(config)
 
-    assert "URLs:" in task
-    assert "https://app.example.com" in task
-    assert "Special instructions: Focus on auth." in task
+    assert "Deployed Contracts:" in task
+    assert "0x0123456789abcdef0123456789abcdef01234567" in task
+    assert "Special instructions: Focus on access control." in task
 
 
 def test_build_root_task_workspace_mount_is_not_a_target() -> None:

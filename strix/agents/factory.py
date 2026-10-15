@@ -29,6 +29,11 @@ from strix.tools.agents_graph.tools import (
 )
 from strix.tools.coverage.tools import list_coverage, record_coverage, update_coverage
 from strix.tools.finish.tool import finish_scan
+from strix.tools.invariants.tools import (
+    list_invariants,
+    record_invariant,
+    update_invariant,
+)
 from strix.tools.load_skill.tool import load_skill
 from strix.tools.mcp import (
     call_mcp,
@@ -46,14 +51,6 @@ from strix.tools.notes.tools import (
 )
 from strix.tools.nullish import is_nullish
 from strix.tools.output_store import bound_and_store, bound_text
-from strix.tools.proxy.tools import (
-    list_requests,
-    list_sitemap,
-    repeat_request,
-    scope_rules,
-    view_request,
-    view_sitemap_entry,
-)
 from strix.tools.reporting.tool import (
     create_dependency_report,
     create_vulnerability_report,
@@ -596,6 +593,9 @@ _BASE_TOOLS: tuple[Tool, ...] = (
     get_threat_model,
     save_threat_model,
     amend_threat_model,
+    record_invariant,
+    update_invariant,
+    list_invariants,
     web_search,
     web_get_contents,
     create_vulnerability_report,
@@ -604,12 +604,6 @@ _BASE_TOOLS: tuple[Tool, ...] = (
     delete_vulnerability_report,
     list_reports,
     get_report,
-    list_requests,
-    view_request,
-    repeat_request,
-    list_sitemap,
-    view_sitemap_entry,
-    scope_rules,
     list_mcps,
     search_mcp_tools,
     get_mcp_tool_schema,

@@ -201,11 +201,6 @@ func TestToolDispatchCoversKnownTools(t *testing.T) {
 			[]string{"viewing agents graph"},
 		},
 		{
-			"list_requests",
-			tool("list_requests", map[string]any{"httpql_filter": "host:example.com"}, nil, "completed"),
-			[]string{"host:example.com"},
-		},
-		{
 			"unknown tool falls back to generic",
 			tool("brand_new_tool", map[string]any{"alpha": "1"}, "done", "completed"),
 			[]string{"brand_new_tool", "alpha", "Done"},

@@ -235,7 +235,6 @@ class ReportState:
         self._run_dir: Path | None = None
         self._saved_vuln_ids: set[str] = set()
 
-        self.caido_url: str | None = None
         self.vulnerability_found_callback: Callable[[dict[str, Any]], None] | None = None
         self.vulnerability_updated_callback: Callable[[dict[str, Any]], None] | None = None
         self.vulnerability_deleted_callback: Callable[[dict[str, Any]], None] | None = None

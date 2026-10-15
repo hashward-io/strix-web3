@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
 _GRAPH = {
     "statuses": {"agent-1": "completed"},
-    "names": {"agent-1": "injection-tester"},
-    "metadata": {"agent-1": {"skills": ["sql_injection", "xss"]}},
+    "names": {"agent-1": "reentrancy-tester"},
+    "metadata": {"agent-1": {"skills": ["reentrancy", "access-control"]}},
 }
 
 
@@ -28,29 +28,29 @@ def _empty_ledger(tmp_path: Path) -> None:
 
 def _record(risk_area: str) -> None:
     _record_impl(
-        surface="POST /api/orders/{id}",
+        surface="Vault.withdraw(uint256)",
         risk_area=risk_area,
         outcome="no_issue_found",
-        evidence="Parameters fuzzed; no anomalies.",
+        evidence="Fuzzed the share math; no anomalies.",
         agent_id="agent-1",
-        agent_name="injection-tester",
+        agent_name="reentrancy-tester",
     )
 
 
 def test_unrecorded_risk_class_is_reported_back_to_the_root_agent() -> None:
-    _record("SQL injection")
+    _record("Reentrancy")
 
     summary = _coverage_summary(_GRAPH)
 
     assert summary["coverage_recorded"] == 1
     assert len(summary["coverage_gaps"]) == 1
-    assert "xss" in summary["coverage_gaps"][0]
+    assert "access-control" in summary["coverage_gaps"][0]
     assert "unexamined" in summary["coverage_gap_warning"]
 
 
 def test_fully_accounted_coverage_raises_no_gap_warning() -> None:
-    _record("SQL injection")
-    _record("cross-site scripting")
+    _record("Reentrancy")
+    _record("access control")
 
     summary = _coverage_summary(_GRAPH)
 

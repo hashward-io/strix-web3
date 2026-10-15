@@ -1,108 +1,126 @@
 ---
 title: "Skills"
-description: "Specialized knowledge packages that enhance agent capabilities"
+description: "Specialized knowledge packages that sharpen an audit agent"
 ---
 
-Skills are structured knowledge packages that give Strix agents deep expertise in specific vulnerability types, technologies, and testing methodologies.
+Skills are structured knowledge packages that give Strix Web3 agents deep expertise in specific bug classes, protocol types, and audit techniques.
 
 ## The Idea
 
-LLMs have broad but shallow security knowledge. They know _about_ SQL injection, but lack the nuanced techniques that experienced pentesters use—parser quirks, bypass methods, validation tricks, and chain attacks.
+LLMs have broad but shallow smart-contract security knowledge. They know _about_ reentrancy, but lack the nuanced judgement an experienced auditor uses — which callbacks matter, how rounding direction compounds, how an oracle's decimals really flow through a share price.
 
-Skills inject this deep, specialized knowledge directly into the agent's context, transforming it from a generalist into a specialist for the task at hand.
+Skills inject this deep, specialized knowledge directly into the agent's context, turning a generalist into a specialist for the task at hand.
 
 ## How They Work
 
-When Strix spawns an agent for a specific task, it selects up to 5 relevant skills based on the context:
+When Strix Web3 spawns an agent for a subsystem or a bug class, it selects up to 5 relevant skills based on the context:
 
 ```python
-# Agent created for JWT testing automatically loads relevant skills
+# Agent created to audit the vault automatically loads the relevant skills
 create_agent(
-    task="Test authentication mechanisms",
-    skills=["authentication_jwt", "business_logic"]
+    task="Audit the ERC-4626 vault share math and oracle reads",
+    skills=["vaults-erc4626", "precision-rounding", "oracle-manipulation"],
 )
 ```
 
 The skills are injected into the agent's system prompt, giving it access to:
 
-- **Advanced techniques** — Non-obvious methods beyond standard testing
-- **Working payloads** — Practical examples with variations
-- **Validation methods** — How to confirm findings and avoid false positives
+- **Attack lenses** — The twelve Pashov lenses, each a way of looking at the code
+- **Bug-class playbooks** — How each class manifests, and the code shapes that carry it
+- **Validation methods** — How to confirm a finding and avoid false positives
 
 ## Skill Categories
 
-### Vulnerabilities
+### Attack Lenses (`hacking_agents/`)
 
-Core vulnerability classes with deep exploitation techniques.
+The twelve lenses, applied in parallel across the protocol's subsystems.
 
-| Skill                                 | Coverage                                               |
-| ------------------------------------- | ------------------------------------------------------ |
-| `authentication_jwt`                  | JWT attacks, algorithm confusion, claim tampering      |
-| `idor`                                | Object reference attacks, horizontal/vertical access   |
-| `sql_injection`                       | SQL injection variants, WAF bypasses, blind techniques |
-| `xss`                                 | XSS types, filter bypasses, DOM exploitation           |
-| `ssrf`                                | Server-side request forgery, protocol handlers         |
-| `csrf`                                | Cross-site request forgery, token bypasses             |
-| `xxe`                                 | XML external entities, OOB exfiltration                |
-| `rce`                                 | Remote code execution vectors                          |
-| `business_logic`                      | Logic flaws, state manipulation, race conditions       |
-| `race_conditions`                     | TOCTOU, parallel request attacks                       |
-| `path_traversal_lfi_rfi`              | File inclusion, path traversal                         |
-| `open_redirect`                       | Redirect bypasses, URL parsing tricks                  |
-| `mass_assignment`                     | Attribute injection, hidden parameter pollution        |
-| `insecure_file_uploads`               | Upload bypasses, extension tricks                      |
-| `information_disclosure`              | Data leakage, error-based enumeration                  |
-| `subdomain_takeover`                  | Dangling DNS, cloud resource claims                    |
-| `broken_function_level_authorization` | Privilege escalation, role bypasses                    |
+| Skill               | Coverage                                                     |
+| ------------------- | ------------------------------------------------------------ |
+| `math-precision`    | Rounding direction, precision loss, decimal/scale mixing     |
+| `access-control`    | Role boundaries, missing modifiers, initialization           |
+| `economic-security` | Incentive and economic design flaws, griefing                |
+| `execution-trace`   | End-to-end execution trace reasoning, call graphs            |
+| `invariant`         | Deriving and challenging the protocol's invariants           |
+| `periphery`         | Contracts that touch the core, integrations and adapters     |
+| `first-principles`  | Reason from the spec, not the implementation                  |
+| `asymmetry`         | Where one party has information or power the other lacks      |
+| `boundary`          | Edges, zero/one/total-supply, first/last actor                |
+| `numerical-gap`     | Dimensional analysis, scale mismatches, overflow             |
+| `trust-gap`         | Who is trusted, and what happens when trust breaks           |
+| `flow-gap`          | Where value enters, moves, and can get stuck                 |
 
-### Frameworks
+### Bug Classes (`vulnerabilities/`)
 
-Framework-specific testing patterns.
+| Skill                        | Coverage                                                |
+| ---------------------------- | ------------------------------------------------------- |
+| `reentrancy`                 | Single/cross-function/cross-contract, read-only, callback |
+| `access-control`             | Missing modifiers, broken initialization, escalation    |
+| `oracle-manipulation`        | Spot vs TWAP, staleness, decimals, single-source feeds  |
+| `price-manipulation`         | Spot-price abuse, AMM reserves, donation to price       |
+| `precision-rounding`         | Truncation, rounding direction, fixed-point scaling     |
+| `accounting-conservation`    | Conservation, solvency, share accounting, aggregate drift |
+| `flash-loan-attacks`         | Atomic-capital exploits and uncollateralized actions     |
+| `signature-replay`           | ECDSA, EIP-712, nonces, permit, malleability             |
+| `upgradeability-proxy`       | Proxy layout, delegatecall context, initializer front-run |
+| `unchecked-returns`          | Low-level calls and non-reverting token transfers       |
+| `erc4626-inflation`          | First-depositor / donation share inflation              |
+| `token-integration`          | Fee-on-transfer, rebasing, non-standard ERC-20          |
+| `dos-griefing`               | Unbounded loops, blocked withdrawals, griefing          |
+| `mev-frontrunning`           | Sandwiching, front/back-running, ordering dependencies  |
+| `governance-attacks`         | Voting, proposals, quorum, timelock abuse                |
+| `cross-contract-consistency` | Assumption mismatches between integrated contracts      |
+| `logic-flaws`                | Business-logic and state-machine errors                 |
 
-| Skill     | Coverage                                     |
-| --------- | -------------------------------------------- |
-| `fastapi` | FastAPI security patterns, Pydantic bypasses |
-| `nextjs`  | Next.js SSR/SSG issues, API route security   |
+### Protocols (`protocols/`)
 
-### Technologies
+Protocol-round playbooks.
 
-Third-party service and platform security.
+| Skill              | Coverage                                        |
+| ------------------ | ----------------------------------------------- |
+| `amm-dex`          | Constant-product/weighted pools, swaps, LP math |
+| `lending`          | Collateral, liquidation, interest accrual       |
+| `vaults-erc4626`   | Share/asset accounting, deposits and withdrawals |
+| `staking-restaking`| Reward accounting, slashing, restaking layers   |
+| `perps`            | Funding, margin, liquidation engines            |
+| `bridges-messaging`| Cross-chain messages, replay, finality          |
+| `governance`       | On-chain governance mechanics                    |
+| `oracles`          | Price-feed integration patterns                  |
 
-| Skill      | Coverage                                               |
-| ---------- | ------------------------------------------------------ |
-| `supabase` | Supabase RLS bypasses, auth issues                     |
-| `firebase` | Firebase Firestore, Storage rules, Auth, and Functions |
+### Custom (`custom/`)
 
-### Protocols
+Technique skills the agents reach for during a specific phase.
 
-Protocol-specific testing techniques.
+| Skill             | Coverage                                             |
+| ----------------- | ---------------------------------------------------- |
+| `foundry-poc`     | Writing a self-contained Foundry/fork proof-of-concept |
+| `fizz-invariants` | Building an Echidna/Medusa/Foundry invariant suite    |
 
-| Skill     | Coverage                                         |
-| --------- | ------------------------------------------------ |
-| `graphql` | GraphQL introspection, batching, resolver issues |
+### Tooling (`tooling/`)
 
-### Reconnaissance
+Sandbox CLI playbooks for the audit toolchain.
 
-Passive discovery and attack-surface mapping techniques.
+| Skill         | Coverage                                               |
+| ------------- | ------------------------------------------------------ |
+| `foundry`     | forge/cast/anvil build, test, fuzz, invariant, fork    |
+| `solidity`    | Compiler versions, layout, common idioms and pitfalls  |
+| `slither`     | Detector runs, triage, custom printers                 |
+| `aderyn`      | Rust-based static analysis runs and triage             |
+| `echidna`     | Property fuzzing configuration and corpus              |
+| `medusa`      | Coverage-guided stateful fuzzing                       |
+| `halmos`      | Symbolic execution and bounded model checking          |
+| `cast-anvil`  | On-chain reads, decoding, and local fork nodes         |
+| `python`      | web3/eth-abi scripting and decoding                    |
 
-| Skill             | Coverage                                                        |
-| ----------------- | --------------------------------------------------------------- |
-| `asset_discovery` | CT, TLS SAN pivoting, passive DNS, and ASN/IP asset enumeration |
+### Reconnaissance (`reconnaissance/`)
 
-### Tooling
+| Skill              | Coverage                                          |
+| ------------------ | ------------------------------------------------- |
+| `x-ray`            | Pre-audit recon: contracts, roles, value, flows   |
+| `protocol-mapping` | Mapping subsystems and trust boundaries           |
+| `git-history`      | Mining history for hotspots and late changes      |
 
-Sandbox CLI playbooks for core recon and scanning tools.
-
-| Skill       | Coverage                                                |
-| ----------- | ------------------------------------------------------- |
-| `nmap`      | Port/service scan syntax and high-signal scan patterns  |
-| `nuclei`    | Template selection, severity filtering, and rate tuning |
-| `httpx`     | HTTP probing and fingerprint output patterns            |
-| `ffuf`      | Wordlist fuzzing, matcher/filter strategy, recursion    |
-| `subfinder` | Passive subdomain enumeration and source control        |
-| `naabu`     | Fast port scanning with explicit rate/verify controls   |
-| `katana`    | Crawl depth/JS/known-files behavior and pitfalls        |
-| `sqlmap`    | SQLi workflow for enumeration and controlled extraction  |
+Internal categories (`scan_modes/`, `coordination/`, `analysis/`) are selected by the runtime, not by users.
 
 ## Skill Structure
 
@@ -116,29 +134,26 @@ description: Brief description of the skill's coverage
 
 # Skill Title
 
-Key insight about this vulnerability or technique.
+Key insight about this bug class or technique.
 
 ## Attack Surface
 What this skill covers and where to look.
 
 ## Methodology
-Step-by-step testing approach.
+Step-by-step audit approach.
 
 ## Techniques
-How to discover and exploit the vulnerability.
-
-## Bypass Methods
-How to bypass common protections.
+Concrete code shapes and the failure they enable.
 
 ## Validation
-How to confirm findings and avoid false positives.
+How to confirm a finding and avoid false positives.
 ```
 
 ## Contributing Skills
 
-Community contributions are welcome. Create a `.md` file in the appropriate category with YAML frontmatter (`name` and `description` fields). Good skills include:
+Contributions are welcome. Add a `.md` file in the appropriate category with YAML frontmatter (`name` and `description`). Good skills include:
 
-1. **Real-world techniques** — Methods that work in practice
-2. **Practical payloads** — Working examples with variations
-3. **Validation steps** — How to confirm without false positives
-4. **Context awareness** — Version/environment-specific behavior
+1. **Real-world patterns** — Code shapes seen in production protocols
+2. **Concrete examples** — Minimal vulnerable snippets and their fix
+3. **Validation steps** — How to prove it with a test or a trace
+4. **Protocol awareness** — Where the pattern commonly appears

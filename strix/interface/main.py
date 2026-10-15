@@ -61,7 +61,6 @@ logger = logging.getLogger(__name__)
 
 _ROOT_SUBCOMMAND_HELP = """
 Additional commands:
-  strix cloud ...          Use the managed Strix platform
   strix auth ...           Manage model-subscription sign-in
   strix view [RUN]         View a completed or running scan
   strix completions SHELL  Generate zsh, bash, or fish tab completion
@@ -254,16 +253,7 @@ def display_completion_message(args: argparse.Namespace, results_path: Path) -> 
     console.print("\n")
     console.print(panel)
     console.print()
-    console.print(
-        "[#60a5fa]strix.ai[/]  [dim]·[/]  "
-        "[#60a5fa]docs.strix.ai[/]  [dim]·[/]  "
-        "[#60a5fa]discord.gg/strix-ai[/]"
-    )
-    if not args.non_interactive:
-        console.print(
-            "[dim]Run a pentest in Strix Cloud[/]  [#60a5fa]app.strix.ai[/]  [dim]·[/]  "
-            "[dim]Enterprise[/]  [#60a5fa]strix.ai/demo[/]"
-        )
+    console.print("[#60a5fa]strix.ai[/]  [dim]·[/]  [#60a5fa]github.com/hashward-io/strix-web3[/]")
     console.print()
     if not args.non_interactive:
         notify_update(console)
@@ -460,13 +450,6 @@ def main() -> None:
         from strix.interface.completions import run_completions
 
         sys.exit(run_completions(sys.argv[2:]))
-
-    # `strix cloud …` drives the managed platform (app.strix.ai) and exits;
-    # it needs no target, Docker, or scan setup.
-    if len(sys.argv) > 1 and sys.argv[1] == "cloud":
-        from strix.interface.cloud import run_cloud
-
-        sys.exit(run_cloud(sys.argv[2:]))
 
     start_import_warmup()
 

@@ -116,8 +116,6 @@ func Tool(data map[string]any) string {
 		return renderThreatModel(name, args, result)
 	case "view_agent_graph", "create_agent", "send_message_to_agent", "agent_finish", "wait_for_agents", "stop_agent":
 		return renderAgentGraphTool(name, args, result)
-	case "list_requests", "view_request", "repeat_request", "list_sitemap", "view_sitemap_entry", "scope_rules":
-		return renderProxyTool(name, args, result, status)
 	}
 	return renderGenericTool(name, args, status)
 }
@@ -135,7 +133,6 @@ const outputPreviewLines = 10
 func ToolPreviewLines(name string) int {
 	switch name {
 	case "exec_command", "write_stdin", "apply_patch",
-		"view_request", "repeat_request", "view_sitemap_entry",
 		"list_coverage", "get_threat_model":
 		return outputPreviewLines
 	}

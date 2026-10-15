@@ -14,7 +14,6 @@ from typing import Any
 import httpx
 import pytest
 from agents import ModelSettings
-from agents.tool_context import ToolContext
 from openai import RateLimitError
 
 import strix.tools.mcp as mcp_pkg
@@ -26,7 +25,6 @@ from strix.core import runner
 from strix.core.agents import AgentCoordinator
 from strix.core.inputs import make_model_settings
 from strix.runtime import session_manager
-from strix.tools.load_skill.tool import load_skill
 from strix.tools.mcp import BearerAuth, McpConnectionConfig, McpConnectionRequest
 from strix.tools.mcp import client as mcp_client
 
@@ -79,7 +77,7 @@ def _patch_engine_scaffold(
     monkeypatch.setattr(notes_tools, "hydrate_notes_from_disk", lambda _state_dir: None)
 
     async def _create_or_reuse(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
-        return {"client": object(), "session": object(), "caido_client": None}
+        return {"client": object(), "session": object()}
 
     async def _cleanup(*_args: Any, **_kwargs: Any) -> None:
         return None
@@ -296,36 +294,21 @@ def test_scope_is_rendered_once_at_the_end_of_the_prompt() -> None:
 
 
 def test_requested_skills_follow_the_shared_prefix() -> None:
-    xss = render_system_prompt(skills=["xss"], include_scope=False)
-    sqli = render_system_prompt(skills=["sql_injection"], include_scope=False)
+    reentrancy = render_system_prompt(skills=["reentrancy"], include_scope=False)
+    mev = render_system_prompt(skills=["mev-frontrunning"], include_scope=False)
 
-    shared = os.path.commonprefix([xss, sqli])
+    shared = os.path.commonprefix([reentrancy, mev])
     assert "</available_skills>" in shared
     assert shared.count("<cache_point>") == 1
-    assert "<xss>" in xss.split("<cache_point>")[1]
+    assert "<reentrancy>" in reentrancy.split("<cache_point>")[1]
 
 
-def test_text_only_prompt_drops_screenshot_guidance() -> None:
-    assert "view_image" in render_system_prompt(include_scope=False)
-
-    prompt = render_system_prompt(include_scope=False, supports_images=False)
+def test_visual_skill_plumbing_is_not_referenced_by_the_prompt() -> None:
+    """The Web3 engine is source-oriented: the prompt carries no screenshot
+    guidance, and a text-only model changes nothing about it."""
+    prompt = render_system_prompt(include_scope=False)
     assert "view_image" not in prompt
-    assert "text-only model and cannot view images" in prompt
     assert "<!--" not in prompt
-
-
-@pytest.mark.asyncio
-async def test_text_only_load_skill_drops_screenshot_guidance() -> None:
-    ctx = ToolContext(
-        context={"supports_images": False},
-        tool_name="load_skill",
-        tool_call_id="call-1",
-        tool_arguments="{}",
-    )
-
-    out = await load_skill.on_invoke_tool(ctx, '{"skills": ["agent_browser"]}')
-    assert "view_image" not in out
-    assert "text-only model" in out
 
 
 def test_scope_is_sent_as_its_own_system_message_on_cache_point_routes() -> None:

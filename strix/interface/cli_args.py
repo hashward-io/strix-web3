@@ -58,59 +58,42 @@ def _positive_int(value: str) -> int:
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Strix Multi-Agent Cybersecurity Penetration Testing Tool",
+        description="Strix Web3 — multi-agent Solidity / EVM smart-contract auditor",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Web application penetration test
-  strix --target https://example.com
+  # Audit a local Foundry / Hardhat project
+  strix --target ./my-protocol
 
-  # GitHub repository analysis
-  strix --target https://github.com/user/repo
-  strix --target git@github.com:user/repo.git
+  # Audit a repository
+  strix --target https://github.com/org/protocol
 
-  # Local code analysis
-  strix --target ./my-project
+  # Audit a deployed contract (verified source fetched by address)
+  strix --target 0x0123456789abcdef0123456789abcdef01234567
 
-  # API spec test (OpenAPI/Swagger file or Postman collection export)
-  strix --target ./openapi.yaml --target https://api.example.com
-  strix --target ./collection.postman_collection.json
+  # Multiple targets (e.g., a proxy and its implementation)
+  strix --target ./src --target 0xProxyAddress
 
-  # Postman collection pulled live by id (needs POSTMAN_API_KEY); optional environment
-  strix --target postman://<collection-uuid> --target https://api.example.com
-  strix --target "postman://<collection-uuid>?env=<environment-uuid>"
+  # Change-set audit of a diff
+  strix --target ./my-protocol --scope-mode diff --diff-base main
 
-  # Domain penetration test
-  strix --target example.com
-
-  # IP address penetration test
-  strix --target 192.168.1.42
-
-  # Multiple targets (e.g., white-box testing with source and deployed app)
-  strix --target https://github.com/user/repo --target https://example.com
-  strix --target ./my-project --target https://staging.example.com --target https://prod.example.com
-
-  # Targets from a file, one target per non-empty, non-comment line
+  # Target list, one target per non-empty, non-comment line
   strix --target-list ./targets.txt
 
   # Custom instructions (inline)
-  strix --target example.com --instruction "Focus on authentication vulnerabilities"
+  strix -t ./my-protocol --instruction "Focus on the vault share accounting"
 
   # Custom instructions (from file)
-  strix --target example.com --instruction-file ./instructions.txt
-  strix --target https://app.com --instruction-file /path/to/detailed_instructions.md
+  strix --target ./my-protocol --instruction-file ./scope.md
 
   # Extra files placed in the sandbox workspace
-  strix --target ./my-project --workspace-file ./wordlist.txt
-  strix --target https://app.com --workspace-file ./openapi.yaml:specs/openapi.yaml
+  strix --target ./my-protocol --workspace-file ./prior-audit.pdf
 
-Strix Cloud:
-  strix cloud login
-  strix cloud scans start --source . --yes --wait
-  strix cloud                      # list every cloud resource
+  # Headless run (CI)
+  strix -n -t ./my-protocol --scan-mode standard --max-budget 20
 
-  Run a pentest in Strix Cloud     https://app.strix.ai
-  Try Strix Enterprise             https://strix.ai/demo
+Scan modes: quick, standard, deep   (add --scope-mode diff for a change-set review)
+Artifacts:  strix_runs/<name>/  (audit_report.md, vulnerabilities.json, findings.sarif, run.json)
         """,
     )
 
@@ -134,11 +117,10 @@ Strix Cloud:
         "--target",
         type=str,
         action="append",
-        help="Target to test: URL, repository, local directory path, domain name, IP address, "
-        "an API spec file (OpenAPI/Swagger .json/.yaml or a Postman collection export), or a "
-        "Postman collection by id (postman://<collection-uuid>[?env=<environment-uuid>], needs "
-        "POSTMAN_API_KEY). Local directories are mounted into the sandbox writable. "
-        "Can be specified multiple times for multi-target scans. "
+        help="Target to audit: a local Solidity/EVM project directory (Foundry/Hardhat), "
+        "a Git repository URL, or a deployed contract address (0x<40 hex>, optionally "
+        "prefixed with a chain, e.g. 1:0x<40 hex>). Local directories are mounted into "
+        "the sandbox writable. Can be specified multiple times for multi-target scans. "
         "Fresh runs require --target or --target-list.",
     )
     parser.add_argument(
@@ -152,18 +134,17 @@ Strix Cloud:
     parser.add_argument(
         "--instruction",
         type=str,
-        help="Custom instructions for the penetration test. This can be "
-        "specific vulnerability types to focus on (e.g., 'Focus on IDOR and XSS'), "
-        "testing approaches (e.g., 'Perform thorough authentication testing'), "
-        "test credentials (e.g., 'Use the following credentials to access the app: "
-        "admin:password123'), "
-        "or areas of interest (e.g., 'Check login API endpoint for security issues').",
+        help="Custom instructions for the audit. This can be "
+        "specific bug classes to focus on (e.g., 'Focus on the oracle and share accounting'), "
+        "an approach (e.g., 'Write a Foundry fork test that proves each finding'), "
+        "deployment details (e.g., 'The proxy is at 0x... and the implementation at 0x...'), "
+        "or an area of interest (e.g., 'Check the upgrade and initialization path').",
     )
 
     parser.add_argument(
         "--instruction-file",
         type=str,
-        help="Path to a file containing detailed custom instructions for the penetration test. "
+        help="Path to a file containing detailed custom instructions for the audit. "
         "Use this option when you have lengthy or complex instructions saved in a file "
         "(e.g., '--instruction-file ./detailed_instructions.txt').",
     )
@@ -174,9 +155,10 @@ Strix Cloud:
         action="append",
         metavar="PATH[:DEST]",
         help="Place a file from this machine into the sandbox workspace before the scan "
-        "starts, for example a wordlist, an API specification, or notes. Repeat the option "
+        "starts, for example a prior audit report, a protocol specification, or notes. "
+        "Repeat the option "
         "for more files. DEST is the path inside /workspace and defaults to the file name "
-        "(for example '--workspace-file ./wordlist.txt:lists/wordlist.txt'). Strix copies "
+        "(for example '--workspace-file ./spec.pdf:docs/spec.pdf'). Strix copies "
         "the file into the sandbox, outside every target directory. The agent can edit the "
         "copy. The file on this machine does not change.",
     )

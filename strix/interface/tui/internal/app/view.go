@@ -729,12 +729,6 @@ func (m Model) statsView() string {
 			b.WriteString(w.Render(fmt.Sprintf(" · $%.2f", cost)))
 		}
 	}
-	if caido := m.snapshot.CaidoURL; caido != "" {
-		if b.Len() > 0 {
-			b.WriteString("\n")
-		}
-		b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(white).Render("Caido: ") + w.Render(caido))
-	}
 	if b.Len() > 0 {
 		b.WriteString("\n")
 	}

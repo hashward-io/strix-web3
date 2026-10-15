@@ -365,10 +365,6 @@ class _Client:
         self.deleted.append(session)
 
 
-async def _no_caido(*_args: Any, **_kwargs: Any) -> None:
-    return None
-
-
 def _use_backend(
     monkeypatch: pytest.MonkeyPatch,
     backend_name: str,
@@ -377,7 +373,6 @@ def _use_backend(
     supports_bind_mounts: bool,
 ) -> None:
     register_backend(backend_name, backend, supports_bind_mounts=supports_bind_mounts)
-    monkeypatch.setattr(session_manager, "bootstrap_caido", _no_caido)
     settings = _Settings(runtime=_RuntimeSettings(backend=backend_name))
     monkeypatch.setattr(session_manager, "load_settings", lambda: settings)
 
@@ -417,7 +412,7 @@ async def test_extra_files_reach_every_backend_as_one_unpacked_archive(
                 {"workspace_path": "/workspace/repo/inside.txt", "content": b"x"},
             ],
         )
-        await bundle["caido_client"].aclose()
+        assert bundle["session"] is fake_session
     finally:
         await session_manager.cleanup(scan_id)
         _forget_backend(backend_name)
@@ -462,7 +457,7 @@ async def test_no_extra_files_means_no_upload(
             local_sources=[_source("repo", str(tmp_path))],
             extra_files=[{"workspace_path": "/workspace/repo/inside.txt", "content": b"x"}],
         )
-        await bundle["caido_client"].aclose()
+        assert bundle["session"] is fake_session
     finally:
         await session_manager.cleanup(scan_id)
         _forget_backend(backend_name)

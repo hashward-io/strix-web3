@@ -35,7 +35,7 @@ from strix.telemetry._common import get_version
 
 logger = logging.getLogger(__name__)
 
-GITHUB_REPO = "usestrix/strix"
+GITHUB_REPO = "hashward-io/strix-web3"
 PYPI_PACKAGE = "strix-agent"
 CHECK_INTERVAL_SECONDS = 24 * 60 * 60
 REQUEST_TIMEOUT_SECONDS = 5

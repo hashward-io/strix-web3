@@ -200,9 +200,6 @@ class TuiController:
             "scope_mode": self.scope_mode,
             "diff_base": terminal_projection(self.diff_base, max_string=256),
             "model": terminal_projection(model, max_string=256),
-            "caido_url": terminal_projection(
-                getattr(self.report_state, "caido_url", None), max_string=1024
-            ),
             "messages": [
                 {
                     "id": str(message.get("id", ""))[:64],

@@ -1,68 +1,31 @@
 ---
 name: quick
-description: Time-boxed rapid assessment targeting high-impact vulnerabilities
+description: Fast high-signal Solidity audit — build check, architecture skim, and the three highest-yield lenses
 ---
 
-# Quick Testing Mode
+# Quick Audit Mode
 
-Time-boxed assessment focused on high-impact vulnerabilities. Prioritize breadth over depth.
+Fastest useful pass. One sweep, no memory, no fuzzing suite, no multi-pass loop. Goal: the obvious High/Critical bugs and a build+architecture picture, in minutes not hours.
 
-## Approach
+## Phase 1 — Build and map (delegate to one recon agent)
 
-Optimize for fast feedback on critical security issues. Skip exhaustive enumeration in favor of targeted testing on high-value attack surfaces.
+- Establish a green build (`forge build`, then `--via-ir`/`--skip test` fallbacks).
+- Enumerate in-scope `.sol` files with the scope rule.
+- Build the architecture map and a first threat model (`save_threat_model`).
+- Extract the entry-point list and a short invariant list (`record_invariant` for the top conservation/bound/state-machine properties).
 
-## Phase 1: Rapid Orientation
+## Phase 2 — Three lenses (delegate one agent per lens)
 
-**Whitebox (source available)**
-- Focus on recent changes: git diffs, new commits, modified files—these are most likely to contain fresh bugs
-- Run a fast static triage on changed files first (`semgrep`, then targeted `sg` queries)
-- Run at least one lightweight AST pass (`sg` or Tree-sitter) so structural mapping is not skipped
-- Keep AST commands tightly scoped to changed or high-risk paths; avoid broad repository-wide pattern dumps
-- Run quick secret and dependency checks (`gitleaks`, `trufflehog`, `trivy fs`) scoped to changed areas when possible
-- Identify security-sensitive patterns in changed code: auth checks, input handling, database queries, file operations
-- Trace user input through modified code paths
-- Check if security controls were modified or bypassed
+Spawn exactly three lens agents over the whole in-scope set:
 
-**Blackbox (no source)**
-- Map authentication and critical user flows
-- Identify exposed endpoints and entry points
-- Skip deep content discovery—test what's immediately accessible
+1. `hacking_agents/access-control` — unprotected functions, escalation, broken init.
+2. `hacking_agents/math-precision` — rounding direction, scale mixing, unchecked casts.
+3. `hacking_agents/first-principles` — the unnamed logic bug, implicit assumptions broken.
 
-## Phase 2: High-Impact Targets
+Load the bug-class skills those lenses point at (`vulnerabilities/*`) only when a concrete bug class is implicated.
 
-Test in priority order:
+## Phase 3 — Report
 
-1. **Authentication bypass** - login flaws, session issues, token weaknesses
-2. **Broken access control** - IDOR, privilege escalation, missing authorization
-3. **Remote code execution** - command injection, deserialization, SSTI
-4. **SQL injection** - authentication endpoints, search, filters
-5. **SSRF** - URL parameters, webhooks, integrations
-6. **Exposed secrets** - hardcoded credentials, API keys, config files
-
-Skip for quick scans:
-- Exhaustive subdomain enumeration
-- Full directory bruteforcing
-- Low-severity information disclosure
-- Theoretical issues without working PoC
-
-## Phase 3: Validation
-
-- Confirm exploitability with minimal proof-of-concept
-- Demonstrate real impact, not theoretical risk
-- Report findings immediately as discovered
-
-## Chaining
-
-When a strong primitive is found (auth weakness, injection point, internal access), immediately attempt one high-impact pivot to demonstrate maximum severity. Don't stop at a low-context "maybe"—turn it into a concrete exploit sequence that reaches privileged action or sensitive data.
-
-## Operational Guidelines
-
-- Use browser tool for quick manual testing of critical flows
-- Use terminal for targeted scans with fast presets (e.g., nuclei with critical/high templates only)
-- Use proxy to inspect traffic on key endpoints
-- Skip extensive fuzzing—use targeted payloads only
-- Create subagents only for parallel high-priority tasks
-
-## Mindset
-
-Think like a time-boxed bug bounty hunter going for quick wins. Prioritize breadth over depth on critical areas. If something looks exploitable, validate quickly and move on. Don't get stuck—if an attack vector isn't yielding results quickly, pivot.
+- File confirmed findings with `create_vulnerability_report`. Attach a Foundry PoC or a concrete trace for High/Critical.
+- Record coverage for every file touched, including the clean ones.
+- Assemble the report and `finish_scan`. State clearly that it was a quick pass and what was not covered (no fuzzing, no deep protocol analysis, no multi-pass loop).

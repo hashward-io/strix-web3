@@ -234,7 +234,7 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
                     await session_manager.cleanup(args.run_name)
 
     except Exception as e:
-        console.print(f"[bold red]Error during penetration test:[/] {e}")
+        console.print(f"[bold red]Error during audit:[/] {e}")
         raise
 
     if report_state.final_scan_result:

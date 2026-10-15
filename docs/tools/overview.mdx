@@ -1,33 +1,31 @@
 ---
 title: "Agent Tools"
-description: "How Strix agents interact with targets"
+description: "How Strix Web3 agents analyze targets"
 ---
 
-Strix agents use specialized tools to test your applications like a real penetration tester would.
+Strix Web3 agents use specialized tools to audit a Solidity / EVM protocol the way a real smart-contract auditor does: build it, map it, fuzz it, and prove the bugs.
 
-## Core Tools
+## Core tools
 
 <CardGroup cols={2}>
-  <Card title="Browser" icon="globe" href="/tools/browser">
-    Playwright-powered Chrome for interacting with web UIs.
-  </Card>
-  <Card title="HTTP Proxy" icon="network-wired" href="/tools/proxy">
-    Caido-powered proxy for intercepting and replaying requests.
+  <Card title="Foundry" icon="hammer" href="/tools/foundry">
+    forge / cast / anvil for building, testing, fuzzing, and forking.
   </Card>
   <Card title="Terminal" icon="terminal" href="/tools/terminal">
-    Bash shell for running commands and security tools.
+    Bash shell for running the audit toolchain.
   </Card>
-  <Card title="Sandbox Tools" icon="toolbox" href="/tools/sandbox">
-    Pre-installed security tools: Nuclei, ffuf, and more.
+  <Card title="Sandbox" icon="toolbox" href="/tools/sandbox">
+    Slither, Aderyn, Echidna, Medusa, Halmos, solc, and Node/Hardhat.
   </Card>
 </CardGroup>
 
-## Additional Tools
+## Additional tools
 
-| Tool           | Purpose                                  |
-| -------------- | ---------------------------------------- |
-| Python Runtime | Write and execute custom exploit scripts |
-| File Editor    | Read and modify source code              |
-| Web Search     | Real-time OSINT with Exa or Perplexity   |
-| Notes          | Document findings during the scan        |
-| Reporting      | Generate vulnerability reports with PoCs |
+| Tool | Purpose |
+| ---- | ------- |
+| Invariant catalog | Record the protocol's must-hold properties and their enforcement status |
+| Threat model | The scan's shared attacker / trust-boundary document |
+| Coverage ledger | One row per surface + risk area, including clean results |
+| Notes | Durable cross-agent facts during the audit |
+| Reporting | File findings with a proof and an inline fix |
+| Web search | Look up a deployed contract, a protocol spec, or a known incident |

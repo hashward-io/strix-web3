@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 WARMUP_MODULES = (
     "strix.core.runner",
     "litellm",
-    "caido_sdk_client",
 )
 
 _thread: threading.Thread | None = None

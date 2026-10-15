@@ -28,7 +28,7 @@ def _wire_runner(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:
     monkeypatch.setattr(notes_tools, "hydrate_notes_from_disk", lambda _d: None)
 
     async def _create_or_reuse(*_a: Any, **_k: Any) -> dict[str, Any]:
-        return {"client": object(), "session": object(), "caido_client": None}
+        return {"client": object(), "session": object()}
 
     async def _cleanup(*_a: Any, **_k: Any) -> None:
         return None

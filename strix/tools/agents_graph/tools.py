@@ -501,7 +501,7 @@ async def create_agent(
 ) -> str:
     """Spawn a specialist child agent to run in parallel.
 
-    Decompose complex pentests by handing focused subtasks to dedicated
+    Decompose complex audits by handing focused subtasks to dedicated
     children. The child runs asynchronously — the parent continues
     immediately and can ``wait_for_agents`` later (or just keep
     working in parallel). When the child calls ``agent_finish``, its

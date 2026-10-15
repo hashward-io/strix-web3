@@ -72,16 +72,17 @@ def test_ledger_entries_are_labelled_as_agent_reported() -> None:
 
 
 def test_assigned_risk_skill_without_coverage_becomes_a_gap() -> None:
-    """An agent carrying the sql_injection skill that records nothing about it
+    """An agent carrying the access-control skill that records nothing about it
     leaves the class unexamined, not clean."""
     doc = _document(
+        entries=[_entry(risk_area="reentrancy", surface="Vault.withdraw(uint256)")],
         agent_graph=_graph(
-            metadata={"agent-1": {"skills": ["idor", "sql_injection"], "task": "review"}}
-        )
+            metadata={"agent-1": {"skills": ["reentrancy", "access-control"], "task": "review"}}
+        ),
     )
 
     gaps = [gap for gap in doc["gaps"] if gap["kind"] == "unrecorded_risk_class"]
-    assert [gap["risk_area"] for gap in gaps] == ["sql injection"]
+    assert [gap["risk_area"] for gap in gaps] == ["access-control"]
 
 
 def test_recorded_risk_class_is_not_reported_as_a_gap() -> None:
@@ -102,9 +103,9 @@ def test_synonym_phrasing_counts_as_recorded_coverage() -> None:
 
 def test_non_risk_skills_carry_no_coverage_obligation() -> None:
     """Tooling skills describe how an agent works, not what it hunts."""
-    doc = _document(agent_graph=_graph(metadata={"agent-1": {"skills": ["idor", "caido"]}}))
+    doc = _document(agent_graph=_graph(metadata={"agent-1": {"skills": ["reentrancy", "foundry"]}}))
 
-    assert not [gap for gap in doc["gaps"] if gap.get("risk_area") == "caido"]
+    assert not [gap for gap in doc["gaps"] if gap.get("risk_area") == "foundry"]
 
 
 def test_agent_that_recorded_nothing_is_a_gap() -> None:

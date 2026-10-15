@@ -214,7 +214,6 @@ def test_unicode_heavy_setup_state_stays_within_control_frame_limit() -> None:
     controller.report_state = cast(
         "Any",
         SimpleNamespace(
-            caido_url="https://例え.example/" + "道" * 10_000,
             get_total_llm_usage=lambda: {
                 "total_tokens": 720_400,
                 "cost": 20.0,
@@ -238,7 +237,6 @@ def test_defensive_state_projection_preserves_usage_summary() -> None:
     controller.report_state = cast(
         "Any",
         SimpleNamespace(
-            caido_url=None,
             get_total_llm_usage=lambda: {"total_tokens": 720_400, "cost": 20.0},
         ),
     )
@@ -341,7 +339,6 @@ async def test_collection_bootstrap_is_chunked_deltas_are_incremental_and_idle_i
     controller = TuiController(args())
     report_state = SimpleNamespace(
         vulnerability_reports=[],
-        caido_url=None,
         get_total_llm_usage=dict,
     )
     controller.report_state = cast("Any", report_state)

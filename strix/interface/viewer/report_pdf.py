@@ -1,6 +1,6 @@
 """Build and encrypt a branded PDF report for a run.
 
-The layout mirrors the Strix cloud pentest report (cover page, executive
+The layout mirrors the classic audit-report structure (cover page, executive
 severity grid, per-finding detail with colored severity badges) but is rendered
 entirely locally with reportlab, so it ships without a browser or heavy system
 deps and keeps the report on the user's machine.

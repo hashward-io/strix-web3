@@ -42,7 +42,7 @@ def test_no_registration_leaves_builtin_only() -> None:
     assert registered_skill_dirs() == ()
     builtin = get_strix_resource_path("skills")
     assert skill_search_dirs() == (builtin,)
-    assert {"nmap", "subfinder"}.issubset(
+    assert {"foundry", "slither"}.issubset(
         {skill["name"] for skill in get_available_skills()["tooling"]}
     )
 
@@ -177,7 +177,7 @@ def test_malformed_frontmatter_keeps_skill_body(tmp_path: Path) -> None:
 def test_system_prompt_renders_skill_descriptions() -> None:
     prompt = render_system_prompt(scan_mode="quick", is_root=True)
 
-    assert "- technologies/firebase: Firebase security testing covering" in prompt
+    assert "- tooling/foundry: Foundry toolkit" in prompt
 
 
 def test_system_prompt_omits_empty_skill_description(tmp_path: Path) -> None:
@@ -263,11 +263,13 @@ def test_resolve_skills_adds_diff_mode_only_when_diff_scoped() -> None:
 def test_resolve_skills_gates_source_aware_skills_on_whitebox() -> None:
     blackbox = _resolve_skills(requested=None)
     assert "analysis/fix_verification" not in blackbox
-    assert "analysis/source_aware_discovery" not in blackbox
+    assert "coordination/audit_whitebox" not in blackbox
+    assert "analysis/invariant-discovery" not in blackbox
 
     whitebox = _resolve_skills(requested=None, is_whitebox=True)
     assert "analysis/fix_verification" in whitebox
-    assert "analysis/source_aware_discovery" in whitebox
+    assert "coordination/audit_whitebox" in whitebox
+    assert "analysis/invariant-discovery" in whitebox
 
 
 def test_new_skill_files_load() -> None:
@@ -275,7 +277,8 @@ def test_new_skill_files_load() -> None:
         "analysis/counterevidence",
         "analysis/severity_calibration",
         "analysis/fix_verification",
-        "analysis/source_aware_discovery",
+        "analysis/invariant-discovery",
+        "coordination/audit_whitebox",
         "scan_modes/diff",
     ]
     loaded = load_skills(names)

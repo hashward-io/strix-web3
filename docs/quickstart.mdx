@@ -1,11 +1,11 @@
 ---
 title: "Quick Start"
-description: "Install Strix and run your first security scan"
+description: "Install Strix Web3 and run your first smart-contract audit"
 ---
 
 ## Prerequisites
 
-- Docker (running)
+- Docker (running) — the audit runs in a Foundry sandbox container
 - An LLM API key from any [supported provider](/llm-providers/overview) (OpenAI, Anthropic, Google, etc.)
 
 ## Installation
@@ -30,16 +30,17 @@ Set your LLM provider:
 ```bash
 export STRIX_LLM="openrouter/z-ai/glm-5.3"
 export LLM_API_KEY="your-api-key"
+export ETH_RPC_URL="https://your-archive-rpc"   # optional, for fork-based PoCs
 ```
 
 <Tip>
 For best results, use `openrouter/z-ai/glm-5.3` (the default pick), `openai/gpt-5.4`, `anthropic/claude-opus-4-6`, or `openai/gpt-5.2`.
 </Tip>
 
-## Run Your First Scan
+## Run Your First Audit
 
 ```bash
-strix --target ./your-app
+strix --target ./my-protocol
 ```
 
 <Note>
@@ -48,20 +49,20 @@ First run pulls the Docker sandbox image automatically. Results are saved to `st
 
 ## Target Types
 
-Strix accepts multiple target types:
+Strix Web3 audits Solidity / EVM code. It accepts:
 
 ```bash
-# Local codebase
-strix --target ./app-directory
+# Local Solidity project (Foundry or Hardhat)
+strix --target ./my-protocol
 
 # GitHub repository
-strix --target https://github.com/org/repo
+strix --target https://github.com/org/protocol
 
-# Live web application
-strix --target https://your-app.com
+# Deployed contract (verified source fetched by address; chain optional)
+strix --target 1:0x0123456789abcdef0123456789abcdef01234567
 
-# Multiple targets (white-box testing)
-strix -t https://github.com/org/repo -t https://your-app.com
+# Multiple targets (e.g., a proxy and its implementation)
+strix -t ./src -t 0xProxyAddress
 
 # Targets from a file, one target per non-empty, non-comment line
 strix --target-list ./targets.txt
@@ -74,6 +75,6 @@ strix --target-list ./targets.txt
     Explore all command-line options.
   </Card>
   <Card title="Scan Modes" icon="gauge" href="/usage/scan-modes">
-    Choose the right scan depth.
+    Choose the right audit depth.
   </Card>
 </CardGroup>

@@ -451,12 +451,6 @@ def build_tui_stats_text(report_state: Any) -> Text:
             stats_text.append(" · ", style="white")
             stats_text.append(f"${cost:.2f}", style="white")
 
-    caido_url = getattr(report_state, "caido_url", None)
-    if caido_url:
-        stats_text.append("\n")
-        stats_text.append("Caido: ", style="bold white")
-        stats_text.append(caido_url, style="white")
-
     return stats_text
 
 
@@ -466,12 +460,12 @@ def _slugify_for_run_name(text: str, max_length: int = 32) -> str:
     text = text.strip("-")
     if len(text) > max_length:
         text = text[:max_length].rstrip("-")
-    return text or "pentest"
+    return text or "audit"
 
 
 def _derive_target_label_for_run_name(targets_info: list[dict[str, Any]] | None) -> str:  # noqa: PLR0911
     if not targets_info:
-        return "pentest"
+        return "audit"
 
     first = targets_info[0]
     target_type = first.get("type")
@@ -502,6 +496,12 @@ def _derive_target_label_for_run_name(targets_info: list[dict[str, Any]] | None)
         except Exception:
             return str(path_str)
 
+    if target_type == "deployed_contract":
+        address = details.get("target_address", original) or original
+        chain = details.get("chain", "")
+        short = address[:10] if isinstance(address, str) and address.startswith("0x") else address
+        return f"{chain}-{short}" if chain else str(short)
+
     if target_type == "ip_address":
         return str(details.get("target_ip", original) or original)
 
@@ -514,7 +514,7 @@ def _derive_target_label_for_run_name(targets_info: list[dict[str, Any]] | None)
         except Exception:
             return str(spec_path)
 
-    return str(original or "pentest")
+    return str(original or "audit")
 
 
 def generate_run_name(targets_info: list[dict[str, Any]] | None = None) -> str:
@@ -1130,11 +1130,45 @@ def _is_http_git_repo(url: str) -> bool:
         return False
 
 
+def _parse_deployed_contract_target(target: str) -> dict[str, str] | None:
+    """Recognize a deployed EVM contract target.
+
+    Accepted spellings:
+
+    - ``0x<40 hex>`` — a contract on the default chain for the run.
+    - ``<chain>:0x<40 hex>`` — pin the chain, e.g. ``1:0x...`` (Ethereum
+      mainnet) or ``mainnet:0x...``. The chain token is stored verbatim and
+      passed to the agent, which resolves it against its RPC configuration.
+    """
+    candidate = target.strip()
+    chain_id = ""
+    address = candidate
+    if ":" in candidate and not candidate.startswith("0x"):
+        chain_token, _, remainder = candidate.partition(":")
+        if chain_token and remainder:
+            chain_id = chain_token.strip()
+            address = remainder.strip()
+
+    if not address.startswith("0x") or len(address) != 42:
+        return None
+    if not all(char in "0123456789abcdefABCDEF" for char in address[2:]):
+        return None
+
+    details: dict[str, str] = {"target_address": address}
+    if chain_id:
+        details["chain"] = chain_id
+    return details
+
+
 def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR0911
     if not target or not isinstance(target, str):
         raise ValueError("Target must be a non-empty string")
 
     target = target.strip()
+
+    deployed = _parse_deployed_contract_target(target)
+    if deployed is not None:
+        return "deployed_contract", deployed
 
     if target.startswith("git@"):
         return "repository", {"target_repo": target}
@@ -1215,14 +1249,10 @@ def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR09
     raise ValueError(
         f"Invalid target: {target}\n"
         "Target must be one of:\n"
-        "- A valid URL (http:// or https://)\n"
+        "- A local Solidity/EVM project directory (Foundry/Hardhat)\n"
         "- A Git repository URL (https://host/org/repo or git@host:org/repo.git)\n"
-        "- A local directory path\n"
-        "- An API spec file (OpenAPI/Swagger .json/.yaml or a Postman collection)\n"
-        "- A Postman collection by id (postman://<collection-uid>[?env=<environment-uid>], "
-        "needs POSTMAN_API_KEY)\n"
-        "- A domain name (e.g., example.com)\n"
-        "- An IP address (e.g., 192.168.1.10)"
+        "- A deployed contract address (0x<40 hex>, optionally <chain>:0x<40 hex>)\n"
+        "- A file or directory to add to the workspace"
     )
 
 
