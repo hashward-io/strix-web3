@@ -33,12 +33,14 @@ jobs:
           cd /tmp/strix-web3 && uv sync
           echo "/tmp/strix-web3/.venv/bin" >> "$GITHUB_PATH"
 
+      - name: Build the sandbox image
+        run: /tmp/strix-web3/scripts/docker.sh        # tags strix-sandbox:dev
+
       - name: Audit the change set
         env:
           STRIX_LLM: ${{ vars.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
-          STRIX_IMAGE: ghcr.io/hashward-io/strix-web3-sandbox:1.7.0
         run: strix -n -t . --scope-mode diff --diff-base "origin/${{ github.base_ref }}" --max-budget 15
 
       - name: Upload SARIF

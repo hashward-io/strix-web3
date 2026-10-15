@@ -141,7 +141,7 @@ class RuntimeSettings(BaseSettings):
     model_config = _BASE_CONFIG
 
     image: str = Field(
-        default="ghcr.io/hashward-io/strix-web3-sandbox:1.7.0",
+        default="strix-sandbox:dev",
         alias="STRIX_IMAGE",
     )
     backend: str = Field(default="docker", alias="STRIX_RUNTIME_BACKEND")

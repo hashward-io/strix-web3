@@ -213,7 +213,7 @@ class GoTuiRuntime:
             self.scan_task = asyncio.create_task(self._run_scan())
 
     async def _run_scan(self) -> None:
-        image = str(load_settings().runtime.image or "strix-sandbox:latest")
+        image = str(load_settings().runtime.image or "strix-sandbox:dev")
         try:
             await run_strix_scan(
                 scan_config=self.scan_config,

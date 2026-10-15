@@ -48,6 +48,7 @@ contract-audit:
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - git clone --depth 1 https://github.com/hashward-io/strix-web3 /tmp/strix-web3
     - (cd /tmp/strix-web3 && uv sync)
+    - /tmp/strix-web3/scripts/docker.sh
     - export PATH="/tmp/strix-web3/.venv/bin:$PATH"
     - strix -n -t ./ --scope-mode diff --diff-base "$CI_MERGE_REQUEST_DIFF_BASE_SHA" --max-budget 15
 ```
@@ -68,6 +69,7 @@ pipeline {
                 sh '''curl -LsSf https://astral.sh/uv/install.sh | sh
                 git clone --depth 1 https://github.com/hashward-io/strix-web3 /tmp/strix-web3
                 (cd /tmp/strix-web3 && uv sync)
+                /tmp/strix-web3/scripts/docker.sh
                 export PATH="/tmp/strix-web3/.venv/bin:$PATH"
                 strix -n -t ./ --scan-mode quick --fail-on high'''
             }
@@ -95,14 +97,19 @@ jobs:
             (cd /tmp/strix-web3 && uv sync)
             echo 'export PATH="/tmp/strix-web3/.venv/bin:$PATH"' >> "$BASH_ENV"
       - run:
+          name: Build the sandbox image
+          command: /tmp/strix-web3/scripts/docker.sh
+      - run:
           name: Run Audit
           command: strix -n -t ./ --scope-mode diff --diff-base origin/main --max-budget 15
 ```
 
 <Note>
-All CI platforms require Docker access. Ensure your runner has Docker
-available, and that `STRIX_IMAGE` points at a published or locally built
-`strix-web3-sandbox` image (see [Sandbox Tools](/tools/sandbox)).
+All CI platforms require Docker access. Each example builds the sandbox image
+(`strix-sandbox:dev`) from `containers/Dockerfile`, which is the default
+`STRIX_IMAGE`. The full multi-chain build is slow — publish the image once and
+set `STRIX_IMAGE` to its tag, or build EVM-only (`INSTALL_EXTRA_CHAINS=0`) for
+Solidity-only repositories (see [Sandbox Tools](/tools/sandbox)).
 </Note>
 
 <Tip>

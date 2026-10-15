@@ -16,13 +16,12 @@ This fork has no release binaries yet, so install it from source:
 git clone https://github.com/hashward-io/strix-web3 && cd strix-web3
 make dev-install          # uv sync
 ./scripts/docker.sh       # build the multi-chain sandbox image
-export STRIX_IMAGE=strix-sandbox:dev
+export STRIX_IMAGE=strix-sandbox:dev   # optional: this is the default tag
 ```
 
 <Note>
-  The sandbox image (`ghcr.io/hashward-io/strix-web3-sandbox`) is not on a public
-  registry yet — build it once with `./scripts/docker.sh` and point `STRIX_IMAGE`
-  at the tag as shown above.
+  The sandbox image is not on a public registry yet. `./scripts/docker.sh` builds
+  and tags it `strix-sandbox:dev`, which is the default `STRIX_IMAGE`.
 </Note>
 
 ## Configuration

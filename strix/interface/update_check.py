@@ -416,8 +416,9 @@ def self_update(console: Console | None = None, version: str | None = None) -> b
         logger.debug("self-update failed", exc_info=True)
         console.print(f"[bold red]Update failed:[/] {e}")
         console.print(
-            "[dim]You can reinstall manually with:[/] "
-            "[#60a5fa]curl -sSL https://strix.ai/install | bash[/]"
+            "[dim]You can reinstall from source:[/] "
+            "[#60a5fa]git clone https://github.com/hashward-io/strix-web3 "
+            "&& cd strix-web3 && uv sync[/]"
         )
         return False
 

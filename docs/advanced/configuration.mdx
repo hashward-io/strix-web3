@@ -145,14 +145,15 @@ When remote vars are set, Strix dual-writes telemetry to both local JSONL and th
 
 ## Docker Configuration
 
-<ParamField path="STRIX_IMAGE" default="ghcr.io/hashward-io/strix-web3-sandbox:1.7.0" type="string">
+<ParamField path="STRIX_IMAGE" default="strix-sandbox:dev" type="string">
   Docker image to use for the sandbox container. Strix Web3's sandbox is a
-  multi-chain image built from `containers/Dockerfile`. If you are not pulling a
-  published image, build it locally and point `STRIX_IMAGE` at your tag:
+  multi-chain image built from `containers/Dockerfile`. The default is the
+  locally-built `strix-sandbox:dev` image; if you publish the image under a
+  registry tag, point `STRIX_IMAGE` at it:
 
   ```bash
-  ./scripts/docker.sh                 # builds strix-sandbox:dev
-  export STRIX_IMAGE=strix-sandbox:dev
+  ./scripts/docker.sh                            # builds strix-sandbox:dev
+  export STRIX_IMAGE=ghcr.io/you/strix-sandbox:1.7.0
   ```
 
   The Dockerfile installs the extra-chain toolchains (Solana, Move, Cairo,

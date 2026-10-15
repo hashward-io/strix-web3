@@ -3,8 +3,8 @@
 set -euo pipefail
 
 APP=strix
-REPO="usestrix/strix"
-STRIX_IMAGE="ghcr.io/hashward-io/strix-web3-sandbox:1.7.0"
+REPO="hashward-io/strix-web3"
+STRIX_IMAGE="strix-sandbox:dev"
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -76,8 +76,16 @@ mkdir -p "$INSTALL_DIR"
 if [ -z "$requested_version" ]; then
     specific_version=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
     if [[ $? -ne 0 || -z "$specific_version" ]]; then
-        echo -e "${RED}Failed to fetch version information${NC}"
-        exit 1
+        echo -e "${YELLOW}No prebuilt ${APP} binary is published for this fork yet.${NC}"
+        echo -e "${MUTED}Install it from source instead:${NC}"
+        echo ""
+        echo -e "  git clone https://github.com/$REPO"
+        echo -e "  cd ${REPO##*/}"
+        echo -e "  make dev-install      ${MUTED}# or: uv sync${NC}"
+        echo -e "  ./scripts/docker.sh   ${MUTED}# builds the strix-sandbox:dev image${NC}"
+        echo ""
+        echo -e "${MUTED}Then run:${NC} uv run strix -n -t <target> ${MUTED}(with STRIX_LLM and LLM_API_KEY set)${NC}"
+        exit 0
     fi
 else
     specific_version=$requested_version

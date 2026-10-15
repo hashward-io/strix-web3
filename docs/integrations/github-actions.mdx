@@ -28,19 +28,24 @@ jobs:
           cd /tmp/strix-web3 && uv sync
           echo "/tmp/strix-web3/.venv/bin" >> "$GITHUB_PATH"
 
+      - name: Build the sandbox image
+        run: /tmp/strix-web3/scripts/docker.sh        # tags strix-sandbox:dev
+
       - name: Run Contract Audit
         env:
           STRIX_LLM: ${{ secrets.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}   # optional, for fork PoCs
-          STRIX_IMAGE: ghcr.io/hashward-io/strix-web3-sandbox:1.7.0
         run: strix -n -t . --scope-mode diff --diff-base "origin/${{ github.base_ref }}" --max-budget 15
 ```
 
 <Note>
-  The job needs the multi-chain sandbox image. Publish
-  `ghcr.io/hashward-io/strix-web3-sandbox` from `containers/Dockerfile` (or build
-  it in a prior job with `./scripts/docker.sh`) and set `STRIX_IMAGE` to the tag.
+  The job builds the sandbox image (`strix-sandbox:dev`) from
+  `containers/Dockerfile` before the run. The full multi-chain image is large and
+  slow to build on every PR — publish it to a registry once (or build it in a
+  separate job) and set `STRIX_IMAGE` to the tag, or build only the EVM
+  toolchains with `INSTALL_EXTRA_CHAINS=0 /tmp/strix-web3/scripts/docker.sh` for
+  Solidity-only repositories.
 </Note>
 
 ## Required Secrets

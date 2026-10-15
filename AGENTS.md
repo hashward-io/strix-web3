@@ -22,7 +22,7 @@ npx skills add hashward-io/strix-web3
 git clone https://github.com/hashward-io/strix-web3 && cd strix-web3
 make dev-install                                  # or: uv sync
 ./scripts/docker.sh                               # builds the multi-chain sandbox image
-export STRIX_IMAGE=strix-sandbox:dev              # the published image is not public yet
+export STRIX_IMAGE=strix-sandbox:dev              # optional; built locally, this is the default
 export STRIX_LLM="openrouter/z-ai/glm-5.3"        # any LiteLLM model id
 export LLM_API_KEY="<key>"
 export ETH_RPC_URL="<archive-rpc>"                # optional, for EVM fork PoCs

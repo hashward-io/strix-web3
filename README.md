@@ -63,9 +63,9 @@ uv run strix --target ./my-protocol
 ```
 
 > [!NOTE]
-> The fork's sandbox image (`ghcr.io/hashward-io/strix-web3-sandbox`) is not on a
-> public registry yet. Build it once with `./scripts/docker.sh` and run with
-> `STRIX_IMAGE=strix-sandbox:dev` (see [Sandbox Tools](docs/tools/sandbox.mdx)).
+> The sandbox image is not on a public registry yet. `./scripts/docker.sh` builds
+> it and tags it `strix-sandbox:dev`, which is the default `STRIX_IMAGE` (see
+> [Sandbox Tools](docs/tools/sandbox.mdx)).
 
 ## Usage examples
 
@@ -137,12 +137,12 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           git clone --depth 1 https://github.com/hashward-io/strix-web3 /tmp/strix-web3
           cd /tmp/strix-web3 && uv sync
+          /tmp/strix-web3/scripts/docker.sh
           echo "/tmp/strix-web3/.venv/bin" >> "$GITHUB_PATH"
       - env:
           STRIX_LLM: ${{ vars.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
-          STRIX_IMAGE: ghcr.io/hashward-io/strix-web3-sandbox:1.7.0
         run: strix -n -t . --scope-mode diff --diff-base "origin/${{ github.base_ref }}" --max-budget 15
       - uses: github/codeql-action/upload-sarif@v3
         if: always()
