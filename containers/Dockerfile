@@ -86,11 +86,12 @@ RUN set -eux; \
         *) echo "Unsupported arch for aderyn" >&2; exit 1 ;; \
     esac; \
     TAG="$(curl -fsSL https://api.github.com/repos/Cyfrin/aderyn/releases/latest | jq -r .tag_name)"; \
-    curl -fsSL "https://github.com/Cyfrin/aderyn/releases/download/${TAG}/aderyn-${ADERYN_ARCH}-unknown-linux-gnu.tar.gz" -o /tmp/aderyn.tgz; \
-    tar -xzf /tmp/aderyn.tgz -C /tmp; \
+    curl -fsSL "https://github.com/Cyfrin/aderyn/releases/download/${TAG}/aderyn-${ADERYN_ARCH}-unknown-linux-gnu.tar.xz" -o /tmp/aderyn.txz; \
+    tar -xJf /tmp/aderyn.txz -C /tmp; \
     mkdir -p /home/auditor/.local/bin; \
-    install -m 0755 /tmp/aderyn /home/auditor/.local/bin/aderyn; \
-    rm -f /tmp/aderyn /tmp/aderyn.tgz
+    install -m 0755 "/tmp/aderyn-${ADERYN_ARCH}-unknown-linux-gnu/aderyn" /home/auditor/.local/bin/aderyn; \
+    rm -rf "/tmp/aderyn-${ADERYN_ARCH}-unknown-linux-gnu" /tmp/aderyn.txz; \
+    /home/auditor/.local/bin/aderyn --version
 
 # Echidna (property-based fuzzer).
 RUN set -eux; \
@@ -107,19 +108,21 @@ RUN set -eux; \
     rm -f /tmp/echidna /tmp/echidna.tgz; \
     /home/auditor/.local/bin/echidna --version || true
 
-# Medusa (coverage-guided stateful fuzzer).
+# Medusa (coverage-guided stateful fuzzer). Upstream ships linux/amd64 (x64) only.
 RUN set -eux; \
     case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
-        amd64) MEDUSA_ARCH="amd64" ;; \
-        arm64) MEDUSA_ARCH="arm64" ;; \
+        amd64) MEDUSA_ARCH="x64" ;; \
+        arm64) echo "medusa: no linux/arm64 release; skipping" >&2; MEDUSA_ARCH="" ;; \
         *) echo "Unsupported arch for medusa" >&2; exit 1 ;; \
     esac; \
-    TAG="$(curl -fsSL https://api.github.com/repos/crytic/medusa/releases/latest | jq -r .tag_name)"; \
-    curl -fsSL "https://github.com/crytic/medusa/releases/download/${TAG}/medusa-linux-${MEDUSA_ARCH}.tar.gz" -o /tmp/medusa.tgz; \
-    tar -xzf /tmp/medusa.tgz -C /tmp; \
-    find /tmp -maxdepth 3 -type f -name 'medusa' -exec install -m 0755 {} /home/auditor/.local/bin/medusa \; ; \
-    rm -rf /tmp/medusa /tmp/medusa.tgz; \
-    /home/auditor/.local/bin/medusa --version || true
+    if [ -n "${MEDUSA_ARCH}" ]; then \
+        TAG="$(curl -fsSL https://api.github.com/repos/crytic/medusa/releases/latest | jq -r .tag_name)"; \
+        curl -fsSL "https://github.com/crytic/medusa/releases/download/${TAG}/medusa-linux-${MEDUSA_ARCH}.tar.gz" -o /tmp/medusa.tgz; \
+        tar -xzf /tmp/medusa.tgz -C /tmp; \
+        find /tmp -maxdepth 3 -type f -name 'medusa' -exec install -m 0755 {} /home/auditor/.local/bin/medusa \; ; \
+        rm -rf /tmp/medusa /tmp/medusa.tgz; \
+        /home/auditor/.local/bin/medusa --version || true; \
+    fi
 
 # ---------------------------------------------------------------------------
 # The remaining ecosystem toolchains. Gate off with INSTALL_EXTRA_CHAINS=0.
@@ -203,9 +206,10 @@ RUN { \
       echo 'export PATH="/home/auditor/.venv/bin:/home/auditor/.foundry/bin:/home/auditor/.aiken/bin:/home/auditor/.local/bin:/home/auditor/.cargo/bin:/home/auditor/.avm/bin:/home/auditor/.nargo/bin:/home/auditor/.fuelup/bin:/home/auditor/.local/share/solana/install/active_release/bin:$PATH"'; \
     } >> /home/auditor/.profile
 
-RUN mkdir -p /home/auditor/tools /workspace
+RUN mkdir -p /home/auditor/tools
 
 USER root
+RUN mkdir -p /workspace && chown auditor:auditor /workspace
 COPY containers/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
