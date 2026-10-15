@@ -8,7 +8,7 @@
 #   Move         sui, aptos, move prover
 #   Cairo        scarb, snforge/sncast (starknet-foundry), cairo-lint
 #   CosmWasm     wasm32 target, cosmwasm-check, cw-multitest (crate)
-#   ZK           circom, snarkjs, circomspect, ecne, nargo (Noir)
+#   ZK           circom, snarkjs, circomspect, nargo (Noir)
 #   TON          func, tact, blueprint
 #   Substrate    cargo-contract (ink!)
 #   Sway/Fuel    forc, fuel-core (fuelup)
@@ -125,18 +125,23 @@ RUN set -eux; \
     fi
 
 # ---------------------------------------------------------------------------
-# The remaining ecosystem toolchains. Gate off with INSTALL_EXTRA_CHAINS=0.
-# Each cargo-install is slow; they share one layer so they rebuild together.
+# Ecosystem toolchains. Gate off with INSTALL_EXTRA_CHAINS=0. One layer per
+# ecosystem so a single broken download only rebuilds that ecosystem (and so
+# CI/user builds still cache the ecosystems that do work).
 # ---------------------------------------------------------------------------
+
+# --- Solana ----------------------------------------------------------------
 RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
     export PATH="/home/auditor/.cargo/bin:${PATH}"; \
-    # --- Solana -----------------------------------------------------------
-    sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)" && \
+    sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"; \
     /home/auditor/.local/share/solana/install/active_release/bin/solana --version; \
     cargo install --git https://github.com/coral-xyz/anchor avm --locked --force; \
     /home/auditor/.cargo/bin/avm install latest; \
     /home/auditor/.cargo/bin/avm use latest; \
-    # --- Move (Sui + Aptos) ----------------------------------------------
+    fi
+
+# --- Move: Sui + Aptos -----------------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
     curl -fsSL "https://aptos.dev/scripts/install_cli.py" | python3; \
     SUI_TAG="$(curl -fsSL https://api.github.com/repos/MystenLabs/sui/releases/latest | jq -r .tag_name)"; \
     case "${TARGETARCH:-$(dpkg --print-architecture)}" in \
@@ -147,32 +152,76 @@ RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
     curl -fsSL "https://github.com/MystenLabs/sui/releases/download/${SUI_TAG}/sui-${SUI_TAG}-${SUI_ARCH}.tgz" -o /tmp/sui.tgz; \
     tar -xzf /tmp/sui.tgz -C /home/auditor/.local/bin; \
     rm -f /tmp/sui.tgz; \
-    # --- Cairo / Starknet -------------------------------------------------
-    curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s -- -v; \
+    fi
+
+# --- Cairo / Starknet ------------------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
+    export PATH="/home/auditor/.cargo/bin:${PATH}"; \
+    curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh -s --; \
+    /home/auditor/.local/bin/scarb --version; \
     curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | sh; \
     /home/auditor/.local/bin/snfoundryup || true; \
-    # --- CosmWasm ---------------------------------------------------------
+    fi
+
+# --- CosmWasm --------------------------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
+    export PATH="/home/auditor/.cargo/bin:${PATH}"; \
     cargo install --locked cosmwasm-check; \
-    # --- ZK: Circom, circomspect, ecne, Noir -----------------------------
-    cargo install --git https://github.com/iden3/circom.git --locked --force; \
+    fi
+
+# --- ZK: Circom, circomspect, Noir -----------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
+    export PATH="/home/auditor/.cargo/bin:${PATH}"; \
+    export SHELL=/bin/bash; \
+    export NPM_CONFIG_PREFIX=/home/auditor/.local; \
+    cargo install --git https://github.com/iden3/circom.git --locked --force circom; \
     cargo install circomspect --locked; \
-    cargo install --git https://github.com/eth-sri/ecne.git --locked --force || true; \
     curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash; \
     /home/auditor/.nargo/bin/noirup || true; \
     npm install -g snarkjs; \
-    # --- TON --------------------------------------------------------------
+    fi
+
+# --- TON -------------------------------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
+    export NPM_CONFIG_PREFIX=/home/auditor/.local; \
     npm install -g @tact-lang/compiler @ton/blueprint; \
-    # --- Substrate / ink! -------------------------------------------------
+    fi
+
+# --- Substrate / ink! ------------------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
+    export PATH="/home/auditor/.cargo/bin:${PATH}"; \
     cargo install --locked cargo-contract; \
-    # --- Sway / Fuel ------------------------------------------------------
+    fi
+
+# --- Sway / Fuel -----------------------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
     curl https://install.fuel.network | sh -s -- --no-modify-path; \
-    # --- NEAR -------------------------------------------------------------
+    fi
+
+# --- NEAR ------------------------------------------------------------------
+# cargo-near -> near-cli-rs -> hidapi (Ledger) needs libudev headers.
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
+    sudo apt-get update; \
+    sudo apt-get install -y --no-install-recommends libudev-dev; \
+    sudo rm -rf /var/lib/apt/lists/*; \
+    export PATH="/home/auditor/.cargo/bin:${PATH}"; \
     cargo install --locked cargo-near; \
-    # --- Arbitrum Stylus --------------------------------------------------
+    fi
+
+# --- Arbitrum Stylus -------------------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
+    export PATH="/home/auditor/.cargo/bin:${PATH}"; \
     cargo install --locked cargo-stylus; \
-    # --- Algorand (AVM) ---------------------------------------------------
+    fi
+
+# --- Algorand (AVM) --------------------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
     pipx install algokit; \
-    # --- Cardano (Aiken / Plutus) -----------------------------------------
+    /home/auditor/.local/bin/algokit --version; \
+    fi
+
+# --- Cardano (Aiken / Plutus) ----------------------------------------------
+RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
     curl -sSfL https://install.aiken-lang.org | bash; \
     /home/auditor/.aiken/bin/aikup install; \
     /home/auditor/.aiken/bin/aiken --version; \
