@@ -498,8 +498,11 @@ def _derive_target_label_for_run_name(targets_info: list[dict[str, Any]] | None)
 
     if target_type == "deployed_contract":
         address = details.get("target_address", original) or original
-        chain = details.get("chain", "")
-        short = address[:10] if isinstance(address, str) and address.startswith("0x") else address
+        chain = details.get("chain", "") or details.get("ecosystem", "")
+        if isinstance(address, str) and (address.startswith("0x") or ":" in address):
+            short = address[:10]
+        else:
+            short = str(address)[:12]
         return f"{chain}-{short}" if chain else str(short)
 
     if target_type == "ip_address":
@@ -1130,33 +1133,151 @@ def _is_http_git_repo(url: str) -> bool:
         return False
 
 
+# Address shapes by ecosystem. An ecosystem of "" means "a chain address whose
+# chain we could not infer"; the agent resolves the chain itself.
+_EVM_ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
+_WIDE_ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{64}$")  # Move/Aptos/Sui/Starknet: 32-byte id
+# Sui/Aptos allow short-form hex ids (e.g. ``0x2``); only accepted with a chain token.
+_SHORT_HEX_RE = re.compile(r"^0x[0-9a-fA-F]{1,63}$")
+_SOLANA_ADDRESS_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
+_TON_FRIENDLY_RE = re.compile(r"^(?:EQ|UQ|kQ|0Q)[A-Za-z0-9_-]{46}$")
+_TON_RAW_RE = re.compile(r"^-?\d+:[0-9a-fA-F]{64}$")
+_COSMOS_ADDRESS_RE = re.compile(r"^[a-z][a-z0-9]{2,15}1[023456789acdefghjklmnpqrstuvwxyz]{11,}$")
+_BITCOIN_ADDRESS_RE = re.compile(r"^(?:bc1|tb1|bcrt1)[023456789acdefghjklmnpqrstuvwxyz]{11,}$")
+
+#: Chain/ecosystem tokens we recognize in a ``<chain>:<address>`` spelling.
+_CHAIN_ECOSYSTEMS: dict[str, str] = {
+    # EVM
+    "eth": "evm",
+    "ethereum": "evm",
+    "mainnet": "evm",
+    "evm": "evm",
+    "arbitrum": "evm",
+    "optimism": "evm",
+    "base": "evm",
+    "polygon": "evm",
+    "bsc": "evm",
+    "avalanche": "evm",
+    "avax": "evm",
+    "linea": "evm",
+    "scroll": "evm",
+    "zksync": "evm",
+    "blast": "evm",
+    "celo": "evm",
+    # Non-EVM
+    "sol": "solana",
+    "solana": "solana",
+    "sui": "move",
+    "aptos": "move",
+    "move": "move",
+    "starknet": "cairo",
+    "cairo": "cairo",
+    "stark": "cairo",
+    "cosmos": "cosmwasm",
+    "cosmwasm": "cosmwasm",
+    "osmosis": "cosmwasm",
+    "osmo": "cosmwasm",
+    "neutron": "cosmwasm",
+    "sei": "cosmwasm",
+    "ton": "ton",
+    "toncoin": "ton",
+    "polkadot": "substrate",
+    "substrate": "substrate",
+    "ink": "substrate",
+    "kusama": "substrate",
+    "fuel": "sway",
+    "sway": "sway",
+    "near": "near",
+    "bitcoin": "bitcoin",
+    "btc": "bitcoin",
+    "circom": "zk",
+    "noir": "zk",
+    "zk": "zk",
+}
+
+#: Address regex → ecosystem, checked in order. Excludes the shared 32-byte hex
+#: and short-form hex shapes, which need the chain token to disambiguate.
+_ADDRESS_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (_EVM_ADDRESS_RE, "evm"),
+    (_TON_FRIENDLY_RE, "ton"),
+    (_TON_RAW_RE, "ton"),
+    (_SOLANA_ADDRESS_RE, "solana"),
+    (_COSMOS_ADDRESS_RE, "cosmwasm"),
+    (_BITCOIN_ADDRESS_RE, "bitcoin"),
+)
+
+
+def _ecosystem_from_chain(token: str) -> str:
+    return _CHAIN_ECOSYSTEMS.get(token.strip().lower(), "")
+
+
+def _looks_like_address(candidate: str) -> bool:
+    return any(
+        pattern.match(candidate)
+        for pattern in (
+            _EVM_ADDRESS_RE,
+            _WIDE_ADDRESS_RE,
+            _SHORT_HEX_RE,
+            _SOLANA_ADDRESS_RE,
+            _TON_FRIENDLY_RE,
+            _TON_RAW_RE,
+            _COSMOS_ADDRESS_RE,
+            _BITCOIN_ADDRESS_RE,
+        )
+    )
+
+
+def _ecosystem_for_address(address: str, chain: str) -> str | None:
+    """Return the ecosystem for an address, ``""`` when it is an address of an
+    unknown chain, or ``None`` when it is not an on-chain address at all."""
+    for pattern, ecosystem in _ADDRESS_PATTERNS:
+        if pattern.match(address):
+            return ecosystem
+    if _WIDE_ADDRESS_RE.match(address):
+        # 32-byte ids are shared by Move (Sui/Aptos) and Starknet; the chain token
+        # disambiguates, otherwise the agent resolves it from context.
+        return _ecosystem_from_chain(chain) or ""
+    if _SHORT_HEX_RE.match(address):
+        # Short-form hex is only meaningful when the chain token names the chain.
+        return _ecosystem_from_chain(chain) or None
+    return None
+
+
 def _parse_deployed_contract_target(target: str) -> dict[str, str] | None:
-    """Recognize a deployed EVM contract target.
+    """Recognize a deployed on-chain target in any supported ecosystem.
 
     Accepted spellings:
 
-    - ``0x<40 hex>`` — a contract on the default chain for the run.
-    - ``<chain>:0x<40 hex>`` — pin the chain, e.g. ``1:0x...`` (Ethereum
-      mainnet) or ``mainnet:0x...``. The chain token is stored verbatim and
-      passed to the agent, which resolves it against its RPC configuration.
+    - An address alone: EVM ``0x<40 hex>``, Solana base58, Sui/Aptos/Starknet
+      ``0x<64 hex>``, Cosmos bech32 (``cosmos1...``), TON friendly/raw, or a
+      Bitcoin ``bc1...`` address.
+    - ``<chain>:<address>`` — pin the chain, e.g. ``1:0x...``, ``solana:<base58>``,
+      ``sui:0x<64 hex>``, ``starknet:0x...``. The chain token is stored verbatim
+      and passed to the agent, which resolves it against its RPC configuration.
     """
     candidate = target.strip()
-    chain_id = ""
+
+    if _TON_RAW_RE.match(candidate):
+        return {"target_address": candidate, "ecosystem": "ton"}
+
+    chain = ""
     address = candidate
     if ":" in candidate and not candidate.startswith("0x"):
         chain_token, _, remainder = candidate.partition(":")
-        if chain_token and remainder:
-            chain_id = chain_token.strip()
-            address = remainder.strip()
+        remainder = remainder.strip()
+        if chain_token.strip() and _looks_like_address(remainder):
+            chain = chain_token.strip()
+            address = remainder
 
-    if not address.startswith("0x") or len(address) != 42:
-        return None
-    if not all(char in "0123456789abcdefABCDEF" for char in address[2:]):
+    ecosystem = _ecosystem_for_address(address, chain)
+    if ecosystem is None:
         return None
 
     details: dict[str, str] = {"target_address": address}
-    if chain_id:
-        details["chain"] = chain_id
+    if chain:
+        details["chain"] = chain
+    if ecosystem:
+        details["ecosystem"] = ecosystem
     return details
 
 
@@ -1249,9 +1370,13 @@ def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR09
     raise ValueError(
         f"Invalid target: {target}\n"
         "Target must be one of:\n"
-        "- A local Solidity/EVM project directory (Foundry/Hardhat)\n"
+        "- A local smart-contract project directory (Foundry/Hardhat, "
+        "Anchor/Solana, Move, Scarb/Cairo, CosmWasm, Tact/TON, ink!/Substrate, "
+        "Circom/Noir, Forc/Sway, NEAR, Bitcoin)\n"
         "- A Git repository URL (https://host/org/repo or git@host:org/repo.git)\n"
-        "- A deployed contract address (0x<40 hex>, optionally <chain>:0x<40 hex>)\n"
+        "- A deployed on-chain target: EVM 0x<40 hex>, Solana base58, "
+        "Sui/Aptos/Starknet 0x<64 hex>, Cosmos bech32, TON, or Bitcoin — "
+        "optionally <chain>:<address>\n"
         "- A file or directory to add to the workspace"
     )
 

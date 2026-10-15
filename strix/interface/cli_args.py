@@ -58,11 +58,11 @@ def _positive_int(value: str) -> int:
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Strix Web3 — multi-agent Solidity / EVM smart-contract auditor",
+        description="Strix Web3 — multi-agent multi-chain smart-contract auditor",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Audit a local Foundry / Hardhat project
+  # Audit a local project (Foundry/Hardhat, Anchor/Solana, Move, Scarb/Cairo, ...)
   strix --target ./my-protocol
 
   # Audit a repository
@@ -117,11 +117,14 @@ Artifacts:  strix_runs/<name>/  (audit_report.md, vulnerabilities.json, findings
         "--target",
         type=str,
         action="append",
-        help="Target to audit: a local Solidity/EVM project directory (Foundry/Hardhat), "
-        "a Git repository URL, or a deployed contract address (0x<40 hex>, optionally "
-        "prefixed with a chain, e.g. 1:0x<40 hex>). Local directories are mounted into "
-        "the sandbox writable. Can be specified multiple times for multi-target scans. "
-        "Fresh runs require --target or --target-list.",
+        help="Target to audit: a local smart-contract project directory in any supported "
+        "ecosystem (Foundry/Hardhat, Anchor/Solana, Move, Scarb/Cairo, CosmWasm, Tact/TON, "
+        "ink!/Substrate, Circom/Noir, Forc/Sway, NEAR, Bitcoin), a Git repository URL, or a "
+        "deployed on-chain target (EVM 0x<40 hex>, Solana base58, Sui/Aptos/Starknet "
+        "0x<64 hex>, Cosmos bech32, TON, or Bitcoin, optionally prefixed with a chain, e.g. "
+        "1:0x<40 hex> or sui:0x<64 hex>). Local directories are mounted into the sandbox "
+        "writable. Can be specified multiple times for multi-target scans. Fresh runs "
+        "require --target or --target-list.",
     )
     parser.add_argument(
         "--target-list",

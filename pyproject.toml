@@ -1,7 +1,7 @@
 [project]
 name = "strix-agent"
 version = "1.7.0"
-description = "Open-source AI smart-contract security auditor for Solidity / EVM"
+description = "Open-source AI smart-contract security auditor for every major chain and language"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.12"

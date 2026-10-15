@@ -50,7 +50,7 @@ Deep mode is the default. It explores edge cases, chained vulnerabilities, and c
 
 ## Change-Set Scope
 
-`--scope-mode diff` narrows any depth to the changed `.sol` files, using the rest of the repository only as context. It is an overlay, not a fourth depth.
+`--scope-mode diff` narrows any depth to the changed source files (in whatever ecosystem they belong to), using the rest of the repository only as context. It is an overlay, not a fourth depth.
 
 ```bash
 strix -n --target ./my-protocol --scan-mode standard --scope-mode diff --diff-base origin/main

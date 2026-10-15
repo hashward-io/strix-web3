@@ -9,8 +9,9 @@ set -euo pipefail
 WORKSPACE="${WORKSPACE:-/workspace}"
 mkdir -p "${WORKSPACE}"
 
-# Make the audit toolchain resolvable in non-login shells too.
-export PATH="/home/auditor/.venv/bin:/home/auditor/.foundry/bin:/home/auditor/.local/bin:${PATH}"
+# Make the audit toolchain resolvable in non-login shells too: Python venv,
+# Foundry, and the per-ecosystem toolchains (Rust, Anchor, Noir, Fuel, Solana).
+export PATH="/home/auditor/.venv/bin:/home/auditor/.foundry/bin:/home/auditor/.local/bin:/home/auditor/.cargo/bin:/home/auditor/.avm/bin:/home/auditor/.nargo/bin:/home/auditor/.fuelup/bin:/home/auditor/.local/share/solana/install/active_release/bin:${PATH}"
 
 # Foundry/Docker sometimes runs as root; keep the workspace usable for the
 # sandbox user when we can.

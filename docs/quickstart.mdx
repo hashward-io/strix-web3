@@ -5,7 +5,7 @@ description: "Install Strix Web3 and run your first smart-contract audit"
 
 ## Prerequisites
 
-- Docker (running) — the audit runs in a Foundry sandbox container
+- Docker (running) — the audit runs in a multi-chain sandbox container
 - An LLM API key from any [supported provider](/llm-providers/overview) (OpenAI, Anthropic, Google, etc.)
 
 ## Installation
@@ -49,20 +49,24 @@ First run pulls the Docker sandbox image automatically. Results are saved to `st
 
 ## Target Types
 
-Strix Web3 audits Solidity / EVM code. It accepts:
+Strix Web3 audits any supported chain/language. It accepts:
 
 ```bash
-# Local Solidity project (Foundry or Hardhat)
+# Local project — the ecosystem is detected from the manifest
+# (Foundry/Hardhat, Anchor.toml, Move.toml, Scarb.toml, Cargo.toml,
+#  tact.config.json, Forc.toml, Nargo.toml, ...)
 strix --target ./my-protocol
 
 # GitHub repository
 strix --target https://github.com/org/protocol
 
-# Deployed contract (verified source fetched by address; chain optional)
-strix --target 1:0x0123456789abcdef0123456789abcdef01234567
+# Deployed on-chain target (verified source fetched by the agent; chain optional)
+strix --target 1:0x0123456789abcdef0123456789abcdef01234567   # EVM
+strix --target solana:9xQeWvG816bUx9EPfNqNKpS4Zk5N7gVvDLJq7YvYhq3f  # Solana
+strix --target sui:0x2                                        # Sui package
 
 # Multiple targets (e.g., a proxy and its implementation)
-strix -t ./src -t 0xProxyAddress
+strix -t ./src -t 0x0123456789abcdef0123456789abcdef01234567
 
 # Targets from a file, one target per non-empty, non-comment line
 strix --target-list ./targets.txt

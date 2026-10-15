@@ -331,7 +331,7 @@ echo "   ╚════██║   ██║   ██╔══██╗██�
 echo "   ███████║   ██║   ██║  ██║██║██╔╝ ██╗"
 echo "   ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝"
 echo -e "${NC}"
-echo -e "${MUTED}  Solidity / EVM Smart-Contract Auditor${NC}"
+echo -e "${MUTED}  Multi-Chain Smart-Contract Auditor${NC}"
 echo ""
 echo -e "${MUTED}To get started:${NC}"
 echo ""

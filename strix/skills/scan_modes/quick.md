@@ -1,6 +1,6 @@
 ---
 name: quick
-description: Fast high-signal Solidity audit — build check, architecture skim, and the three highest-yield lenses
+description: Fast high-signal smart-contract audit — build check, architecture skim, and the three highest-yield lenses
 ---
 
 # Quick Audit Mode
@@ -9,8 +9,8 @@ Fastest useful pass. One sweep, no memory, no fuzzing suite, no multi-pass loop.
 
 ## Phase 1 — Build and map (delegate to one recon agent)
 
-- Establish a green build (`forge build`, then `--via-ir`/`--skip test` fallbacks).
-- Enumerate in-scope `.sol` files with the scope rule.
+- Detect the ecosystem (`reconnaissance/ecosystem-detection`) and establish a green build with its toolchain (`tooling/*`).
+- Enumerate in-scope source files for that ecosystem with the scope rule.
 - Build the architecture map and a first threat model (`save_threat_model`).
 - Extract the entry-point list and a short invariant list (`record_invariant` for the top conservation/bound/state-machine properties).
 
@@ -26,6 +26,6 @@ Load the bug-class skills those lenses point at (`vulnerabilities/*`) only when 
 
 ## Phase 3 — Report
 
-- File confirmed findings with `create_vulnerability_report`. Attach a Foundry PoC or a concrete trace for High/Critical.
+- File confirmed findings with `create_vulnerability_report`. Attach a runnable PoC (`custom/poc-construction`) or a concrete trace for High/Critical.
 - Record coverage for every file touched, including the clean ones.
 - Assemble the report and `finish_scan`. State clearly that it was a quick pass and what was not covered (no fuzzing, no deep protocol analysis, no multi-pass loop).

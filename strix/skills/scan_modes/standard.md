@@ -1,6 +1,6 @@
 ---
 name: standard
-description: One full 12-lens Solidity audit pass with architecture, threat model, invariant catalog, and PoC for High/Critical
+description: One full 12-lens smart-contract audit pass with architecture, threat model, invariant catalog, and PoC for High/Critical
 ---
 
 # Standard Audit Mode
@@ -21,9 +21,9 @@ Each child loads its lens plus `analysis/finding-contract`, `analysis/report-lan
 
 ## Phase 3 — Deduplicate and validate
 
-- Deduplicate by root cause (`group_key` = `Contract | function | bug-class`); convergence of 2+ agents on one area is a signal, not a duplicate.
+- Deduplicate by root cause (`group_key` = `Module | function | bug-class`); convergence of 2+ agents on one area is a signal, not a duplicate.
 - Run the four gates in `analysis/judging` on each candidate: attack execution, reachability, trigger, impact.
-- For every High/Critical, require a Foundry PoC or a complete trace (`custom/foundry-poc`).
+- For every High/Critical, require a runnable PoC in the target's ecosystem harness (`custom/poc-construction`) or a complete trace.
 
 ## Phase 4 — Report
 

@@ -1,6 +1,6 @@
 ---
 name: diff
-description: Audit only the changed Solidity files in a pull request, with surrounding contracts as context
+description: Audit only the changed source files in a pull request, with surrounding code as context
 ---
 
 # Diff Audit Mode
@@ -9,9 +9,9 @@ Overlay mode: audit the change set, using the rest of the repository only as con
 
 ## Scope
 
-- In-scope files are the changed `.sol` files the run was scoped to (see the diff-scope block in the task).
+- In-scope files are the changed source files the run was scoped to, in whatever ecosystem they belong to (see the diff-scope block in the task).
 - Everything else in the repository is **context**: read it to understand a changed function's callers and callees, but do not audit it unless the change reaches into it.
-- A dependency or unchanged contract that a changed file assumes is in scope **for its interaction with the change only**.
+- A dependency or unchanged module that a changed file assumes is in scope **for its interaction with the change only**.
 
 ## Focus
 

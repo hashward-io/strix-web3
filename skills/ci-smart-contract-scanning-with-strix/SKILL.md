@@ -1,6 +1,6 @@
 ---
 name: ci-smart-contract-scanning-with-strix
-description: Add Solidity / EVM smart-contract security scanning to CI/CD with Strix — a GitHub Actions or GitLab CI job that runs a diff-scoped audit on every pull request, comments the findings on the PR, and uploads SARIF to code scanning, so vulnerable contract changes are caught before they merge. Uses the self-hosted open-source CLI inside your runner. Use when the user asks to add smart-contract security scanning, a Solidity audit gate, or automated contract review to their CI pipeline, pre-merge gate, or PR workflow.
+description: Add smart-contract security scanning to CI/CD with Strix — a GitHub Actions or GitLab CI job that runs a diff-scoped audit on every pull request (any supported chain, not just Solidity/EVM), comments the findings on the PR, and uploads SARIF to code scanning, so vulnerable contract changes are caught before they merge. Uses the self-hosted open-source CLI inside your runner. Use when the user asks to add smart-contract security scanning, a contract audit gate, or automated contract review to their CI pipeline, pre-merge gate, or PR workflow.
 license: Apache-2.0
 metadata:
   author: usestrix
@@ -17,7 +17,7 @@ Run a diff-scoped Strix audit on every contract change, so a pull request that i
 name: strix-audit
 on:
   pull_request:
-    paths: ["**/*.sol", "foundry.toml", "hardhat.config.*"]
+    paths: ["**/*.sol", "**/*.vy", "**/*.rs", "**/*.move", "**/*.cairo", "**/*.sw", "**/*.circom", "**/*.nr", "foundry.toml", "hardhat.config.*", "Anchor.toml", "Move.toml", "Scarb.toml", "Forc.toml"]
 
 jobs:
   audit:
@@ -72,7 +72,7 @@ strix-audit:
 ## Notes
 
 - **Use `--scope-mode diff`** with the merge base. A full `deep` audit on every PR is slow and expensive; reserve it for release branches.
-- **Requires Docker** in the runner (the audit runs in a Foundry sandbox container).
+- **Requires Docker** in the runner (the audit runs in a multi-chain sandbox container).
 - **Exit codes**: `0` clean, `1` fatal error, `2` findings. Gate on `2` to block on findings; treat `1` as a pipeline failure.
 - **Budget**: `--max-budget` caps LLM spend per run. A `diff` scan on a small change set is cheap.
 - **Secrets**: set `LLM_API_KEY` (and `ETH_RPC_URL` for fork PoCs) as CI secrets, never in the workflow file.

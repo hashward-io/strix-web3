@@ -1,32 +1,104 @@
 ---
 title: "Sandbox Tools"
-description: "Pre-installed smart-contract audit tools in the Strix Web3 container"
+description: "Pre-installed multi-chain smart-contract audit tools in the Strix Web3 container"
 ---
 
-Strix Web3 runs inside a Debian-based Docker container with a complete Solidity / EVM audit toolchain pre-installed. The agent can use any of these tools through the [terminal](/tools/terminal).
+Strix Web3 runs inside a Debian-based Docker container with a multi-ecosystem smart-contract audit toolchain pre-installed. Detect the target's ecosystem and use the matching tools through the [terminal](/tools/terminal).
 
-## Build & Test
+## EVM
 
 | Tool | Description |
 | ---- | ----------- |
 | [Foundry](https://github.com/foundry-rs/foundry) | `forge` / `cast` / `anvil` — build, test, fuzz, invariant, and fork tests |
 | `solc` / `solc-select` | The Solidity compiler, pinned per project |
-| Node.js / npm / Hardhat | Projects that use the Hardhat toolchain |
-
-## Static Analysis
-
-| Tool | Description |
-| ---- | ----------- |
 | [Slither](https://github.com/crytic/slither) | Solidity static analyzer (lead generator, not a verdict) |
 | [Aderyn](https://github.com/Cyfrin/aderyn) | Rust-based Solidity static analyzer |
-
-## Fuzzing & Formal Verification
-
-| Tool | Description |
-| ---- | ----------- |
 | [Echidna](https://github.com/crytic/echidna) | Property-based invariant fuzzer |
 | [Medusa](https://github.com/crytic/medusa) | Coverage-guided stateful fuzzer |
 | [Halmos](https://github.com/a16z/halmos) | Symbolic execution / bounded model checking |
+| Vyper / Titanoboa | Vyper compiler and test framework |
+| Node.js / npm / Hardhat | Projects that use the Hardhat toolchain |
+| `cargo-stylus` | Arbitrum Stylus (Rust→WASM on the EVM) |
+
+## Solana
+
+| Tool | Description |
+| ---- | ----------- |
+| [Solana CLI](https://github.com/anza-xyz/agave) | `solana`, `cargo build-sbf`, `solana-test-validator` |
+| [Anchor](https://github.com/coral-xyz/anchor) | `anchor build` / `anchor test` framework and local validator |
+| LiteSVM | Fast in-process SVM test harness |
+| Trident / `cargo fuzz` | Fuzzing for Rust programs |
+| `spl-token` | Token and Token-2022 CLI |
+
+## Move (Sui & Aptos)
+
+| Tool | Description |
+| ---- | ----------- |
+| `sui` | `sui move build` / `sui move test`, publish, object inspection |
+| `aptos` | `aptos move compile` / `aptos move test` |
+| Move Prover | `move prove` specification checking |
+
+## Cairo / Starknet
+
+| Tool | Description |
+| ---- | ----------- |
+| [Scarb](https://github.com/software-mansion/scarb) | Package manager and build tool (`scarb build` / `scarb test`) |
+| [Starknet Foundry](https://github.com/foundry-rs/starknet-foundry) | `snforge` tests and `sncast` on-chain interactions |
+| `starknet-devnet` | Local Starknet node |
+| cairo-lint / amarna / caracal | Cairo linters and analyzers |
+
+## CosmWasm / Cosmos
+
+| Tool | Description |
+| ---- | ----------- |
+| Rust + `wasm32-unknown-unknown` | Contract build target |
+| `cw-multitest` | Integration test harness |
+| `cosmwasm-check` / `cosmwasm-schema` | Wasm validation and schema generation |
+
+## TON
+
+| Tool | Description |
+| ---- | ----------- |
+| `func` / `tact` | FunC and Tact compilers |
+| [Blueprint](https://github.com/ton-org/blueprint) | Project scaffolding, build, and test |
+| `@ton/sandbox` | In-process TVM sandbox for tests |
+
+## Substrate / ink!
+
+| Tool | Description |
+| ---- | ----------- |
+| `cargo-contract` | `cargo contract build` / `check` / `test` |
+| `ink_e2e` | End-to-end tests against a local contracts node |
+
+## ZK circuits
+
+| Tool | Description |
+| ---- | ----------- |
+| `circom` / [snarkjs](https://github.com/iden3/snarkjs) | Circuit compile and Groth16/PLONK setup, prove, verify |
+| `circomspect` / `ecne` | Circom static analysis and under-constraint detection |
+| [Nargo](https://github.com/noir-lang/noir) + `bb` | Noir build, test, execute, prove, verify |
+
+## Sway / Fuel
+
+| Tool | Description |
+| ---- | ----------- |
+| [Forc](https://github.com/FuelLabs/sway) | `forc build` / `test` / `deploy` |
+| `fuel-core` | Local Fuel node |
+
+## NEAR
+
+| Tool | Description |
+| ---- | ----------- |
+| `cargo near` | `cargo near build` / `test` |
+| `near-workspaces` / `near-sandbox` | Sandboxed integration testing |
+
+## Bitcoin
+
+| Tool | Description |
+| ---- | ----------- |
+| `bitcoind` / `bitcoin-cli` | Regtest node and RPC for Script testing |
+| `rust-miniscript` / BDK | Miniscript compilation and policy analysis |
+| `ord` / runes | Ordinals and runes tooling |
 
 ## Scripting & Decoding
 
@@ -34,8 +106,9 @@ Strix Web3 runs inside a Debian-based Docker container with a complete Solidity 
 | ---- | ----------- |
 | Python 3 | Venv with `web3`, `eth-abi`, `eth-utils`, `py-solc-x` |
 | `cast` | State reads, calldata decoding, and on-chain simulation |
+| Node.js / Rust | Ecosystem-specific harnesses and scripting |
 | Git | Repository history mining and diff scoping |
 
 <Note>
-  All tools are pre-configured and in `PATH`. The agent selects the appropriate tool for the audit stage — build, recon, fuzzing, or proof-of-concept.
+  All tools are pre-configured and in `PATH`. The agent detects the target's ecosystem and selects the appropriate toolchain for each audit stage — build, recon, fuzzing, or proof-of-concept.
 </Note>

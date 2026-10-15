@@ -3,7 +3,7 @@ title: "Skills"
 description: "Specialized knowledge packages that sharpen an audit agent"
 ---
 
-Skills are structured knowledge packages that give Strix Web3 agents deep expertise in specific bug classes, protocol types, and audit techniques.
+Skills are structured knowledge packages that give Strix Web3 agents deep expertise in specific chains/languages, bug classes, protocol types, and audit techniques.
 
 ## The Idea
 
@@ -30,6 +30,24 @@ The skills are injected into the agent's system prompt, giving it access to:
 - **Validation methods** — How to confirm a finding and avoid false positives
 
 ## Skill Categories
+
+### Ecosystems (`ecosystems/`)
+
+Every audit starts by detecting the target's chain/language, then loading the matching playbook. One per supported ecosystem.
+
+| Skill        | Coverage                                                              |
+| ------------ | --------------------------------------------------------------------- |
+| `evm`        | Solidity, Vyper, Yul/Huff, Arbitrum Stylus — toolchain, bug map, proof |
+| `solana`     | Rust (Anchor/native/Pinocchio), account model, PDAs, CPIs, Token-2022 |
+| `move`       | Sui Move, Aptos Move — objects, abilities, capabilities, prover       |
+| `cairo`      | Cairo/Starknet — felt math, storage, L1↔L2, upgrades                  |
+| `cosmwasm`   | CosmWasm/Cosmos SDK — entry points, addresses, submessages, migration |
+| `ton`        | FunC/Tact — cells, messages, bounce, jettons, get-methods             |
+| `substrate`  | ink!/Substrate — dispatchables, storage, weight, cross-contract calls |
+| `zk`         | Circom, Noir, Halo2, gnark — constraints, soundness, Fiat–Shamir      |
+| `sway`       | Sway/Fuel — storage, predicates, assets, reentrancy                   |
+| `near`       | Rust/AssemblyScript — promises, storage staking, access              |
+| `bitcoin`    | Script/Miniscript — covenants, timelocks, sighash, malleability       |
 
 ### Attack Lenses (`hacking_agents/`)
 
@@ -72,6 +90,22 @@ The twelve lenses, applied in parallel across the protocol's subsystems.
 | `cross-contract-consistency` | Assumption mismatches between integrated contracts      |
 | `logic-flaws`                | Business-logic and state-machine errors                 |
 
+EVM is one ecosystem of many. Each chain has its own bug classes:
+
+| Ecosystem | Skills |
+| --------- | ------ |
+| Solana | `solana-signer-authorization`, `solana-account-validation`, `solana-pda-seeds`, `solana-cpi-safety`, `solana-close-and-reinit`, `solana-token2022`, `solana-arithmetic-and-casts`, `solana-defi-accounting` |
+| Move | `move-capability-misuse`, `move-visibility-and-friends`, `move-arithmetic-and-abort`, `move-object-and-dynamic-fields` |
+| Cairo | `cairo-felt-and-math`, `cairo-storage-and-l1-l2`, `cairo-access-and-upgrade`, `cairo-hints-and-oracles` |
+| CosmWasm | `cosmwasm-address-and-funds`, `cosmwasm-message-and-reply`, `cosmwasm-migration-and-admin` |
+| ZK | `zk-underconstrained-circuit`, `zk-soundness-completeness`, `zk-privacy-leakage`, `zk-setup-and-fiat-shamir`, `zk-noir-specific` |
+| TON | `ton-sender-and-bounce`, `ton-cell-and-gas`, `ton-jetton-and-getmethods` |
+| Substrate/ink! | `substrate-dispatch-origin`, `substrate-storage-and-weight`, `ink-storage-and-abi` |
+| Sway | `sway-storage-and-predicates`, `sway-arithmetic-and-reentrancy` |
+| NEAR | `near-promise-and-storage`, `near-access-and-math` |
+| Bitcoin | `bitcoin-script-covenants` |
+| Stylus | `stylus-arbitrum-specific` |
+
 ### Protocols (`protocols/`)
 
 Protocol-round playbooks.
@@ -86,6 +120,10 @@ Protocol-round playbooks.
 | `bridges-messaging`| Cross-chain messages, replay, finality          |
 | `governance`       | On-chain governance mechanics                    |
 | `oracles`          | Price-feed integration patterns                  |
+| `account-abstraction` | ERC-4337, smart accounts, paymasters, session keys |
+| `rwa-and-tokenization` | Permissioned transfers, compliance, NAV/redemption |
+| `nft-and-marketplaces` | ERC-721/1155, signatures, royalties, escrow     |
+| `intents-and-solvers` | Order validity, solvers, settlement, MEV        |
 
 ### Custom (`custom/`)
 
@@ -93,17 +131,19 @@ Technique skills the agents reach for during a specific phase.
 
 | Skill             | Coverage                                             |
 | ----------------- | ---------------------------------------------------- |
+| `poc-construction`| The proof standard in any ecosystem (exploit or trace) |
 | `foundry-poc`     | Writing a self-contained Foundry/fork proof-of-concept |
 | `fizz-invariants` | Building an Echidna/Medusa/Foundry invariant suite    |
 
 ### Tooling (`tooling/`)
 
-Sandbox CLI playbooks for the audit toolchain.
+Sandbox CLI playbooks for the audit toolchain, one per ecosystem.
 
 | Skill         | Coverage                                               |
 | ------------- | ------------------------------------------------------ |
 | `foundry`     | forge/cast/anvil build, test, fuzz, invariant, fork    |
 | `solidity`    | Compiler versions, layout, common idioms and pitfalls  |
+| `vyper`       | Vyper language and Titanoboa toolchain                 |
 | `slither`     | Detector runs, triage, custom printers                 |
 | `aderyn`      | Rust-based static analysis runs and triage             |
 | `echidna`     | Property fuzzing configuration and corpus              |
@@ -111,12 +151,40 @@ Sandbox CLI playbooks for the audit toolchain.
 | `halmos`      | Symbolic execution and bounded model checking          |
 | `cast-anvil`  | On-chain reads, decoding, and local fork nodes         |
 | `python`      | web3/eth-abi scripting and decoding                    |
+| `solana-anchor` | Solana CLI, Anchor, LiteSVM, Trident, spl-token      |
+| `move-cli`    | Sui/Aptos Move build/test and the Move Prover          |
+| `cairo-scarb` | Scarb, snforge/sncast, devnet, linters                 |
+| `cosmwasm`    | Wasm build, cw-multitest, cosmwasm-check               |
+| `ton`         | FunC/Tact, Blueprint, @ton/sandbox                     |
+| `substrate-ink` | cargo contract, ink_e2e                              |
+| `zk-circom`   | circom, snarkjs, circomspect, ecne                     |
+| `zk-noir`     | nargo, bb (Barretenberg)                               |
+| `stylus`      | Arbitrum Stylus toolchain                              |
+| `sway-fuel`   | Forc, fuel-core, fuelup                               |
+| `near`        | cargo near, near-workspaces                            |
+| `bitcoin-script` | bitcoind regtest, rust-miniscript, ord             |
+
+### Reference (`reference/`)
+
+Curated external vuln data, distilled into checklists.
+
+| Skill | Coverage |
+| ----- | -------- |
+| `scsvs-checklist` | Smart Contract Security Verification Standard (SCSVS) |
+| `smart-contract-vulnerabilities` | The kadenzipfel bug-class taxonomy |
+| `web3bugs-taxonomy` | Web3Bugs (ICSE'23) real-world bug taxonomy |
+| `weird-erc20` | Non-standard ERC-20 token quirks |
+| `solana-security-checklist` | Solana program security checklist |
+| `move-security-checklist` | Move (Sui/Aptos) security checklist |
+| `cairo-security-checklist` | Cairo/Starknet security checklist |
+| `zk-security-checklist` | ZK circuit security checklist |
 
 ### Reconnaissance (`reconnaissance/`)
 
 | Skill              | Coverage                                          |
 | ------------------ | ------------------------------------------------- |
-| `x-ray`            | Pre-audit recon: contracts, roles, value, flows   |
+| `ecosystem-detection` | Detect chain/language/framework from the repo  |
+| `x-ray`            | Pre-audit recon: modules, roles, value, flows     |
 | `protocol-mapping` | Mapping subsystems and trust boundaries           |
 | `git-history`      | Mining history for hotspots and late changes      |
 

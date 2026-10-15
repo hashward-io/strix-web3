@@ -3,7 +3,7 @@ title: "Coding Agents"
 description: "Use Strix Web3 from Claude Code, Cursor, Codex, and other AI agents"
 ---
 
-Strix Web3 is built to be driven by AI coding agents. Install the official agent skills and your agent knows how to audit a Solidity/EVM protocol, remediate findings, and wire Strix into CI.
+Strix Web3 is built to be driven by AI coding agents. Install the official agent skills and your agent knows how to audit a blockchain protocol on any supported chain, remediate findings, and wire Strix into CI.
 
 ## Install the Skills
 
@@ -15,8 +15,8 @@ npx skills add hashward-io/strix-web3
 
 | Skill | What your agent learns |
 |-------|------------------------|
-| `auditing-smart-contracts-with-strix` | Audit a Solidity/EVM protocol (local project, repo, or deployed address) and read the results |
-| `find-solidity-vulnerabilities-with-strix` | White-box review of a Solidity codebase, with exploits to confirm findings |
+| `auditing-smart-contracts-with-strix` | Audit a smart-contract protocol (local project, repo, or deployed address, any supported chain) and read the results |
+| `find-solidity-vulnerabilities-with-strix` | White-box review of a Solidity/EVM codebase, with exploits to confirm findings |
 | `fix-solidity-vulnerabilities-with-strix` | Triage findings, fix root causes, and re-run Strix to verify each fix |
 | `ci-smart-contract-scanning-with-strix` | Add a diff-scoped contract audit gate to GitHub Actions or any CI |
 
@@ -28,7 +28,7 @@ npx skills use hashward-io/strix-web3@auditing-smart-contracts-with-strix | clau
 
 ## How it runs
 
-Strix Web3 is self-hosted and open-source: it runs locally in a Docker sandbox with your own LLM key. It is fully local and air-gap capable. Fork proofs need an archive RPC endpoint via `ETH_RPC_URL`.
+Strix Web3 is self-hosted and open-source: it runs locally in a Docker sandbox with your own LLM key. It is fully local and air-gap capable. Fork proofs need an archive RPC endpoint via `ETH_RPC_URL` (EVM); other ecosystems use their own local node/validator.
 
 ## Agent-Friendly Interfaces
 
@@ -45,7 +45,7 @@ Everything an agent needs is machine-readable:
 Once the skills are installed, prompts like these just work:
 
 ```text
-Audit this Solidity repo with Strix (standard mode, $20 budget) and summarize the findings.
+Audit this smart-contract repo with Strix (standard mode, $20 budget) and summarize the findings.
 ```
 
 ```text
@@ -53,5 +53,5 @@ Fix all critical and high findings from the last Strix run, then re-run to verif
 ```
 
 ```text
-Add Strix contract auditing to our GitHub Actions so every PR that touches .sol files gets checked.
+Add Strix contract auditing to our GitHub Actions so every PR that touches contract source files gets checked.
 ```

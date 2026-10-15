@@ -141,10 +141,16 @@ def build_root_task(scan_config: dict[str, Any]) -> str:
         elif ttype == "deployed_contract":
             address = details.get("target_address", "")
             chain = details.get("chain", "")
+            ecosystem = details.get("ecosystem", "")
             label = f"{address} (chain: {chain})" if chain else address
+            hint = (
+                f"fetch the verified source for this {ecosystem} target from the chain's "
+                "explorer before analyzing"
+                if ecosystem
+                else "fetch the verified source from the chain's explorer before analyzing"
+            )
             sections["Deployed Contracts"].append(
-                f"- {label} - fetch the verified source (Etherscan/chain explorer) "
-                "before analyzing; if only bytecode is available, say so as a gap"
+                f"- {label} - {hint}; if only bytecode is available, say so as a gap"
             )
         elif ttype == "web_application":
             sections["Web Applications"].append(f"- {details.get('target_url', '')}")
@@ -216,6 +222,8 @@ def build_scope_context(scan_config: dict[str, Any]) -> dict[str, Any]:
         value = details.get(key, "") if key is not None else target.get("original", "")
         if ttype == "deployed_contract" and details.get("chain"):
             value = f"{details['chain']}:{value}"
+        elif ttype == "deployed_contract" and details.get("ecosystem"):
+            value = f"{details['ecosystem']}:{value}"
 
         workspace_subdir = details.get("workspace_subdir")
         workspace_path = f"/workspace/{workspace_subdir}" if workspace_subdir else ""

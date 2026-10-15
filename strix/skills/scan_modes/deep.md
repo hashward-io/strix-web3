@@ -1,6 +1,6 @@
 ---
 name: deep
-description: Multi-pass, invariant-fuzzing Solidity audit — repeated 12-lens sweeps with a memory ledger plus Echidna/Medusa
+description: Multi-pass, invariant-fuzzing smart-contract audit — repeated 12-lens sweeps with a memory ledger plus ecosystem fuzzers
 ---
 
 # Deep Audit Mode
@@ -19,10 +19,13 @@ Thorough understanding before exploitation. Test every path, every boundary. Cha
 
 ## Phase 2 — Fuzzing
 
-For invariant-heavy or math-heavy logic, generate and run a fuzzing suite (`custom/fizz-invariants`):
+For invariant-heavy or math-heavy logic, generate and run a fuzzing/invariant suite for the target's ecosystem:
 
-- Foundry invariant tests for fast properties.
-- Echidna and/or Medusa for stateful invariant fuzzing (`tooling/echidna`, `tooling/medusa`).
+- EVM — Foundry invariant tests for fast properties; Echidna and/or Medusa for stateful invariant fuzzing (`tooling/echidna`, `tooling/medusa`).
+- Solana — `anchor test`/LiteSVM harnesses and Trident/`cargo fuzz` for sequences (`tooling/solana-anchor`).
+- Move — `sui move test` with `#[expected_failure]` and the Move Prover (`tooling/move-cli`).
+- Cairo — `snforge` fuzz tests (`tooling/cairo-scarb`).
+- ZK — witness/counterexample search with `nargo`/`snarkjs` (`tooling/zk-circom`, `tooling/zk-noir`).
 - Every invariant in the catalog should have a property, or be explicitly marked as not-fuzzable with a reason.
 
 ## Phase 3 — Twelve lenses, multiple passes
@@ -37,7 +40,7 @@ Individual bugs are starting points. Chain them for maximum impact: information 
 
 ## Phase 5 — PoC and closure
 
-- High/Critical: a working Foundry mainnet-fork PoC (`custom/foundry-poc`) or a complete trace.
+- High/Critical: a runnable PoC in the target's ecosystem harness (`custom/poc-construction`) or a complete trace.
 - Every candidate closes as `confirmed`, `ruled_out` (with the named control), or `open_proof_gap` — never silently dropped.
 
 ## Phase 6 — Reporting

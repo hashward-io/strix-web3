@@ -3,19 +3,19 @@ title: "Agent Tools"
 description: "How Strix Web3 agents analyze targets"
 ---
 
-Strix Web3 agents use specialized tools to audit a Solidity / EVM protocol the way a real smart-contract auditor does: build it, map it, fuzz it, and prove the bugs.
+Strix Web3 agents use specialized tools to audit a blockchain protocol the way a real smart-contract auditor does: detect the ecosystem, build it, map it, fuzz it, and prove the bugs. The same tool set works across EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, and Bitcoin.
 
 ## Core tools
 
 <CardGroup cols={2}>
   <Card title="Foundry" icon="hammer" href="/tools/foundry">
-    forge / cast / anvil for building, testing, fuzzing, and forking.
+    forge / cast / anvil for building, testing, fuzzing, and forking (EVM).
   </Card>
   <Card title="Terminal" icon="terminal" href="/tools/terminal">
     Bash shell for running the audit toolchain.
   </Card>
   <Card title="Sandbox" icon="toolbox" href="/tools/sandbox">
-    Slither, Aderyn, Echidna, Medusa, Halmos, solc, and Node/Hardhat.
+    The multi-chain toolkit: Foundry, Slither, Aderyn, Echidna, Medusa, Halmos, Anchor, Move, Scarb, CosmWasm, Circom, Noir, Tact, cargo-contract, Forc, and more.
   </Card>
 </CardGroup>
 

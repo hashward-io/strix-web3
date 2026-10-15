@@ -1,9 +1,9 @@
 ---
 title: "Introduction"
-description: "Open-source AI smart-contract auditors for Solidity / EVM"
+description: "Open-source AI smart-contract auditors for every major chain and language"
 ---
 
-Strix Web3 is a team of autonomous AI agents that audit Solidity / EVM protocols like a senior auditor: they read the source, derive the protocol's invariants, run the specialist attack lenses, and prove every real finding with a Foundry proof-of-concept instead of a static-analysis alert.
+Strix Web3 is a team of autonomous AI agents that audit blockchain protocols — EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, and Bitcoin — like a senior auditor: they detect the ecosystem, read the source, derive the protocol's invariants, run the specialist attack lenses, and prove every real finding with a runnable proof-of-concept instead of a static-analysis alert.
 
 <Frame>
   <img src="/images/screenshot.png" alt="Strix Web3" />
@@ -26,50 +26,66 @@ Strix Web3 is a team of autonomous AI agents that audit Solidity / EVM protocols
 
 ## Use Cases
 
-- **Pre-deployment audit** — Review a protocol before it ships
+- **Pre-deployment audit** — Review a protocol before it ships, on any supported chain
 - **Second opinion / contest prep** — A systematic pass over the code with proof
-- **Fork-based exploit validation** — Prove an oracle, price, or accounting bug on live state
-- **CI gate** — A diff-scoped audit on every Solidity pull request
+- **Fork/real-state exploit validation** — Prove a bug against live state (EVM fork, Solana validator, Starknet devnet, and more)
+- **CI gate** — A diff-scoped audit on every pull request, in any supported ecosystem
 
 ## Key Capabilities
 
-- **Full EVM toolkit** — Foundry, Slither, Aderyn, Echidna, Medusa, Halmos, and a Python/`web3` runtime
-- **Real validation** — Foundry proof-of-concept, not false positives
-- **Multi-agent orchestration** — Twelve attack lenses and protocol specialists collaborate
+- **Multi-ecosystem** — automatic ecosystem detection and per-chain playbooks for EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, and Bitcoin
+- **Multi-chain toolkit** — Foundry/Slither/Aderyn/Echidna/Medusa/Halmos, Anchor/LiteSVM, Sui/Aptos Move + Prover, Scarb/`snforge`, CosmWasm, Circom/`snarkjs`, Noir, Tact/Blueprint, `cargo-contract`, Forc/Fuel, `cargo near`, and Bitcoin Core
+- **Real validation** — a runnable proof-of-concept in the ecosystem's harness, not false positives
+- **Multi-agent orchestration** — Twelve attack lenses and per-ecosystem bug-class and protocol specialists collaborate
+- **Curated vuln data** — checklists distilled from SCSVS, `smart-contract-vulnerabilities`, Web3Bugs, `weird-erc20`, and per-ecosystem security checklists
 - **Developer-first CLI** — Interactive TUI or headless mode for automation
 
 ## Audit Toolkit
 
-Strix Web3 agents come equipped with a complete Solidity toolchain:
+Strix Web3 agents come equipped with a multi-chain audit toolchain, selected per detected ecosystem:
 
-| Tool | Purpose |
-|------|---------|
-| Foundry | forge/cast/anvil for build, test, fuzz, invariant, and fork tests |
-| Slither / Aderyn | Static analysis to seed leads (not a verdict) |
-| Echidna / Medusa | Property-based and coverage-guided invariant fuzzing |
-| Halmos | Symbolic execution / bounded model checking |
-| Python Runtime | Custom exploit and decoding scripts (`web3`, `eth-abi`) |
-| Invariant catalog | The protocol's must-hold properties and their enforcement status |
+| Ecosystem | Toolkit |
+|-----------|---------|
+| EVM | Foundry (forge/cast/anvil), Slither, Aderyn, Echidna, Medusa, Halmos, Vyper, Hardhat, cargo-stylus |
+| Solana | Anchor, `cargo build-sbf`, `solana-test-validator`, LiteSVM, Trident/`cargo fuzz`, `spl-token` |
+| Move | `sui move`, `aptos move`, Move Prover |
+| Cairo | Scarb, `snforge`/`sncast`, `starknet-devnet`, cairo-lint, amarna, caracal |
+| CosmWasm | `wasm32` build, `cw-multitest`, `cosmwasm-check`, `wasmd` |
+| TON | FunC/Tact compilers, blueprint, `@ton/sandbox` |
+| Substrate / ink! | `cargo contract`, `ink_e2e` |
+| ZK | `circom`/`snarkjs`/`circomspect`/`ecne`, `nargo` + `bb` |
+| Sway / Fuel | Forc, `fuel-core` |
+| NEAR | `cargo near`, `near-workspaces` |
+| Bitcoin | `bitcoin-cli`/`bitcoind` (regtest), `rust-miniscript`, ord/runes |
+
+The invariant catalog and coverage ledger are engine-wide: the protocol's must-hold properties and the negative space of the audit, tracked the same way on every chain.
 
 ## Vulnerability Coverage
 
-| Category | Examples |
-|----------|----------|
-| Reentrancy | Single/cross-function/cross-contract, read-only, callback |
-| Access Control | Missing modifiers, broken initialization, privilege escalation |
-| Price & Oracle | Spot/TWAP manipulation, staleness, decimals, single-source feeds |
-| Precision | Rounding direction, truncation, decimal/scale mixing |
-| Accounting | Conservation, solvency, share accounting, aggregate drift |
-| DeFi-specific | Flash loans, ERC-4626 inflation, MEV, governance, token integration |
-| Upgradeability | Proxy layout, delegatecall context, initializer front-running |
+Every ecosystem runs the same twelve lenses over its own bug-class map:
+
+| Ecosystem | Example bug classes |
+|-----------|----------------------|
+| EVM | Reentrancy, access control, oracle/price manipulation, precision, accounting, flash loans, ERC-4626 inflation, MEV, governance, upgradeability |
+| Solana | Missing signer, account validation/type cosplay, PDA seeds, arbitrary CPI, account close/reinit, Token-2022 |
+| Move | Capability/authority misuse, visibility/`public(friend)`, resource & object aliasing, arithmetic/abort |
+| Cairo | felt252 math, storage address collisions, L1↔L2 trust, upgrade/`class_hash`, hints/oracles |
+| CosmWasm | Address canonicalization, funds handling, `Reply`/submessage, migration/admin |
+| ZK | Under-constrained circuits, soundness/completeness, Fiat–Shamir, trusted setup, privacy leakage |
+| TON | Sender spoofing, bounce handling, cell/gas, jetton trust |
+| Substrate / ink! | Dispatch origin, storage/weight, ABI/selector collisions |
+| Sway | Storage & predicates, arithmetic, reentrancy |
+| NEAR | Promise/async trust, predecessor vs signer, storage staking |
+| Bitcoin | Covenant soundness, timelocks, sighash flags, malleability |
 
 ## Multi-Agent Architecture
 
 Strix Web3 uses a graph of specialized agents for a thorough audit:
 
-- **Distributed workflows** — Recon, per-lens specialists, and validation agents
-- **Scalable coverage** — Parallel execution across the protocol's subsystems
-- **Dynamic coordination** — Agents share the threat model, invariant catalog, and findings
+- **Ecosystem decomposition** — one workstream per detected chain/language, plus the seams between them
+- **Distributed workflows** — recon, per-lens specialists, and validation agents
+- **Scalable coverage** — parallel execution across the protocol's subsystems
+- **Dynamic coordination** — agents share the threat model, invariant catalog, and findings
 
 ## Quick Example
 
@@ -80,7 +96,7 @@ curl -sSL https://strix.ai/install | bash
 # Configure
 export STRIX_LLM="openrouter/z-ai/glm-5.3"
 export LLM_API_KEY="your-api-key"
-export ETH_RPC_URL="https://your-archive-rpc"   # optional, for fork PoCs
+export ETH_RPC_URL="https://your-archive-rpc"   # optional, for EVM fork PoCs
 
 # Audit
 strix --target ./my-protocol

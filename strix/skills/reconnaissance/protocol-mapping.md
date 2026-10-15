@@ -1,6 +1,6 @@
 ---
 name: protocol-mapping
-description: Build the architecture and threat model for a Solidity protocol — contracts, roles, trust boundaries, actors, and value flows
+description: Build the architecture and threat model for a protocol in any ecosystem — modules, roles, trust boundaries, actors, and value flows
 ---
 
 # Protocol Mapping
@@ -9,7 +9,7 @@ Before testing, build the shared picture of what the protocol is and who the att
 
 ## Architecture
 
-- **Contracts by subsystem** — group by function (core, periphery, vaults, oracles, governance, math libs, deploy scripts). Note inheritance and upgrades.
+- **Modules by subsystem** — group by function (core, periphery, vaults, oracles, governance, math libs, deploy scripts). Note inheritance/composition and upgrades.
 - **Roles and access** — every role/modifier/`msg.sender` check; who grants what to whom; which powers are instant vs timelocked; which can move user funds.
 - **Value-holding state** — mappings and variables that hold balances, collateral, debt, shares, or LP.
 - **External integrations** — oracles, tokens, other protocols; the trust and failure assumptions on each.
