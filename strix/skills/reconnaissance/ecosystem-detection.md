@@ -30,6 +30,8 @@ Look for manifest/build files; they identify the ecosystem in one glance.
 | `Forc.toml`, `src/main.sw`, `*.sw` | `sway` |
 | `Cargo.toml` with `near-sdk`, `src/lib.rs` with `#[near]` | `near` |
 | `miniscript`/`bdk`/`bitcoin` crates, `*.miniscript`, ord/runes tooling | `bitcoin` |
+| `AlgoKit`/`algokit` config, `algopy`/`pyteal`/`beaker` imports, `*.teal`, ARC-56 `application.json` | `algorand` |
+| `aiken.toml`, `validators/*.ak`, `lib/*.ak`, `plutus.json` | `cardano` (Aiken/Plutus) |
 
 Secondary signals: CI workflows, `package.json` scripts, Dockerfiles, and README build
 instructions.

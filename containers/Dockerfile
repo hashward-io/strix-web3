@@ -60,7 +60,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
 # ---------------------------------------------------------------------------
 # EVM: Foundry, solc, Slither/Halmos, static analyzers, fuzzers.
 # ---------------------------------------------------------------------------
-ENV PATH="/home/auditor/.foundry/bin:/home/auditor/.local/bin:${PATH}"
+ENV PATH="/home/auditor/.foundry/bin:/home/auditor/.aiken/bin:/home/auditor/.local/bin:${PATH}"
 RUN curl -L https://foundry.paradigm.xyz | bash && \
     /home/auditor/.foundry/bin/foundryup && \
     /home/auditor/.foundry/bin/forge --version
@@ -72,6 +72,7 @@ RUN python3 -m venv /home/auditor/.venv && \
         halmos \
         vyper titanoboa \
         web3 eth-abi eth-utils py-solc-x \
+        algokit-utils \
         requests && \
     /home/auditor/.venv/bin/slither --version
 
@@ -164,6 +165,10 @@ RUN if [ "${INSTALL_EXTRA_CHAINS}" = "1" ]; then set -eux; \
     cargo install --locked cargo-near; \
     # --- Arbitrum Stylus --------------------------------------------------
     cargo install --locked cargo-stylus; \
+    # --- Algorand (AVM) ---------------------------------------------------
+    pipx install algokit; \
+    # --- Cardano (Aiken / Plutus) -----------------------------------------
+    curl -sSfL https://install.aiken-lang.org | bash; \
     fi
 
 # Bitcoin Core (regtest) for Script/Miniscript testing.
@@ -188,10 +193,10 @@ ENV VIRTUAL_ENV="/home/auditor/.venv"
 
 # Login shells reset PATH; re-add every toolchain dir.
 RUN { \
-      echo 'export PATH="/home/auditor/.venv/bin:/home/auditor/.foundry/bin:/home/auditor/.local/bin:/home/auditor/.cargo/bin:/home/auditor/.avm/bin:/home/auditor/.nargo/bin:/home/auditor/.fuelup/bin:/home/auditor/.local/share/solana/install/active_release/bin:$PATH"'; \
+      echo 'export PATH="/home/auditor/.venv/bin:/home/auditor/.foundry/bin:/home/auditor/.aiken/bin:/home/auditor/.local/bin:/home/auditor/.cargo/bin:/home/auditor/.avm/bin:/home/auditor/.nargo/bin:/home/auditor/.fuelup/bin:/home/auditor/.local/share/solana/install/active_release/bin:$PATH"'; \
     } >> /home/auditor/.bashrc && \
     { \
-      echo 'export PATH="/home/auditor/.venv/bin:/home/auditor/.foundry/bin:/home/auditor/.local/bin:/home/auditor/.cargo/bin:/home/auditor/.avm/bin:/home/auditor/.nargo/bin:/home/auditor/.fuelup/bin:/home/auditor/.local/share/solana/install/active_release/bin:$PATH"'; \
+      echo 'export PATH="/home/auditor/.venv/bin:/home/auditor/.foundry/bin:/home/auditor/.aiken/bin:/home/auditor/.local/bin:/home/auditor/.cargo/bin:/home/auditor/.avm/bin:/home/auditor/.nargo/bin:/home/auditor/.fuelup/bin:/home/auditor/.local/share/solana/install/active_release/bin:$PATH"'; \
     } >> /home/auditor/.profile
 
 RUN mkdir -p /home/auditor/tools /workspace

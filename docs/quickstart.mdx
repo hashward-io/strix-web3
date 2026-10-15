@@ -10,18 +10,20 @@ description: "Install Strix Web3 and run your first smart-contract audit"
 
 ## Installation
 
-<Tabs>
-  <Tab title="curl">
-    ```bash
-    curl -sSL https://strix.ai/install | bash
-    ```
-  </Tab>
-  <Tab title="pipx">
-    ```bash
-    pipx install strix-agent
-    ```
-  </Tab>
-</Tabs>
+This fork has no release binaries yet, so install it from source:
+
+```bash
+git clone https://github.com/hashward-io/strix-web3 && cd strix-web3
+make dev-install          # uv sync
+./scripts/docker.sh       # build the multi-chain sandbox image
+export STRIX_IMAGE=strix-sandbox:dev
+```
+
+<Note>
+  The sandbox image (`ghcr.io/hashward-io/strix-web3-sandbox`) is not on a public
+  registry yet — build it once with `./scripts/docker.sh` and point `STRIX_IMAGE`
+  at the tag as shown above.
+</Note>
 
 ## Configuration
 

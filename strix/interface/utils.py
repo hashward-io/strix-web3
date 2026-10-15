@@ -1144,6 +1144,8 @@ _TON_FRIENDLY_RE = re.compile(r"^(?:EQ|UQ|kQ|0Q)[A-Za-z0-9_-]{46}$")
 _TON_RAW_RE = re.compile(r"^-?\d+:[0-9a-fA-F]{64}$")
 _COSMOS_ADDRESS_RE = re.compile(r"^[a-z][a-z0-9]{2,15}1[023456789acdefghjklmnpqrstuvwxyz]{11,}$")
 _BITCOIN_ADDRESS_RE = re.compile(r"^(?:bc1|tb1|bcrt1)[023456789acdefghjklmnpqrstuvwxyz]{11,}$")
+_CARDANO_ADDRESS_RE = re.compile(r"^(?:addr1|addr_test1|stake1|stake_test1)[0-9a-z]{20,}$")
+_ALGORAND_ADDRESS_RE = re.compile(r"^[A-Z2-7]{58}$")
 
 #: Chain/ecosystem tokens we recognize in a ``<chain>:<address>`` spelling.
 _CHAIN_ECOSYSTEMS: dict[str, str] = {
@@ -1193,17 +1195,27 @@ _CHAIN_ECOSYSTEMS: dict[str, str] = {
     "circom": "zk",
     "noir": "zk",
     "zk": "zk",
+    "algorand": "algorand",
+    "algo": "algorand",
+    "avm": "algorand",
+    "cardano": "cardano",
+    "ada": "cardano",
+    "aiken": "cardano",
+    "plutus": "cardano",
 }
 
 #: Address regex → ecosystem, checked in order. Excludes the shared 32-byte hex
 #: and short-form hex shapes, which need the chain token to disambiguate.
+#: Specific bech32 HRPs (Bitcoin, Cardano) precede the generic Cosmos pattern.
 _ADDRESS_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (_EVM_ADDRESS_RE, "evm"),
     (_TON_FRIENDLY_RE, "ton"),
     (_TON_RAW_RE, "ton"),
     (_SOLANA_ADDRESS_RE, "solana"),
-    (_COSMOS_ADDRESS_RE, "cosmwasm"),
     (_BITCOIN_ADDRESS_RE, "bitcoin"),
+    (_CARDANO_ADDRESS_RE, "cardano"),
+    (_ALGORAND_ADDRESS_RE, "algorand"),
+    (_COSMOS_ADDRESS_RE, "cosmwasm"),
 )
 
 
@@ -1223,6 +1235,8 @@ def _looks_like_address(candidate: str) -> bool:
             _TON_RAW_RE,
             _COSMOS_ADDRESS_RE,
             _BITCOIN_ADDRESS_RE,
+            _CARDANO_ADDRESS_RE,
+            _ALGORAND_ADDRESS_RE,
         )
     )
 
@@ -1249,7 +1263,8 @@ def _parse_deployed_contract_target(target: str) -> dict[str, str] | None:
     Accepted spellings:
 
     - An address alone: EVM ``0x<40 hex>``, Solana base58, Sui/Aptos/Starknet
-      ``0x<64 hex>``, Cosmos bech32 (``cosmos1...``), TON friendly/raw, or a
+      ``0x<64 hex>``, Cosmos bech32 (``cosmos1...``), Cardano bech32
+      (``addr1...``/``stake1...``), Algorand base32, TON friendly/raw, or a
       Bitcoin ``bc1...`` address.
     - ``<chain>:<address>`` — pin the chain, e.g. ``1:0x...``, ``solana:<base58>``,
       ``sui:0x<64 hex>``, ``starknet:0x...``. The chain token is stored verbatim
@@ -1372,11 +1387,11 @@ def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR09
         "Target must be one of:\n"
         "- A local smart-contract project directory (Foundry/Hardhat, "
         "Anchor/Solana, Move, Scarb/Cairo, CosmWasm, Tact/TON, ink!/Substrate, "
-        "Circom/Noir, Forc/Sway, NEAR, Bitcoin)\n"
+        "Circom/Noir, Forc/Sway, NEAR, Algorand, Aiken/Cardano, Bitcoin)\n"
         "- A Git repository URL (https://host/org/repo or git@host:org/repo.git)\n"
         "- A deployed on-chain target: EVM 0x<40 hex>, Solana base58, "
-        "Sui/Aptos/Starknet 0x<64 hex>, Cosmos bech32, TON, or Bitcoin — "
-        "optionally <chain>:<address>\n"
+        "Sui/Aptos/Starknet 0x<64 hex>, Cosmos bech32, TON, Cardano addr1…, Algorand, "
+        "or Bitcoin — optionally <chain>:<address>\n"
         "- A file or directory to add to the workspace"
     )
 

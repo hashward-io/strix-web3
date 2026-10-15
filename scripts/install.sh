@@ -4,7 +4,7 @@ set -euo pipefail
 
 APP=strix
 REPO="usestrix/strix"
-STRIX_IMAGE="ghcr.io/usestrix/strix-sandbox:1.3.0"
+STRIX_IMAGE="ghcr.io/hashward-io/strix-web3-sandbox:1.7.0"
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -200,7 +200,8 @@ check_docker() {
             echo -e "${GREEN}✓ Sandbox image pulled successfully${NC}"
         else
             echo -e "${YELLOW}⚠ Failed to pull sandbox image${NC}"
-            echo -e "${MUTED}You can pull it manually later: ${NC}docker pull $STRIX_IMAGE"
+            echo -e "${MUTED}Build it locally instead: ${NC}./scripts/docker.sh"
+            echo -e "${MUTED}then run with ${NC}STRIX_IMAGE=strix-sandbox:dev${NC}"
         fi
     fi
     return 0

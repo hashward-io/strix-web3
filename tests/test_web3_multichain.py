@@ -1,8 +1,9 @@
 """Multi-chain target detection and knowledge-layer tests for Strix Web3.
 
 Covers the expanded ``infer_target_type`` (EVM plus Solana, Move, Cairo,
-CosmWasm, TON, and Bitcoin address shapes) and the new skill categories
-(``ecosystems/`` and ``reference/``) that give the engine non-EVM support.
+CosmWasm, TON, Algorand, Cardano, and Bitcoin address shapes) and the new skill
+categories (``ecosystems/`` and ``reference/``) that give the engine non-EVM
+support.
 """
 
 from __future__ import annotations
@@ -27,6 +28,8 @@ _COSMOS_ADDRESS = "cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu"
 _TON_FRIENDLY = "EQ" + "a" * 46
 _TON_RAW = "0:" + "ef" * 32
 _BITCOIN_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+_CARDANO_ADDRESS = "addr1qy2l9xpjs6z97lztgp3ywp4e8w2q0v6m0c9j0g8x0x3fz2c0j8"
+_ALGORAND_ADDRESS = "A" * 57 + "Q"
 
 
 @pytest.mark.parametrize(
@@ -40,6 +43,8 @@ _BITCOIN_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         (_TON_FRIENDLY, "ton"),
         (_TON_RAW, "ton"),
         (_BITCOIN_ADDRESS, "bitcoin"),
+        (_CARDANO_ADDRESS, "cardano"),
+        (_ALGORAND_ADDRESS, "algorand"),
     ],
 )
 def test_bare_address_detects_ecosystem(target: str, expected_ecosystem: str) -> None:
@@ -62,6 +67,9 @@ def test_bare_address_detects_ecosystem(target: str, expected_ecosystem: str) ->
         (f"cosmos:{_COSMOS_ADDRESS}", "cosmos", "cosmwasm"),
         (f"ton:{_TON_FRIENDLY}", "ton", "ton"),
         (f"bitcoin:{_BITCOIN_ADDRESS}", "bitcoin", "bitcoin"),
+        (f"cardano:{_CARDANO_ADDRESS}", "cardano", "cardano"),
+        (f"ada:{_CARDANO_ADDRESS}", "ada", "cardano"),
+        (f"algorand:{_ALGORAND_ADDRESS}", "algorand", "algorand"),
     ],
 )
 def test_chain_qualified_addresses(
@@ -86,6 +94,16 @@ def test_sui_short_form_package_id_with_chain() -> None:
 def test_short_form_hex_without_known_chain_is_not_an_address() -> None:
     with pytest.raises(ValueError):
         infer_target_type("notachain:0x2")
+
+
+def test_cardano_bech32_is_not_mistaken_for_cosmos() -> None:
+    """``addr1…``/``stake1…`` bech32 must resolve to Cardano, not the generic
+    Cosmos pattern."""
+    for address in (_CARDANO_ADDRESS, "stake1" + "q" * 40):
+        target_type, details = infer_target_type(address)
+
+        assert target_type == "deployed_contract"
+        assert details["ecosystem"] == "cardano"
 
 
 @pytest.mark.parametrize(
@@ -121,6 +139,8 @@ def test_skill_categories_include_ecosystems_and_reference() -> None:
         "solana-cpi-safety",
         "move-capability-misuse",
         "zk-underconstrained-circuit",
+        "algorand-group-transactions",
+        "cardano-eutxo-double-satisfaction",
     } <= vuln_names
 
 
@@ -128,12 +148,21 @@ def test_non_evm_skills_load() -> None:
     names = [
         "ecosystems/solana",
         "ecosystems/move",
+        "ecosystems/algorand",
+        "ecosystems/cardano",
         "vulnerabilities/solana-cpi-safety",
         "vulnerabilities/cairo-felt-and-math",
+        "vulnerabilities/algorand-account-and-rekey",
+        "vulnerabilities/cardano-value-and-minting",
         "tooling/move-cli",
         "tooling/zk-circom",
+        "tooling/algorand",
+        "tooling/aiken",
         "reference/scsvs-checklist",
+        "reference/building-secure-contracts",
         "reconnaissance/ecosystem-detection",
+        "reconnaissance/threat-modeling",
+        "analysis/property-based-testing",
     ]
     loaded = load_skills(names)
 

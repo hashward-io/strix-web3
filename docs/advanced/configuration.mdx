@@ -147,9 +147,17 @@ When remote vars are set, Strix dual-writes telemetry to both local JSONL and th
 
 <ParamField path="STRIX_IMAGE" default="ghcr.io/hashward-io/strix-web3-sandbox:1.7.0" type="string">
   Docker image to use for the sandbox container. Strix Web3's sandbox is a
-  Foundry-first image built from `containers/Dockerfile`. Build it locally with
-  `./scripts/docker.sh` and point `STRIX_IMAGE` at your tag if you are not
-  pulling a published image.
+  multi-chain image built from `containers/Dockerfile`. If you are not pulling a
+  published image, build it locally and point `STRIX_IMAGE` at your tag:
+
+  ```bash
+  ./scripts/docker.sh                 # builds strix-sandbox:dev
+  export STRIX_IMAGE=strix-sandbox:dev
+  ```
+
+  The Dockerfile installs the extra-chain toolchains (Solana, Move, Cairo,
+  CosmWasm, TON, Substrate, ZK, Sway, NEAR, Algorand, Cardano); set
+  `INSTALL_EXTRA_CHAINS=0` at build time for a smaller EVM-only image.
 </ParamField>
 
 <ParamField path="DOCKER_HOST" type="string">

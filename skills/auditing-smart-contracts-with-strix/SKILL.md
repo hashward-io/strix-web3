@@ -1,6 +1,6 @@
 ---
 name: auditing-smart-contracts-with-strix
-description: Audit a smart-contract protocol with Strix on any supported chain — an autonomous multi-agent audit that detects the ecosystem, maps the protocol, derives its invariants, runs the specialist attack lenses, and proves each finding with a runnable proof-of-concept instead of a static-analysis alert. Covers EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, and Bitcoin. Runs self-hosted with the open-source CLI against a local project, a repository, or a deployed on-chain address. Use when the user asks to audit, security-review, or find vulnerabilities in a smart contract, DeFi protocol, or on-chain program.
+description: Audit a smart-contract protocol with Strix on any supported chain — an autonomous multi-agent audit that detects the ecosystem, maps the protocol, derives its invariants, runs the specialist attack lenses, and proves each finding with a runnable proof-of-concept instead of a static-analysis alert. Covers EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, Algorand, Cardano, and Bitcoin. Runs self-hosted with the open-source CLI against a local project, a repository, or a deployed on-chain address. Use when the user asks to audit, security-review, or find vulnerabilities in a smart contract, DeFi protocol, or on-chain program.
 license: Apache-2.0
 metadata:
   author: usestrix
@@ -20,7 +20,7 @@ Strix Web3 audits blockchain protocols across every major chain and language. It
 
 ## Supported ecosystems
 
-EVM (Solidity, Vyper, Yul/Huff, Arbitrum Stylus), Solana (Anchor/native Rust), Move (Sui, Aptos), Cairo/Starknet, CosmWasm, TON (FunC/Tact), Substrate/ink!, ZK circuits (Circom, Noir, Halo2), Sway/Fuel, NEAR, and Bitcoin Script. The ecosystem is detected automatically from the manifest (Foundry/Hardhat, `Anchor.toml`, `Move.toml`, `Scarb.toml`, `Cargo.toml`, `tact.config.json`, `Forc.toml`, `Nargo.toml`, …).
+EVM (Solidity, Vyper, Yul/Huff, Arbitrum Stylus), Solana (Anchor/native Rust), Move (Sui, Aptos), Cairo/Starknet, CosmWasm, TON (FunC/Tact), Substrate/ink!, ZK circuits (Circom, Noir, Halo2), Sway/Fuel, NEAR, Algorand (AVM), Cardano (Aiken, Plutus), and Bitcoin Script. The ecosystem is detected automatically from the manifest (Foundry/Hardhat, `Anchor.toml`, `Move.toml`, `Scarb.toml`, `Cargo.toml`, `tact.config.json`, `Forc.toml`, `Nargo.toml`, `aiken.toml`, …).
 
 ## Prerequisites
 

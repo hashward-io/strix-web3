@@ -119,9 +119,11 @@ Artifacts:  strix_runs/<name>/  (audit_report.md, vulnerabilities.json, findings
         action="append",
         help="Target to audit: a local smart-contract project directory in any supported "
         "ecosystem (Foundry/Hardhat, Anchor/Solana, Move, Scarb/Cairo, CosmWasm, Tact/TON, "
-        "ink!/Substrate, Circom/Noir, Forc/Sway, NEAR, Bitcoin), a Git repository URL, or a "
+        "ink!/Substrate, Circom/Noir, Forc/Sway, NEAR, Algorand, Aiken/Cardano, Bitcoin), a "
+        "Git repository URL, or a "
         "deployed on-chain target (EVM 0x<40 hex>, Solana base58, Sui/Aptos/Starknet "
-        "0x<64 hex>, Cosmos bech32, TON, or Bitcoin, optionally prefixed with a chain, e.g. "
+        "0x<64 hex>, Cosmos bech32, TON, Cardano addr1…, Algorand, or Bitcoin, optionally "
+        "prefixed with a chain, e.g. "
         "1:0x<40 hex> or sui:0x<64 hex>). Local directories are mounted into the sandbox "
         "writable. Can be specified multiple times for multi-target scans. Fresh runs "
         "require --target or --target-list.",

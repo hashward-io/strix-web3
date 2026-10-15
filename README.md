@@ -2,7 +2,7 @@
 
 # Strix Web3
 
-### Autonomous AI smart-contract auditor. Multi-agent security review for EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, and Bitcoin — with proof-of-concept exploits.
+### Autonomous AI smart-contract auditor. Multi-agent security review for EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, Algorand, Cardano, and Bitcoin — with proof-of-concept exploits.
 
 <br/>
 
@@ -22,12 +22,12 @@ Strix Web3 runs a team of autonomous audit agents against a blockchain protocol 
 
 **Key capabilities:**
 
-- **Multi-ecosystem** — EVM (Solidity, Vyper, Yul/Huff, Arbitrum Stylus), Solana (Anchor/native Rust), Move (Sui, Aptos), Cairo/Starknet, CosmWasm, TON (FunC/Tact), Substrate/ink!, ZK circuits (Circom, Noir, Halo2), Sway/Fuel, NEAR, and Bitcoin Script — with automatic ecosystem detection and per-chain playbooks
+- **Multi-ecosystem** — EVM (Solidity, Vyper, Yul/Huff, Arbitrum Stylus), Solana (Anchor/native Rust), Move (Sui, Aptos), Cairo/Starknet, CosmWasm, TON (FunC/Tact), Substrate/ink!, ZK circuits (Circom, Noir, Halo2), Sway/Fuel, NEAR, Algorand (AVM: Algorand Python/PyTeal/Beaker), Cardano (Aiken, Plutus), and Bitcoin Script — with automatic ecosystem detection and per-chain playbooks
 - **Twelve attack lenses** — math-precision, access-control, economic-security, execution-trace, invariant, periphery, first-principles, asymmetry, boundary, numerical-gap, trust-gap, flow-gap (chain-agnostic)
-- **Per-ecosystem bug classes** — the EVM set (reentrancy, oracle/price manipulation, precision & rounding, accounting, flash loans, signatures, upgradeability, unchecked returns, ERC-4626 inflation, token integration, DoS/griefing, MEV, governance, cross-contract consistency) plus `solana-*`, `move-*`, `cairo-*`, `cosmwasm-*`, `zk-*`, `ton-*`, `substrate-*`, `ink-*`, `sway-*`, `near-*`, `bitcoin-*`, and `stylus-*` classes
+- **Per-ecosystem bug classes** — the EVM set (reentrancy, oracle/price manipulation, precision & rounding, accounting, flash loans, signatures, upgradeability, unchecked returns, ERC-4626 inflation, token integration, DoS/griefing, MEV, governance, cross-contract consistency) plus `solana-*`, `move-*`, `cairo-*`, `cosmwasm-*`, `zk-*`, `ton-*`, `substrate-*`, `ink-*`, `sway-*`, `near-*`, `algorand-*`, `cardano-*`, `bitcoin-*`, and `stylus-*` classes
 - **Protocol playbooks** — AMM/DEX, lending, vaults/ERC-4626, staking/restaking, perps, bridges/messaging, governance, oracles, account abstraction, RWA/tokenization, NFTs/marketplaces, intents/solvers
 - **Curated vuln data** — bundled checklists distilled from SCSVS, `smart-contract-vulnerabilities`, Web3Bugs, `weird-erc20`, and per-ecosystem security checklists
-- **Multi-chain sandbox** — Foundry/Slither/Aderyn/Echidna/Medusa/Halmos, Anchor/LiteSVM, Sui/Aptos Move + Prover, Scarb/`snforge`, CosmWasm, Circom/`snarkjs`, Noir, Tact/Blueprint, `cargo-contract`, Forc/Fuel, `cargo near`, and Bitcoin Core
+- **Multi-chain sandbox** — Foundry/Slither/Aderyn/Echidna/Medusa/Halmos, Anchor/LiteSVM, Sui/Aptos Move + Prover, Scarb/`snforge`, CosmWasm, Circom/`snarkjs`, Noir, Tact/Blueprint, `cargo-contract`, Forc/Fuel, `cargo near`, AlgoKit, Aiken, and Bitcoin Core
 - **Proof-of-concept driven** — every High/Critical carries a runnable exploit or a complete reachable trace
 - **Developer-first output** — severity-ranked findings with an inline, root-cause fix
 
@@ -46,9 +46,10 @@ Strix Web3 runs a team of autonomous audit agents against a blockchain protocol 
 - An LLM API key from any [supported provider](https://docs.strix.ai/llm-providers/overview) (OpenAI, Anthropic, Google, etc.).
 
 ```bash
-# Install Strix Web3 (same installer as upstream; this fork ships the Web3 engine)
-curl -sSL https://strix.ai/install | bash
-# ...or run from source: uv run strix --target ./protocol
+# Install Strix Web3 — this fork has no release binaries, so run it from source:
+git clone https://github.com/hashward-io/strix-web3 && cd strix-web3
+make dev-install          # or: uv sync
+uv run strix --target ./protocol
 
 # Configure your AI provider
 export STRIX_LLM="openrouter/z-ai/glm-5.3"
@@ -58,11 +59,13 @@ export LLM_API_KEY="your-api-key"
 export ETH_RPC_URL="https://your-archive-rpc"
 
 # Audit a local project (any supported ecosystem)
-strix --target ./my-protocol
+uv run strix --target ./my-protocol
 ```
 
 > [!NOTE]
-> The first run automatically pulls the sandbox Docker image. Results are saved to `strix_runs/<run-name>/`.
+> The fork's sandbox image (`ghcr.io/hashward-io/strix-web3-sandbox`) is not on a
+> public registry yet. Build it once with `./scripts/docker.sh` and run with
+> `STRIX_IMAGE=strix-sandbox:dev` (see [Sandbox Tools](docs/tools/sandbox.mdx)).
 
 ## Usage examples
 
@@ -79,6 +82,8 @@ strix --target 1:0x0123456789abcdef0123456789abcdef01234567      # EVM
 strix --target solana:9xQeWvG816bUx9EPf...                        # Solana program
 strix --target sui:0x2                                                # Sui package
 strix --target starknet:0x049d36570d4e46f48e99674bd3fcc84644dd6b8a      # Starknet
+strix --target cardano:addr1qy2l9xpjs6z97lztgp3ywp4e8w2q0v6m0c9j0g8x0x3fz2c0j8  # Cardano validator
+strix --target algorand:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ  # Algorand app account
 
 # A proxy and its implementation together
 strix --target ./src --target 0xProxyAddress
@@ -127,11 +132,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - run: curl -sSL https://strix.ai/install | bash
+      - name: Install Strix (from source)
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          git clone --depth 1 https://github.com/hashward-io/strix-web3 /tmp/strix-web3
+          cd /tmp/strix-web3 && uv sync
+          echo "/tmp/strix-web3/.venv/bin" >> "$GITHUB_PATH"
       - env:
           STRIX_LLM: ${{ vars.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+          STRIX_IMAGE: ghcr.io/hashward-io/strix-web3-sandbox:1.7.0
         run: strix -n -t . --scope-mode diff --diff-base "origin/${{ github.base_ref }}" --max-budget 15
       - uses: github/codeql-action/upload-sarif@v3
         if: always()
@@ -209,7 +220,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md). Layout: `strix/agents` (agent graph + 
 
 ## Acknowledgements
 
-Strix Web3 builds on the open-source work of [Foundry](https://github.com/foundry-rs/foundry), [Slither](https://github.com/crytic/slither), [Echidna](https://github.com/crytic/echidna), [Medusa](https://github.com/crytic/medusa), [Halmos](https://github.com/a16z/halmos), [Aderyn](https://github.com/Cyfrin/aderyn), [Anchor](https://github.com/coral-xyz/anchor), [Sui](https://github.com/MystenLabs/sui), [Aptos](https://github.com/aptos-labs/aptos-core), [Starknet Foundry](https://github.com/foundry-rs/starknet-foundry), [Scarb](https://github.com/software-mansion/scarb), [CosmWasm](https://github.com/CosmWasm/cosmwasm), [circom](https://github.com/iden3/circom) and [snarkjs](https://github.com/iden3/snarkjs), [Noir](https://github.com/noir-lang/noir), [Tact](https://github.com/tact-lang/tact), [ink!](https://github.com/use-ink/ink), [Sway](https://github.com/FuelLabs/sway), [near-sdk](https://github.com/near/near-sdk-rs), and [rust-miniscript](https://github.com/rust-bitcoin/rust-miniscript), [LiteLLM](https://github.com/BerriAI/litellm), and [Bubble Tea](https://github.com/charmbracelet/bubbletea). It adapts [Pashov Audit Group](https://github.com/pashov)'s public Web3 audit methodology, [Trail of Bits](https://github.com/trailofbits/skills)' audit skills, and [zkSecurity](https://github.com/zksecurity/zk-skills)' ZK skills. Huge thanks to their maintainers.
+Strix Web3 builds on the open-source work of [Foundry](https://github.com/foundry-rs/foundry), [Slither](https://github.com/crytic/slither), [Echidna](https://github.com/crytic/echidna), [Medusa](https://github.com/crytic/medusa), [Halmos](https://github.com/a16z/halmos), [Aderyn](https://github.com/Cyfrin/aderyn), [Anchor](https://github.com/coral-xyz/anchor), [Sui](https://github.com/MystenLabs/sui), [Aptos](https://github.com/aptos-labs/aptos-core), [Starknet Foundry](https://github.com/foundry-rs/starknet-foundry), [Scarb](https://github.com/software-mansion/scarb), [CosmWasm](https://github.com/CosmWasm/cosmwasm), [circom](https://github.com/iden3/circom) and [snarkjs](https://github.com/iden3/snarkjs), [Noir](https://github.com/noir-lang/noir), [Tact](https://github.com/tact-lang/tact), [ink!](https://github.com/use-ink/ink), [Sway](https://github.com/FuelLabs/sway), [near-sdk](https://github.com/near/near-sdk-rs), [AlgoKit](https://github.com/algorandfoundation/algokit-cli), [Aiken](https://github.com/aiken-lang/aiken), and [rust-miniscript](https://github.com/rust-bitcoin/rust-miniscript), [LiteLLM](https://github.com/BerriAI/litellm), and [Bubble Tea](https://github.com/charmbracelet/bubbletea). It adapts [Pashov Audit Group](https://github.com/pashov)'s public Web3 audit methodology, [Trail of Bits](https://github.com/trailofbits/skills)' audit skills, and [zkSecurity](https://github.com/zksecurity/zk-skills)' ZK skills. Huge thanks to their maintainers.
 
 > [!WARNING]
 > **Authorized use only.** Strix Web3 audits the code and contracts you point it at, so only run it against code you own or have **explicit, written permission** to audit. You alone are responsible for obtaining authorization and complying with the law. Strix is provided "as is" with no warranty or liability for misuse.

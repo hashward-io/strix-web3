@@ -47,6 +47,8 @@ Every audit starts by detecting the target's chain/language, then loading the ma
 | `zk`         | Circom, Noir, Halo2, gnark — constraints, soundness, Fiat–Shamir      |
 | `sway`       | Sway/Fuel — storage, predicates, assets, reentrancy                   |
 | `near`       | Rust/AssemblyScript — promises, storage staking, access              |
+| `algorand`   | Algorand Python/PyTeal/Beaker — atomic groups, rekey, inner txns     |
+| `cardano`    | Aiken/Plutus — eUTxO, double satisfaction, datum/redeemer, tokens    |
 | `bitcoin`    | Script/Miniscript — covenants, timelocks, sighash, malleability       |
 
 ### Attack Lenses (`hacking_agents/`)
@@ -103,6 +105,8 @@ EVM is one ecosystem of many. Each chain has its own bug classes:
 | Substrate/ink! | `substrate-dispatch-origin`, `substrate-storage-and-weight`, `ink-storage-and-abi` |
 | Sway | `sway-storage-and-predicates`, `sway-arithmetic-and-reentrancy` |
 | NEAR | `near-promise-and-storage`, `near-access-and-math` |
+| Algorand | `algorand-group-transactions`, `algorand-account-and-rekey`, `algorand-inner-and-storage` |
+| Cardano | `cardano-eutxo-double-satisfaction`, `cardano-datum-redeemer-context`, `cardano-value-and-minting` |
 | Bitcoin | `bitcoin-script-covenants` |
 | Stylus | `stylus-arbitrum-specific` |
 
@@ -162,6 +166,8 @@ Sandbox CLI playbooks for the audit toolchain, one per ecosystem.
 | `stylus`      | Arbitrum Stylus toolchain                              |
 | `sway-fuel`   | Forc, fuel-core, fuelup                               |
 | `near`        | cargo near, near-workspaces                            |
+| `algorand`    | AlgoKit, goal, algokit-utils + pytest                  |
+| `aiken`       | Aiken build/check/test, cardano-cli/testnet, Lucid/Mesh |
 | `bitcoin-script` | bitcoind regtest, rust-miniscript, ord             |
 
 ### Reference (`reference/`)
@@ -178,12 +184,14 @@ Curated external vuln data, distilled into checklists.
 | `move-security-checklist` | Move (Sui/Aptos) security checklist |
 | `cairo-security-checklist` | Cairo/Starknet security checklist |
 | `zk-security-checklist` | ZK circuit security checklist |
+| `building-secure-contracts` | Trail of Bits dev guidelines and per-chain pitfalls |
 
 ### Reconnaissance (`reconnaissance/`)
 
 | Skill              | Coverage                                          |
 | ------------------ | ------------------------------------------------- |
 | `ecosystem-detection` | Detect chain/language/framework from the repo  |
+| `threat-modeling`  | Assets, actors, trust boundaries, must-never-happen |
 | `x-ray`            | Pre-audit recon: modules, roles, value, flows     |
 | `protocol-mapping` | Mapping subsystems and trust boundaries           |
 | `git-history`      | Mining history for hotspots and late changes      |

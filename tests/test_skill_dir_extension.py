@@ -250,6 +250,7 @@ def test_resolve_skills_always_includes_analysis_baseline() -> None:
 
     assert "analysis/counterevidence" in resolved
     assert "analysis/severity_calibration" in resolved
+    assert "reconnaissance/threat-modeling" in resolved
 
 
 def test_resolve_skills_adds_diff_mode_only_when_diff_scoped() -> None:
@@ -270,6 +271,7 @@ def test_resolve_skills_gates_source_aware_skills_on_whitebox() -> None:
     assert "analysis/fix_verification" in whitebox
     assert "coordination/audit_whitebox" in whitebox
     assert "analysis/invariant-discovery" in whitebox
+    assert "analysis/property-based-testing" in whitebox
 
 
 def test_new_skill_files_load() -> None:

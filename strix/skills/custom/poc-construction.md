@@ -49,6 +49,8 @@ Every PoC states, in order:
 | zk | `nargo execute`/`prove` with a witness that violates soundness; or `snarkjs` verify |
 | sway | `forc test` / `fuel-core` local node |
 | near | `near-workspaces` sandbox test |
+| algorand | AlgoKit localnet + `pytest` (`algokit-utils`); assert balances, global/local state, boxes |
+| cardano | `aiken test` against a constructed `Transaction`, or a `cardano-testnet` + Lucid/`cardano-cli` tx |
 | bitcoin | `bitcoind -regtest` + `bitcoin-cli`, or a `rust-bitcoin`/`miniscript` unit test |
 
 ## Rules

@@ -3,7 +3,7 @@ title: "Introduction"
 description: "Open-source AI smart-contract auditors for every major chain and language"
 ---
 
-Strix Web3 is a team of autonomous AI agents that audit blockchain protocols — EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, and Bitcoin — like a senior auditor: they detect the ecosystem, read the source, derive the protocol's invariants, run the specialist attack lenses, and prove every real finding with a runnable proof-of-concept instead of a static-analysis alert.
+Strix Web3 is a team of autonomous AI agents that audit blockchain protocols — EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, Algorand, Cardano, and Bitcoin — like a senior auditor: they detect the ecosystem, read the source, derive the protocol's invariants, run the specialist attack lenses, and prove every real finding with a runnable proof-of-concept instead of a static-analysis alert.
 
 <Frame>
   <img src="/images/screenshot.png" alt="Strix Web3" />
@@ -33,11 +33,11 @@ Strix Web3 is a team of autonomous AI agents that audit blockchain protocols —
 
 ## Key Capabilities
 
-- **Multi-ecosystem** — automatic ecosystem detection and per-chain playbooks for EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, and Bitcoin
-- **Multi-chain toolkit** — Foundry/Slither/Aderyn/Echidna/Medusa/Halmos, Anchor/LiteSVM, Sui/Aptos Move + Prover, Scarb/`snforge`, CosmWasm, Circom/`snarkjs`, Noir, Tact/Blueprint, `cargo-contract`, Forc/Fuel, `cargo near`, and Bitcoin Core
+- **Multi-ecosystem** — automatic ecosystem detection and per-chain playbooks for EVM, Solana, Move, Cairo, CosmWasm, TON, Substrate/ink!, ZK circuits, Sway, NEAR, Algorand, Cardano, and Bitcoin
+- **Multi-chain toolkit** — Foundry/Slither/Aderyn/Echidna/Medusa/Halmos, Anchor/LiteSVM, Sui/Aptos Move + Prover, Scarb/`snforge`, CosmWasm, Circom/`snarkjs`, Noir, Tact/Blueprint, `cargo-contract`, Forc/Fuel, `cargo near`, AlgoKit, Aiken, and Bitcoin Core
 - **Real validation** — a runnable proof-of-concept in the ecosystem's harness, not false positives
 - **Multi-agent orchestration** — Twelve attack lenses and per-ecosystem bug-class and protocol specialists collaborate
-- **Curated vuln data** — checklists distilled from SCSVS, `smart-contract-vulnerabilities`, Web3Bugs, `weird-erc20`, and per-ecosystem security checklists
+- **Curated vuln data** — checklists distilled from SCSVS, `smart-contract-vulnerabilities`, Web3Bugs, `weird-erc20`, `building-secure-contracts`, and per-ecosystem security checklists
 - **Developer-first CLI** — Interactive TUI or headless mode for automation
 
 ## Audit Toolkit
@@ -56,6 +56,8 @@ Strix Web3 agents come equipped with a multi-chain audit toolchain, selected per
 | ZK | `circom`/`snarkjs`/`circomspect`/`ecne`, `nargo` + `bb` |
 | Sway / Fuel | Forc, `fuel-core` |
 | NEAR | `cargo near`, `near-workspaces` |
+| Algorand | AlgoKit (`algokit`), `goal`, `algokit-utils` + `pytest` |
+| Cardano | `aiken`, `cardano-cli`/`cardano-testnet`, Lucid/Mesh |
 | Bitcoin | `bitcoin-cli`/`bitcoind` (regtest), `rust-miniscript`, ord/runes |
 
 The invariant catalog and coverage ledger are engine-wide: the protocol's must-hold properties and the negative space of the audit, tracked the same way on every chain.
@@ -76,6 +78,8 @@ Every ecosystem runs the same twelve lenses over its own bug-class map:
 | Substrate / ink! | Dispatch origin, storage/weight, ABI/selector collisions |
 | Sway | Storage & predicates, arithmetic, reentrancy |
 | NEAR | Promise/async trust, predecessor vs signer, storage staking |
+| Algorand | Atomic-group composition, rekey/close-remainder drain, inner-txn authorization, boxes/MBR |
+| Cardano | Double satisfaction, missing continuation/output checks, datum/redeemer trust, native-token forgery |
 | Bitcoin | Covenant soundness, timelocks, sighash flags, malleability |
 
 ## Multi-Agent Architecture
@@ -90,8 +94,10 @@ Strix Web3 uses a graph of specialized agents for a thorough audit:
 ## Quick Example
 
 ```bash
-# Install
-curl -sSL https://strix.ai/install | bash
+# Install (this fork has no release binaries — run from source)
+git clone https://github.com/hashward-io/strix-web3 && cd strix-web3
+make dev-install && ./scripts/docker.sh
+export STRIX_IMAGE=strix-sandbox:dev
 
 # Configure
 export STRIX_LLM="openrouter/z-ai/glm-5.3"
@@ -99,7 +105,7 @@ export LLM_API_KEY="your-api-key"
 export ETH_RPC_URL="https://your-archive-rpc"   # optional, for EVM fork PoCs
 
 # Audit
-strix --target ./my-protocol
+uv run strix --target ./my-protocol
 ```
 
 ## Community

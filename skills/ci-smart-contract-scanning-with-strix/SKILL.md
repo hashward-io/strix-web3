@@ -26,14 +26,19 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
-      - name: Install Strix
-        run: curl -sSL https://strix.ai/install | bash
+      - name: Install Strix (from source)
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          git clone --depth 1 https://github.com/hashward-io/strix-web3 /tmp/strix-web3
+          cd /tmp/strix-web3 && uv sync
+          echo "/tmp/strix-web3/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Audit the change set
         env:
           STRIX_LLM: ${{ vars.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+          STRIX_IMAGE: ghcr.io/hashward-io/strix-web3-sandbox:1.7.0
         run: strix -n -t . --scope-mode diff --diff-base "origin/${{ github.base_ref }}" --max-budget 15
 
       - name: Upload SARIF
@@ -58,7 +63,10 @@ strix-audit:
   variables:
     STRIX_LLM: "$STRIX_LLM"
   script:
-    - curl -sSL https://strix.ai/install | bash
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - git clone --depth 1 https://github.com/hashward-io/strix-web3 /tmp/strix-web3
+    - (cd /tmp/strix-web3 && uv sync)
+    - export PATH="/tmp/strix-web3/.venv/bin:$PATH"
     - strix -n -t . --scope-mode diff --diff-base "$CI_MERGE_REQUEST_DIFF_BASE_SHA" --max-budget 15
   artifacts:
     when: always

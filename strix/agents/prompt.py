@@ -40,6 +40,9 @@ def _resolve_skills(
     3. ``reconnaissance/ecosystem-detection`` (always — the first step of
        every audit is identifying the target's chain/language, and it is
        the pointer to the ``ecosystems/*`` playbook for that chain).
+    4. ``reconnaissance/threat-modeling`` (always — assets, actors, trust
+       boundaries, and the "must never happen" list that every candidate
+       is judged against and every invariant is derived from).
     4. ``tooling/python`` (always — Python runs through ``exec_command``
        for decoding, boundary math, and harness generation).
     5. ``tooling/foundry`` and ``custom/foundry-poc`` (always — EVM is the
@@ -56,15 +59,17 @@ def _resolve_skills(
        multi-chain targets into workstreams.
     9. Whitebox-specific skills if applicable: ``coordination/audit_whitebox``
        (the source-available playbook), ``analysis/invariant-discovery``
-       (the invariant catalog the audit is structured around), and
-       ``analysis/fix_verification`` (only whitebox agents can attach an
-       applyable ``fix_after``).
+       (the invariant catalog the audit is structured around),
+       ``analysis/property-based-testing`` (turning those invariants into
+       executable properties), and ``analysis/fix_verification`` (only whitebox
+       agents can attach an applyable ``fix_after``).
     """
     ordered: list[str] = list(requested or [])
     ordered.append(f"scan_modes/{scan_mode}")
     if is_diff_scoped:
         ordered.append("scan_modes/diff")
     ordered.append("reconnaissance/ecosystem-detection")
+    ordered.append("reconnaissance/threat-modeling")
     ordered.append("tooling/python")
     ordered.append("tooling/foundry")
     ordered.append("custom/foundry-poc")
@@ -77,6 +82,7 @@ def _resolve_skills(
     if is_whitebox:
         ordered.append("coordination/audit_whitebox")
         ordered.append("analysis/invariant-discovery")
+        ordered.append("analysis/property-based-testing")
         ordered.append("analysis/fix_verification")
 
     deduped: list[str] = []

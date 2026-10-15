@@ -9,7 +9,7 @@ You have the source. The code tells you the boundaries, the entry points, and th
 
 ## Phase 0 — Detect, map, and build
 
-1. **Detect the ecosystem and toolchain** (`reconnaissance/ecosystem-detection`). Read the manifest first (`foundry.toml`/`hardhat.config.*`, `Anchor.toml`, `Move.toml`, `Scarb.toml`, `Nargo.toml`, CosmWasm `Cargo.toml`, `tact.config.json`, ink! `Cargo.toml`, `Forc.toml`, NEAR `Cargo.toml`, Circom/Noir files). Record the source directory.
+1. **Detect the ecosystem and toolchain** (`reconnaissance/ecosystem-detection`). Read the manifest first (`foundry.toml`/`hardhat.config.*`, `Anchor.toml`, `Move.toml`, `Scarb.toml`, `Nargo.toml`, CosmWasm `Cargo.toml`, `tact.config.json`, ink! `Cargo.toml`, `Forc.toml`, NEAR `Cargo.toml`, `aiken.toml`, AlgoKit config, Circom/Noir files). Record the source directory.
 2. **Establish a green build before trusting any tool output.** A static analyzer, fuzzer, or prover run against code that does not compile produces noise. Use the ecosystem's build command (`tooling/*`):
    - EVM: `forge build` (fall back to `--skip test`/`--via-ir`) or `npx hardhat compile`.
    - Solana: `anchor build` / `cargo build-sbf`.

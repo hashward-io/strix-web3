@@ -26,7 +26,7 @@ for the seams (`coordination/ecosystem-decomposition`). Apply the scope rule per
 - **In scope:** the production source of each detected ecosystem, as its manifest declares
   (Foundry/Hardhat `src`/`contracts`, Anchor `programs/`, Move `sources/`, Scarb `src`,
   CosmWasm `src/`, Tact/FunC contracts, ink! `lib.rs`, Circom/Noir circuits, Sway `src`,
-  NEAR `src`, etc.).
+  NEAR `src`, Algorand `smart_contracts/` or `*.py`/`*.teal`, Aiken `validators/`/`lib/`, etc.).
 - **Deploy/init scripts stay in scope** — they set constructor/init args, hand over authority,
   and seed state.
 - **Exclude:** dependency and build dirs (`node_modules/`, `lib/`, `target/`, `build/`,
@@ -57,7 +57,7 @@ Structure audit work by function so coverage is explicit:
 
 - `hacking_agents/math-precision`, `hacking_agents/access-control`, `hacking_agents/economic-security`, `hacking_agents/execution-trace`, `hacking_agents/invariant`, `hacking_agents/periphery`, `hacking_agents/first-principles`, `hacking_agents/asymmetry`, `hacking_agents/boundary`, `hacking_agents/numerical-gap`, `hacking_agents/trust-gap`, `hacking_agents/flow-gap`.
 
-**Bug-class specialists** — spawn per module × bug class where the code shape warrants it, using the ecosystem's `vulnerabilities/*`: EVM (reentrancy, oracle manipulation, precision/rounding, accounting/conservation, signature replay, upgradeability, unchecked returns, ERC-4626 inflation, token integration, MEV, governance, cross-contract consistency); Solana (`solana-*`); Move (`move-*`); Cairo (`cairo-*`); CosmWasm (`cosmwasm-*`); ZK (`zk-*`); TON (`ton-*`); Substrate/ink! (`substrate-*`, `ink-*`); Sway (`sway-*`); NEAR (`near-*`); Bitcoin (`bitcoin-*`); Stylus (`stylus-*`).
+**Bug-class specialists** — spawn per module × bug class where the code shape warrants it, using the ecosystem's `vulnerabilities/*`: EVM (reentrancy, oracle manipulation, precision/rounding, accounting/conservation, signature replay, upgradeability, unchecked returns, ERC-4626 inflation, token integration, MEV, governance, cross-contract consistency); Solana (`solana-*`); Move (`move-*`); Cairo (`cairo-*`); CosmWasm (`cosmwasm-*`); ZK (`zk-*`); TON (`ton-*`); Substrate/ink! (`substrate-*`, `ink-*`); Sway (`sway-*`); NEAR (`near-*`); Algorand (`algorand-*`); Cardano (`cardano-*`); Bitcoin (`bitcoin-*`); Stylus (`stylus-*`).
 
 **Protocol specialists** — for protocol-specific risk, use `protocols/*` (AMM/DEX, lending, vaults/ERC-4626, staking/restaking, perps, bridges/messaging, governance, oracles, account-abstraction, rwa-and-tokenization, nft-and-marketplaces, intents-and-solvers).
 

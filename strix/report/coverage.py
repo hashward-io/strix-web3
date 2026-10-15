@@ -456,6 +456,51 @@ _SKILL_PHRASINGS: dict[str, tuple[str, ...]] = {
         "delegate call",
         "entrypoint",
     ),
+    "algorand-group-transactions": (
+        "atomic group",
+        "group transaction",
+        "gtxn",
+        "fee pooling",
+        "group index",
+    ),
+    "algorand-account-and-rekey": (
+        "rekey",
+        "close remainder",
+        "sender",
+        "clawback",
+        "asset allowlist",
+    ),
+    "algorand-inner-and-storage": (
+        "inner transaction",
+        "itxn",
+        "caller app",
+        "box",
+        "minimum balance",
+        "app call depth",
+    ),
+    "cardano-eutxo-double-satisfaction": (
+        "double satisfaction",
+        "eutxo",
+        "continuation",
+        "continuing output",
+        "unspent output",
+    ),
+    "cardano-datum-redeemer-context": (
+        "datum",
+        "redeemer",
+        "script context",
+        "validity range",
+        "signatories",
+        "purpose",
+    ),
+    "cardano-value-and-minting": (
+        "minting policy",
+        "native token",
+        "counterfeit",
+        "lovelace",
+        "one-shot",
+        "value normalization",
+    ),
 }
 
 
