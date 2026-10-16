@@ -79,9 +79,9 @@ Strix is entirely tool-driven: every working turn must be a **native** function/
 This is almost always an **inference-server configuration** problem, not a model or Strix problem. Common symptoms are the model printing a call as text such as:
 
 ```text
-<tool_call>{"name": "exec_command", "arguments": {"cmd": "nmap ..."}}</tool_call>
-exec_command(cmd="nmap ...", timeout=180)
-{"action": "exec_command", "params": {"cmd": "nmap ..."}}
+<tool_call>{"name": "exec_command", "arguments": {"cmd": "forge test ..."}}</tool_call>
+exec_command(cmd="forge test ...", timeout=180)
+{"action": "exec_command", "params": {"cmd": "forge test ..."}}
 ```
 
 The fix belongs on the inference server: it must be configured to parse the model's tool tokens into structured `tool_calls`. A correctly configured endpoint either returns a structured call or rejects the request outright — it never leaks the call as text.

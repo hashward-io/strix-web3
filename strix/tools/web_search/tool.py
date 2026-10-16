@@ -324,31 +324,29 @@ async def web_search(ctx: RunContextWrapper, query: str) -> str:
 
     Use it liberally for anything that's not in your training data:
 
-    - Current CVEs, advisories, and 0-days for a specific
-      service/version (``OpenSSH 9.6 RCE``, ``Jenkins 2.401.3 auth
-      bypass``).
-    - Latest WAF / EDR bypass techniques (``Cloudflare WAF SQLi
-      bypass 2025``, ``CrowdStrike Falcon evasion``).
-    - Tool documentation, flag references, payload galleries.
-    - Target reconnaissance / OSINT (company tech stack, leaked
-      credentials, exposed assets).
-    - Cloud-provider misconfiguration patterns
-      (Azure/AWS/GCP-specific attack paths).
-    - Bug-bounty writeups and security research papers.
-    - Compliance frameworks and CWE/CVSS guidance.
-    - Picking the right Python lib / Kali tool for a job (``best 2025
-      lib for JWT alg-confusion``).
-    - When stuck — looking up the exact error message, ``Access
-      denied`` quirks, kernel-specific local-privesc exploits.
+    - Current vulnerabilities, advisories, and post-mortems for a specific
+      protocol, contract standard, or compiler version (``Curve Vyper
+      reentrancy 2023``, ``solc 0.8.13 optimizer bug``).
+    - Known exploits and their writeups (``Euler Finance donation
+      attack``, ``Wormhole signature-verification bypass``).
+    - Audit reports and findings for a protocol or a fork of it
+      (``Pashov audit Aave fork``, ``Code4rena Uniswap v4 findings``).
+    - Ecosystem-specific tooling, harnesses, and PoC techniques
+      (``Foundry fork-test cheatcodes``, ``Anchor CPI guard pattern``).
+    - Chain/protocol documentation and contract standards (``ERC-4626
+      rounding spec``, ``CosmWasm reply submessage``).
+    - Public proof-of-concept repositories and exploit transactions.
+    - CWE/CVSS guidance and smart-contract security frameworks (SWC, SCSVS).
+    - When stuck — looking up an exact compiler error, an RPC/explorer
+      quirk, or a harness-specific failure.
 
-    Be specific: include version numbers, error messages, target
-    technology, and the exact problem you're stuck on. The more context
-    in the query, the more actionable the answer. Vague queries get
-    generic answers.
+    Be specific: include versions, the chain/ecosystem, the
+    contract/function, and the exact problem you're stuck on. The more
+    context in the query, the more actionable the answer. Vague queries
+    get generic answers.
 
-    A security-focused system prompt biases responses toward CVEs,
-    exploits, Kali-compatible tooling, and concrete code/command
-    examples.
+    A security-focused system prompt biases responses toward protocol
+    exploits, audit findings, and concrete code/command examples.
 
     With the Exa provider you get a ranked list of results, each with a
     title, URL, and a short security-focused summary. Read the result
@@ -359,27 +357,23 @@ async def web_search(ctx: RunContextWrapper, query: str) -> str:
     **Good example queries** (each is a full sentence, names a
     version/product, and asks one concrete thing):
 
-    - ``"Found OpenSSH 7.4 on port 22 — any known RCE or privesc for
-      this exact version?"``
-    - ``"Cloudflare WAF is blocking my sqlmap on a login form — what
-      bypass techniques work in 2025?"``
-    - ``"Target runs WordPress 5.8.3 + WooCommerce 6.1.1 — current
-      RCE chains for this combo?"``
-    - ``"Low-priv shell on Ubuntu 20.04 kernel 5.4.0-74-generic — what
-      local privesc exploits hit this kernel?"``
-    - ``"Compromised domain user on Windows Server 2019 AD — quietest
-      paths to Domain Admin without tripping EDR?"``
-    - ``"'Access denied' uploading a webshell to IIS 10.0 — alternate
-      Windows IIS upload bypass techniques?"``
-    - ``"Discovered Jenkins 2.401.3 on staging — current authn-bypass
-      and RCE exploits for this version?"``
-    - ``"Best 2025 Python lib for JWT algorithm-confusion + weak-secret
-      cracking?"``
+    - ``"This is a Uniswap V2 fork with a fee-on-transfer token — which
+      known accounting bugs apply?"``
+    - ``"solc 0.8.4 with the optimizer enabled — any known
+      miscompilation affecting this version?"``
+    - ``"A Solana Anchor program CPIs to a caller-supplied program id —
+      what validation does the canonical pattern require?"``
+    - ``"Found a Cairo storage collision between two storage structs —
+      how does Starknet derive storage addresses?"``
+    - ``"This is a Curve-style Vyper pool — what was the precise root
+      cause of the 2023 reentrancy exploit?"``
+    - ``"A CosmWasm contract returns a reply on instantiate failure — how
+      do submessages and reply ids work?"``
 
     Args:
-        query: The search query — a full sentence with version numbers,
-            target tech, and the specific question. Treat it like a
-            ticket title for a senior security engineer.
+        query: The search query — a full sentence with versions, the
+            chain/ecosystem, and the specific question. Treat it like a
+            ticket title for a senior smart-contract auditor.
     """
     result = await asyncio.to_thread(_do_search, query)
     return json.dumps(result, ensure_ascii=False, default=str)
