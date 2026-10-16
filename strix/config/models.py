@@ -22,6 +22,7 @@ from agents.model_settings import ModelSettings
 from agents.models.fake_id import FAKE_RESPONSES_ID
 from agents.models.interface import Model, ModelProvider
 from agents.models.multi_provider import MultiProvider
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from agents.models.openai_responses import OpenAIResponsesModel
 from agents.retry import (
     ModelRetryBackoffSettings,
@@ -29,6 +30,7 @@ from agents.retry import (
     RetryPolicyContext,
     retry_policies,
 )
+from openai.types.chat import ChatCompletion
 from openai.types.responses import (
     Response,
     ResponseCompletedEvent,
@@ -42,7 +44,7 @@ from strix.agents.prompt import CACHE_POINT
 from strix.config import codex
 from strix.config.loader import load_settings
 from strix.config.tool_call_arguments import repair_input
-from strix.config.tool_call_ids import TurnCallIdRewriter, dedupe_input
+from strix.config.tool_call_ids import TurnCallIdRewriter, dedupe_input, new_call_id
 from strix.config.tool_call_limits import TurnToolCallLimiter
 from strix.llm import request_log
 
@@ -166,6 +168,27 @@ class _CodexResponsesModel(OpenAIResponsesModel):
                 result = close()
                 if inspect.isawaitable(result):
                     await result
+
+
+class _ToolCallIdRepairOpenAIChatModel(OpenAIChatCompletionsModel):
+    """Repair absent tool-call ids before the Agents SDK converts a response.
+
+    The streamed Chat Completions path tolerates a null id long enough for the
+    turn guard to repair it. The non-streamed SDK converter instead constructs
+    a ``ResponseFunctionToolCall`` immediately and rejects ``id=None``. Repair
+    the parsed ChatCompletion at the narrow boundary before that conversion.
+    """
+
+    async def _fetch_response(self, *args: Any, **kwargs: Any) -> Any:
+        response = await super()._fetch_response(*args, **kwargs)
+        if kwargs.get("stream", False) or not isinstance(response, ChatCompletion):
+            return response
+        for choice in response.choices:
+            message = choice.message
+            for tool_call in message.tool_calls or []:
+                if not tool_call.id:
+                    tool_call.id = new_call_id()
+        return response
 
 
 class _NonStreamingModel(Model):
@@ -633,6 +656,16 @@ class StrixProvider(MultiProvider):
             )
         else:
             model = super().get_model(model_name)
+            if isinstance(model, OpenAIChatCompletionsModel) and not isinstance(
+                model, _ToolCallIdRepairOpenAIChatModel
+            ):
+                model = _ToolCallIdRepairOpenAIChatModel(
+                    model.model,
+                    model._client,
+                    model.should_replay_reasoning_content,
+                    model._strict_feature_validation,
+                    model._buffer_streamed_tool_calls,
+                )
             resolved_name = model_name or llm.model or "unknown"
             if _routes_via_litellm(model):
                 # LiteLLM's callbacks log every reply; only a cancelled attempt

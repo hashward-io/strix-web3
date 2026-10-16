@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import litellm
 import pytest
 from agents import Agent, ModelSettings, Runner, function_tool
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from agents.run import RunConfig
 
 from strix.config import loader
@@ -48,12 +49,6 @@ class _Scenario:
     @property
     def calls(self) -> int:
         return sum(len(turn) for turn in self.turns)
-
-    @property
-    def has_null_id(self) -> bool:
-        return any(
-            call_id is None or call_id is _MISSING for turn in self.turns for call_id in turn
-        )
 
 
 SCENARIOS = {
@@ -299,7 +294,6 @@ def _final_history(handler: type[_Gateway]) -> list[dict[str, Any]]:
 @pytest.mark.parametrize("scenario_name", list(SCENARIOS))
 @pytest.mark.parametrize("model", MODELS)
 async def test_tool_call_ids_are_repaired_on_every_route(
-    request: pytest.FixtureRequest,
     monkeypatch: pytest.MonkeyPatch,
     model: str,
     scenario_name: str,
@@ -307,16 +301,6 @@ async def test_tool_call_ids_are_repaired_on_every_route(
     stream: bool,
 ) -> None:
     scenario = SCENARIOS[scenario_name]
-    if model.startswith("openai/") and not stream and scenario.has_null_id:
-        request.applymarker(
-            pytest.mark.xfail(
-                strict=True,
-                reason=(
-                    "the Agents SDK's Chat Completions converter rejects a null tool-call id "
-                    "in a non-streamed response before the turn guard sees it"
-                ),
-            )
-        )
     with _gateway(scenario) as (base_url, handler):
         result, ran = await _run(
             monkeypatch,
@@ -368,10 +352,13 @@ async def test_tool_call_ids_are_repaired_on_every_route(
 async def test_blank_call_id_is_rejected_on_every_route_without_the_guard(
     monkeypatch: pytest.MonkeyPatch, model: str, *, stream: bool
 ) -> None:
-    # Repro: with the turn guard removed, an empty id reaches the provider on
-    # every route, so the matrix above is exercising the repair and not a
-    # route that happens to fill ids in on its own.
+    # Disable both repair layers to prove that the provider's blank ID would
+    # otherwise reach the strict next request and fail.
     monkeypatch.setattr(strix_models, "_TurnGuardModel", lambda model, **_: model)
+    if model.startswith("openai/") and not stream:
+        monkeypatch.setattr(
+            strix_models, "_ToolCallIdRepairOpenAIChatModel", OpenAIChatCompletionsModel
+        )
     with (
         _gateway(SCENARIOS["empty-id"]) as (base_url, _handler),
         pytest.raises(Exception, match="must include a non-empty"),
