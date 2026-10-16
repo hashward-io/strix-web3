@@ -545,9 +545,9 @@ def _fit_revision_to_class(
 
     A finding keeps its class and the metadata that belongs to it. Writing an
     exploit onto a dependency record would leave it carrying a package pin next
-    to a request against an endpoint, so the proof belongs in its own dynamic
-    finding instead. A dependency finding is still re-rated, through the
-    contextual CVSS it was filed with.
+    to an on-chain exploit, so the proof belongs in its own dynamic finding
+    instead. A dependency finding is still re-rated, through the contextual CVSS
+    it was filed with.
     """
     matched = next(
         (r for r in report_state.get_existing_vulnerabilities() if r.get("id") == report_id),
@@ -1398,8 +1398,8 @@ async def create_vulnerability_report(
         fix_pr_body: Optional. When source is available and you have a
             concrete fix, a markdown PR-description body proposing the
             fix (summary + rationale). Prose/markdown only — the code
-            change itself belongs in ``code_locations``. Omit for
-            black-box findings.
+            change itself belongs in ``code_locations``. Omit when there is
+            no source (a deployed-only target).
     """
     (
         http_exchange_ids,
@@ -2212,13 +2212,14 @@ async def create_dependency_report(
             Whenever you found the vulnerable symbol in use, also give the
             **source-to-sink trace** here: start at the vulnerable package
             call site and walk backwards hop by hop to the entry point
-            that carries untrusted input (HTTP route, CLI argument, queue
-            message, webhook, config file), going one step deeper whenever
-            a hop is a wrapper. Write it as ``entry point -> intermediate
-            call -> package call`` with a ``file:line`` per hop, name what
-            each hop enforces (auth, role check, validation, a flag that
-            is off in production), and say who controls the input. State
-            it plainly when no entry point reaches the sink — that is the
+            that carries untrusted input (an externally-callable contract
+            function, a callback, a constructor/initializer, or the build
+            and deploy tooling), going one step deeper whenever a hop is a
+            wrapper. Write it as ``entry point -> intermediate call ->
+            package call`` with a ``file:line`` per hop, name what each
+            hop enforces (auth, role check, validation, a flag that is off
+            in production), and say who controls the input. State it
+            plainly when no entry point reaches the sink — that is the
             most useful result a reader can get.
         code_locations: Where application code imports or calls the package —
             the evidence behind your ``reachability`` claim. List of dicts,
