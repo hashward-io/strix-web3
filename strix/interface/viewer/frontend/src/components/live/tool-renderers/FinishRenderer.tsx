@@ -11,7 +11,7 @@ export default function FinishRenderer({ args }: ToolRendererProps) {
 
   return (
     <div className="space-y-3">
-      <span className="text-emerald-400/80 font-semibold text-sm">Penetration test completed</span>
+      <span className="text-emerald-400/80 font-semibold text-sm">Audit completed</span>
       {executiveSummary && (
         <div><span className="text-emerald-400/60 text-sm font-semibold">Executive Summary</span><div className="mt-1"><TruncatedText text={executiveSummary} maxLines={25} /></div></div>
       )}

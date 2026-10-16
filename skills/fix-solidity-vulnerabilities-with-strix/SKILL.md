@@ -39,7 +39,7 @@ Each finding's `code_locations` holds a verbatim `fix_before`/`fix_after`. Apply
 ## Verify the fix
 
 1. Re-run the audit against the patched tree: `strix -n -t ./protocol --scan-mode quick`.
-2. Confirm the original PoC now fails, and that the fix did not open a new path. The audit's `analysis/fix-verification` skill covers the revert-to-prove step.
+2. Confirm the original PoC now fails, and that the fix did not open a new path. The audit's `analysis/fix_verification` skill covers the revert-to-prove step.
 3. Re-run the project's own tests: `forge test`.
 
 ## Rules

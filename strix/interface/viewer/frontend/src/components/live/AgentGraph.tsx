@@ -189,7 +189,7 @@ export default function AgentGraph({
         </div>
         <p className="text-sm text-[#555]">
           {scanCompleted
-            ? "Agent trace data is not available for this pentest"
+            ? "Agent trace data is not available for this audit"
             : "Waiting for agent data\u2026"}
         </p>
       </div>

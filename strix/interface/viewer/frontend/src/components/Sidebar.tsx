@@ -200,7 +200,7 @@ export default function Sidebar({
           <div className="relative flex flex-col gap-px px-2">
             <NavItem
               icon={<ProjectsIcon />}
-              label="Pentest Overview"
+              label="Audit Overview"
               active={view === "overview"}
               onClick={() => onSelectView("overview")}
             />
