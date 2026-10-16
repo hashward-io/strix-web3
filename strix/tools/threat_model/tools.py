@@ -7,11 +7,11 @@ re-deriving trust boundaries from scratch.
 
 It does not outlive the scan. The mirror lives in the run's own state directory
 and exists only so a resumed scan keeps the baseline its earlier agents agreed
-on; a new scan against the same host or checkout starts with no model and
-derives its own. Agents do spell one target several ways within a run — the URL
-they were handed, the page they happen to be testing, a checkout path — so a
-model is keyed by a normalized target identity to keep them converging on one
-document instead of each starting a fresh one.
+on; a new scan against the same target or checkout starts with no model and
+derives its own. Agents do spell one target several ways within a run — the
+address they were handed, the contract they happen to be testing, a checkout
+path — so a model is keyed by a normalized target identity to keep them
+converging on one document instead of each starting a fresh one.
 """
 
 from __future__ import annotations
@@ -31,6 +31,7 @@ from urllib.parse import urlsplit
 from agents import RunContextWrapper, function_tool
 
 from strix.core.agents import AgentCoordinator
+from strix.utils.targets import on_chain_identity, parse_deployed_contract_target
 
 
 logger = logging.getLogger(__name__)
@@ -87,14 +88,24 @@ def _local_directory(target: str) -> Path | None:
 
 
 def _remote_authority(target: str) -> str:
-    """The ``host[:port]`` a remote target lives on, or "" if it has none."""
+    """The ``host[:port]`` a remote target lives on, or "" if it has none.
+
+    A deployed-contract target, and anything whose authority does not parse,
+    returns "" so identity falls back to the target's normalized spelling
+    instead of being mistaken for a ``host:port``.
+    """
+    if on_chain_identity(target) is not None:
+        return ""
     candidate = target if "://" in target else f"//{target}"
     parts = urlsplit(candidate)
     host = (parts.hostname or "").lower()
     if not host:
         return ""
     scheme = (parts.scheme or "https").lower()
-    port = str(parts.port) if parts.port else _DEFAULT_PORTS.get(scheme, "")
+    try:
+        port = str(parts.port) if parts.port else _DEFAULT_PORTS.get(scheme, "")
+    except ValueError:
+        return ""
     return f"{host}:{port}" if port else host
 
 
@@ -139,12 +150,16 @@ def _normalize_git_remote(remote: str) -> str:
 def _target_identity(target: str) -> str:
     """Return the stable identity a model is stored under.
 
-    A checkout is keyed on its remote, so the same repository checked out at
-    two paths shares one model and a subdirectory resolves to the whole tree.
-    Everything else — a host, a URL, an API base, a named scope — is keyed on
-    its normalized form. Both routes run through the same normalization, so a
-    checkout and the URL it was cloned from land on one key.
+    A deployed on-chain address is keyed on its chain and address. A checkout is
+    keyed on its remote, so the same repository checked out at two paths shares
+    one model and a subdirectory resolves to the whole tree. Everything else — a
+    host, a URL, a named scope — is keyed on its normalized form. All routes run
+    through the same normalization, so a checkout and the URL it was cloned from
+    land on one key.
     """
+    on_chain = on_chain_identity(target)
+    if on_chain is not None:
+        return on_chain
     directory = _local_directory(target)
     if directory is None:
         return _normalize_remote_target(target).removesuffix(".git")
@@ -158,17 +173,27 @@ def _target_identity(target: str) -> str:
 def _snap_to_scan_target(raw: str, scan_targets: list[str]) -> str:
     """Pull a target onto the scan's own spelling of it.
 
-    Agents name the same target differently — one passes the URL it was given,
-    the next the page it happens to be testing, a third the checkout path. Left
-    alone those become separate keys, every lookup misses, and each agent
-    quietly derives its own model, which is the exact failure the shared model
-    exists to prevent. So a target that is recognisably one of the scan's own
-    targets is resolved to that target instead.
+    Agents name the same target differently — one passes the address it was
+    given, the next the contract it happens to be testing, a third the checkout
+    path. Left alone those become separate keys, every lookup misses, and each
+    agent quietly derives its own model, which is the exact failure the shared
+    model exists to prevent. So a target that is recognisably one of the scan's
+    own targets is resolved to that target instead.
     """
     identity = _target_identity(raw)
     scoped = [(target, _target_identity(target)) for target in scan_targets]
     if any(known == identity for _, known in scoped):
         return raw
+
+    # A deployed address is the same contract whether or not the caller pinned
+    # the chain token, so ``0x…`` snaps onto the scan's ``<chain>:0x…``.
+    raw_deployed = parse_deployed_contract_target(raw)
+    if raw_deployed is not None:
+        raw_address = raw_deployed["target_address"].lower()
+        for target in scan_targets:
+            known = parse_deployed_contract_target(target)
+            if known is not None and known["target_address"].lower() == raw_address:
+                return target
 
     authority = _remote_authority(raw)
     if authority:
@@ -198,8 +223,8 @@ def _resolve_target(
         if len(known) == 1:
             return known[0], None
         return None, (
-            "target cannot be empty - pass the host, URL, application, or "
-            "repository path this model describes"
+            "target cannot be empty - pass the contract address, repository, or "
+            "project path this model describes"
             + (f". This scan is scoped to: {', '.join(known)}" if known else "")
         )
     return (_snap_to_scan_target(raw, known) if known else raw), None
@@ -286,9 +311,9 @@ def _not_found(identity: str) -> dict[str, Any]:
         "message": (
             "No threat model for this target on this scan. Nothing carries over "
             "from other scans, so derive one — from the code if you have it, from "
-            "recon output if you do not — and share it with save_threat_model, so "
-            "every agent on this scan works from one view of the trust boundaries "
-            "instead of each inventing their own."
+            "the deployment and explorer otherwise — and share it with "
+            "save_threat_model, so every agent on this scan works from one view of "
+            "the trust boundaries instead of each inventing their own."
         ),
     }
 
@@ -431,8 +456,8 @@ def _amend_impl(
             "success": False,
             "error": (
                 f"Amendment is too thin ({len(body)} chars). Say what the base model "
-                "got wrong or left out, and name the endpoint, host, file, or control "
-                "that makes your correction true."
+                "got wrong or left out, and name the contract, function, file, or "
+                "control that makes your correction true."
             ),
         }
 
@@ -490,11 +515,11 @@ async def get_threat_model(ctx: RunContextWrapper, target: str) -> str:
     It is scoped to this scan and nothing is carried over from an
     earlier run, so an empty result means no agent has derived one yet.
 
-    Works black-box or white-box. The target can be a host, a URL, an
-    API base, or a repository path; equivalent spellings of the same
-    host resolve to the same model, and a checkout resolves to its
-    remote, so a model derived white-box by one agent is read back by
-    another testing the deployment.
+    Works against source or a deployment. The target can be a deployed
+    address, a repository path, or a checkout; equivalent spellings of
+    the same address resolve to the same model, and a checkout resolves
+    to its remote, so a model derived from the source by one agent is
+    read back by another testing the deployment.
 
     Returns ``found: false`` when nothing has been derived yet — derive
     one and share it with ``save_threat_model``.
@@ -505,8 +530,8 @@ async def get_threat_model(ctx: RunContextWrapper, target: str) -> str:
     contradicts the base text.
 
     Args:
-        target: What the model describes — a host or URL
-            (``https://app.example.com``), or a repository path
+        target: What the model describes — a deployed address
+            (``0x...`` or ``<chain>:<address>``), or a repository path
             (``/workspace/myrepo``). Use the same value the scan was
             pointed at, so agents converge on one model.
     """
@@ -522,7 +547,7 @@ async def save_threat_model(ctx: RunContextWrapper, target: str, content: str) -
     """Share a target-scoped threat model with the other agents on this scan.
 
     The model lives for this run only — it is not written to disk and a
-    later scan of the same host or tree starts without it.
+    later scan of the same target or tree starts without it.
 
     **This replaces the whole document, and clears any amendments** —
     it is for the agent establishing the baseline (normally root,
@@ -532,49 +557,54 @@ async def save_threat_model(ctx: RunContextWrapper, target: str, content: str) -
     saving over it will silently discard whatever other agents added.
 
     **Write it from whatever evidence you have.** With source, ground
-    it in the code and name the files, entrypoints, and controls that
-    make each claim true. Black-box, ground it in recon: the hosts and
-    ports that answered, the technology fingerprints, the observed
-    roles and tenants, the authentication and session model, the
-    endpoints and parameters you enumerated. A black-box model is
-    necessarily provisional — say which parts are inferred rather than
-    observed, and let later agents amend it as the picture fills in.
+    it in the code and name the files, entry points, privileged
+    functions, and controls that make each claim true. For a deployed
+    target, ground it in the chain and explorer: the verified source if
+    published, the bytecode and ABI otherwise, the contracts that make
+    up the system, the privileged roles and upgrade authority, the
+    value flows, and the entry points and selectors you enumerated. A
+    deployed-target model is necessarily provisional — say which parts
+    are inferred rather than observed, and let later agents amend it as
+    the picture fills in.
 
     **Scope it to the target, not to your slice of it.** Do not centre
-    it on the diff you were handed, the subsystem you were assigned, or
-    the one host that happened to answer first. With source, distinguish
-    real product and runtime surfaces from test, docs, example, and
+    it on the diff you were handed, the contract you were assigned, or
+    the one deployment that happened to resolve first. With source,
+    distinguish real production contracts from test, mock, example, and
     developer-tooling paths — in a monorepo, do not let ``tests/`` or
     one-off scripts become the centre of gravity unless the code shows
     they are genuinely deployed. Where the target documents its own
     boundary — an ``AGENTS`` file, a specific ``SECURITY.md``, a
-    published API spec, an engagement scope — build on it rather than
-    inventing a competing story.
+    published interface or ABI, an engagement scope — build on it
+    rather than inventing a competing story.
 
     Structure the content in Markdown with these sections:
 
-    - **Overview** — what the target actually is, its real-world usage,
-      and which parts are product/runtime versus tooling or
-      non-production.
+    - **Overview** — what the protocol actually is, its assets and
+      real-world usage, and which contracts are production versus
+      test/example or developer tooling.
     - **Trust Boundaries and Assumptions** — the boundaries, the actors
       on either side, and the invariants that must hold. Separate
-      attacker-controlled, operator-controlled, and
-      developer-controlled inputs explicitly. Black-box, this is the
-      role, tenant, and privilege model: who can reach what before
-      authenticating, as a low-privilege user, and across tenants.
+      externally-callable (attacker-controlled), privileged/operator,
+      and admin/governance-controlled inputs explicitly. For a deployed
+      target this is the role and privilege model: which functions are
+      open to anyone, which are permissioned, and what the privileged
+      roles and upgrade authority actually are.
     - **Attack Surface and Attacker Stories** — the exposed surfaces
-      (hosts, endpoints, parameters, integrations, or the code-level
-      entrypoints and sinks), the mitigations already present that
-      materially change severity or reach, realistic attacker stories,
-      and the stories that are *not* realistic here and why.
+      (externally-callable functions and entry points, external
+      callbacks and reentrancy paths, oracle/token/messaging
+      integrations, or the code-level entry points and sinks), the
+      mitigations already present that materially change severity or
+      reach, realistic attacker stories, and the stories that are *not*
+      realistic here and why.
     - **Severity Calibration** — what critical / high / medium / low
       look like for *this* target, with a concrete example at each
       level. Where a vulnerability class needs attacker control that
       does not exist in real usage, say so here.
 
     Args:
-        target: What the model describes — a host or URL
-            (``https://app.example.com``), or a repository path
+        target: What the model describes — a deployed address
+            (``0x...`` or ``<chain>:<address>``), or a repository path
             (``/workspace/myrepo``). Use the same value the scan was
             pointed at.
         content: The full threat model in Markdown.
@@ -594,9 +624,10 @@ async def amend_threat_model(ctx: RunContextWrapper, target: str, addendum: str)
 
     The baseline is written before anyone starts hunting, so it is
     written with the least information anyone will ever have. That is
-    doubly true black-box, where the model starts as inference over
-    recon output and only becomes real as agents authenticate, map
-    roles, and reach the surfaces behind them. When your work
+    doubly true for a deployed target, where the model starts as
+    inference over the chain and explorer and only becomes real as
+    agents read the verified source, map privileged roles, and trace the
+    value flows. When your work
     contradicts the model or fills in something it missed, record that
     here — every agent that calls ``get_threat_model`` afterwards sees
     your addendum next to the base model.
@@ -610,24 +641,24 @@ async def amend_threat_model(ctx: RunContextWrapper, target: str, addendum: str)
 
     - A boundary the model calls trusted that you found is
       attacker-reachable, or vice versa.
-    - A host, endpoint, parameter, role, sink, or shared control the
+    - A contract, entry point, role, sink, or shared control the
       model does not mention.
     - Something the model only inferred that you have now observed — or
       that turned out not to be true.
     - A severity call the model got wrong for this target, with the
       reason.
-    - An assumption you disproved — the model says input is validated
-      upstream and you found the path that skips it.
+    - An assumption you disproved — the model says an input is
+      validated/constrained and you found the path that skips it.
 
     Not worth amending: individual findings (those are reports), or
     restating what the model already says.
 
     Args:
-        target: What the model describes — the same host, URL, or
+        target: What the model describes — the same deployed address or
             repository path used to save it.
         addendum: The correction, in Markdown. State what the base
-            model says, what is actually true, and the endpoint, host,
-            file, or control that proves it.
+            model says, what is actually true, and the contract,
+            function, file, or control that proves it.
     """
     return json.dumps(
         await asyncio.to_thread(

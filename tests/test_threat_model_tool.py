@@ -365,3 +365,41 @@ def test_different_repositories_on_one_host_stay_separate(tmp_path: Path) -> Non
     _git(second, "remote", "add", "origin", "git@github.com:acme/payments.git")
 
     assert _get_impl(str(second))["found"] is False
+
+
+_EVM = "0x1234567890abcdef1234567890abcdef12345678"
+_SOLANA = "So11111111111111111111111111111111111111112"
+
+
+def test_deployed_address_round_trips() -> None:
+    target = f"ethereum:{_EVM}"
+    assert _save_impl(target, _MODEL, "root")["success"] is True
+    assert _get_impl(target)["found"] is True
+
+
+def test_chain_prefixed_address_does_not_crash() -> None:
+    # Regression: the target used to be fed through ``urlsplit``, whose
+    # ``.port`` access raised ValueError on ``<chain>:<address>`` and took the
+    # whole tool down for every deployed-contract scan.
+    assert _get_impl(f"ethereum:{_EVM}")["found"] is False
+
+
+def test_deployed_address_spellings_share_one_model() -> None:
+    # The chain token and the hex digits are each case-insensitive.
+    _save_impl(f"ethereum:{_EVM}", _MODEL, "root")
+    assert _get_impl(f"ETHEREUM:{_EVM}")["found"] is True
+    assert _get_impl(f"ethereum:0x{_EVM[2:].upper()}")["found"] is True
+
+
+def test_bare_address_snaps_onto_a_chain_qualified_scan_target() -> None:
+    scan_targets = [f"ethereum:{_EVM}"]
+    _save_impl(f"ethereum:{_EVM}", _MODEL, "root", scan_targets)
+
+    # An agent naming the bare address must land on the scan's own spelling.
+    assert _get_impl(_EVM, scan_targets)["found"] is True
+
+
+def test_base58_address_is_case_sensitive() -> None:
+    _save_impl(f"solana:{_SOLANA}", _MODEL, "root")
+    assert _get_impl(f"solana:{_SOLANA}")["found"] is True
+    assert _get_impl(f"solana:{_SOLANA.lower()}")["found"] is False

@@ -14,6 +14,7 @@ import pytest
 
 from strix.interface import utils
 from strix.interface.utils import infer_target_type
+from strix.utils.targets import on_chain_identity
 
 
 if TYPE_CHECKING:
@@ -121,3 +122,22 @@ def test_git_suffix_url_is_a_repository() -> None:
 
     assert ttype == "repository"
     assert details["target_repo"].endswith(".git")
+
+
+def test_on_chain_identity_folds_hex_and_chain_case() -> None:
+    # The shared module is what the threat-model store keys targets on, so a
+    # hex address and its chain token must normalize to one identity.
+    assert on_chain_identity("EVM:0x" + "AB" * 20) == "evm:0x" + "ab" * 20
+    assert on_chain_identity("0x" + "AB" * 20) == "0x" + "ab" * 20
+
+
+def test_on_chain_identity_preserves_base58_case() -> None:
+    # Base58 is case-sensitive: the two spellings are different contracts.
+    assert on_chain_identity(SOLANA_ADDRESS) == SOLANA_ADDRESS
+    assert on_chain_identity(SOLANA_ADDRESS.lower()) != on_chain_identity(SOLANA_ADDRESS)
+
+
+def test_on_chain_identity_is_none_for_non_targets() -> None:
+    assert on_chain_identity("https://github.com/acme/protocol") is None
+    assert on_chain_identity("/workspace/protocol") is None
+    assert on_chain_identity("foo:bar") is None

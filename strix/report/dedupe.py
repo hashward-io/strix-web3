@@ -123,14 +123,14 @@ Or, if not a duplicate:
   "is_duplicate": false,
   "duplicate_id": "",
   "confidence": 0.90,
-  "reason": "Different endpoints: candidate is /api/search, existing is /api/login"
+  "reason": "Different sinks: candidate is `Vault.withdraw`, existing is `Vault.deposit`"
 }
 
 Rules:
 - ``is_duplicate`` is a boolean.
 - ``duplicate_id`` is the exact id from existing reports, or "" if not a duplicate.
 - ``confidence`` is a number between 0 and 1.
-- ``reason`` is a specific explanation mentioning endpoint/parameter/root cause.
+- ``reason`` is a specific explanation mentioning the contract/function and root cause.
 - Output ONLY the JSON object — no surrounding prose, no code fences."""
 
 
