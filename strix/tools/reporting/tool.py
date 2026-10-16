@@ -2172,7 +2172,8 @@ async def create_dependency_report(
         impact: What the CVE enables; business risk in this context.
         remediation_steps: How to fix (usually upgrade to a fixed version).
         assumptions: Exploitability/reachability assumptions & confidence.
-        package_ecosystem: e.g. ``npm`` / ``pypi`` / ``maven`` / ``go``.
+        package_ecosystem: e.g. ``npm`` / ``cargo`` / ``go`` / ``pypi`` /
+            ``maven`` (registry where the package lives).
         fixed_version: First non-vulnerable version, if known.
         cwe: ``CWE-NNN`` (most specific) if certain, else omit.
         advisory_cvss: **Required.** Published advisory base score
