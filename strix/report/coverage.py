@@ -20,7 +20,7 @@ A coverage claim is an attestation, so conflating the two would be the worst
 possible failure: a hallucinated "tested and clean" is strictly less honest
 than no coverage record at all. Every entry therefore carries its ``source``,
 and machine-observed facts contradict rather than confirm — an agent that
-carried the ``sql_injection`` skill and recorded nothing about SQL injection
+carried the ``reentrancy`` skill and recorded nothing about reentrancy
 shows up under ``gaps``, and a run that hit its budget ceiling is stamped
 ``complete: false`` no matter how tidy the ledger looks.
 """

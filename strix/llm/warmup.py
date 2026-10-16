@@ -1,8 +1,8 @@
 """Background pre-import of the heavy scan dependencies.
 
-The scan engine's import graph (the agents SDK, OpenAI client, LiteLLM, the
-Caido SDK) costs seconds to import cold, but none of it is needed until a scan
-actually starts. Importing it on a daemon thread at CLI entry overlaps that
+The scan engine's import graph (the agents SDK, OpenAI client, LiteLLM) costs
+seconds to import cold, but none of it is needed until a scan actually starts.
+Importing it on a daemon thread at CLI entry overlaps that
 cost with the I/O-bound startup work that always precedes a scan (argument
 parsing, Docker checks, image pull, TUI setup). The Docker SDK is not on the
 list: the Docker checks import it on the main thread during that same window.

@@ -194,7 +194,7 @@ def display_completion_message(args: argparse.Namespace, results_path: Path) -> 
 
     completion_text = Text()
     if scan_completed:
-        completion_text.append("Penetration test completed", style="bold #22c55e")
+        completion_text.append("Audit completed", style="bold #22c55e")
     else:
         completion_text.append("SESSION ENDED", style="bold #eab308")
 

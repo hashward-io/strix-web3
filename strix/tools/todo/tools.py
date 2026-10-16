@@ -288,7 +288,7 @@ async def create_todo(ctx: RunContextWrapper, todos: str) -> str:
             list. Each object's fields:
 
             - ``title`` (str, **required**): short actionable title,
-              e.g. ``"Test /api/admin for IDOR"``.
+              e.g. ``"Test Vault.withdraw for reentrancy"``.
             - ``description`` (str, optional): extra context or
               acceptance criteria.
             - ``priority`` (str, optional): one of ``"low"`` /

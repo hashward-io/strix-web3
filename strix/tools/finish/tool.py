@@ -215,7 +215,7 @@ async def finish_scan(
     - Never mention internal infrastructure: no local/absolute paths
       (``/workspace/...``), no agent names, no sandbox/orchestrator/
       tooling references, no system prompts, no model-internal errors.
-      Never leak internal identifiers (proxy request IDs, internal
+      Never leak internal identifiers (internal run IDs, internal
       vulnerability report IDs, or any system-generated IDs) into any
       field.
     - Tone: formal, third-person, objective, concise. This is a
@@ -223,13 +223,16 @@ async def finish_scan(
     - Each section has a specific role:
 
         - ``executive_summary`` — for non-technical leadership. Risk
-          posture, business impact (data exposure / compliance /
-          reputation), notable criticals, overarching remediation
-          theme.
-        - ``methodology`` — frameworks followed (OWASP WSTG, PTES,
-          OSSTMM, NIST), engagement type (black/gray/white box), scope
-          and constraints, categories of testing performed. **No**
-          internal execution detail.
+          posture, business impact (funds at risk / protocol
+          insolvency / governance capture / user harm), notable
+          criticals, overarching remediation theme.
+        - ``methodology`` — frameworks followed (SCSVS, the SWC
+          Registry, the Pashov audit methodology, Trail of Bits'
+          building-secure-contracts), engagement type (black/gray/white
+          box), scope (the contracts, programs, and deployment
+          addresses reviewed, with the commit) and constraints, and the
+          categories of analysis performed. **No** internal execution
+          detail.
         - ``technical_analysis`` — consolidated findings overview with
           severity model and systemic root causes. Reference individual
           vuln reports for repro steps; don't duplicate raw evidence.
@@ -257,50 +260,55 @@ async def finish_scan(
     Example (abbreviated — mirror this structure, not the wording)::
 
         executive_summary:
-            An external assessment of the **Acme Customer Portal**
-            identified multiple weaknesses that could lead to
-            unauthorized access to customer data.
+            An audit of the **Acme Lending Protocol** identified
+            critical weaknesses that put depositor funds at risk.
 
-            **Overall risk posture:** Elevated.
+            **Overall risk posture:** Critical.
 
             **Key findings**
-            - Confirmed SSRF in a URL-preview feature reaching internal
-              network ranges.
-            - Broken tenant isolation enabling cross-tenant data access.
+            - Reentrancy in `Vault.withdraw` enabling a drain of pooled
+              assets (proof-of-concept on a mainnet fork).
+            - Missing access control on `setOracle`, letting an attacker
+              point the protocol at an arbitrary price source.
 
             **Business impact**
-            - Potential exposure of customer records across tenants.
+            - Loss of user deposits; protocol insolvency.
 
         methodology:
-            Conducted per the **OWASP WSTG**.
+            Conducted per the **SCSVS** and the **Pashov audit
+            methodology**.
 
-            **Engagement type:** Gray-box external test.
-            **Scope:** `https://app.acme.example`, `.../api/v1/`.
+            **Engagement type:** White-box review of the repository.
+            **Scope:** `contracts/` at commit `a1b2c3d`, plus the
+            deployed proxy `0x…` on Ethereum mainnet.
 
-            **Activities:** recon, authn/session review, authorization
-            and tenant-isolation testing, input/SSRF testing.
+            **Activities:** ecosystem and protocol mapping, invariant
+            derivation, the specialist bug-class passes
+            (access-control, economic-security, execution-trace), and
+            fork-based proof-of-concept development.
 
         technical_analysis:
             **Severity model** reflects exploitability x impact.
 
-            1. **SSRF in URL preview** (Critical) — insufficient
-               destination validation; reaches link-local addresses.
-            2. **Broken tenant isolation** (High) — object identifiers
-               accepted without ownership checks.
+            1. **Reentrancy in `Vault.withdraw`** (Critical) — state is
+               updated after the external call; the PoC drains the vault
+               on a fork.
+            2. **Unprotected `setOracle`** (High) — no owner check; the
+               price source is attacker-controlled.
 
-            **Systemic themes:** authorization enforced inconsistently;
-            no deny-by-default egress policy.
+            **Systemic themes:** state changes ordered after external
+            calls; privileged setters lack role checks.
 
         recommendations:
             **Immediate**
-            1. Remediate SSRF: enforce a destination allowlist,
-               deny-by-default, re-validate on every redirect hop.
+            1. Remediate reentrancy: apply checks-effects-interactions
+               and a reentrancy guard; re-run the PoC to confirm.
 
             **Short-term**
-            2. Centralize authorization with deny-by-default middleware.
+            2. Gate `setOracle` behind the owner role or a timelock.
 
-            **Retest & validation:** re-test immediate items to confirm
-            SSRF and tenant-isolation controls hold.
+            **Retest & validation:** re-run the fork tests to confirm
+            both issues are closed.
 
     Args:
         executive_summary: Business-level summary for leadership.

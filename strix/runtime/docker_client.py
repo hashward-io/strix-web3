@@ -8,13 +8,12 @@ deltas:
 
 1. Drop the SDK's ``entrypoint=["tail"]`` override; supply ``["tail", "-f",
    "/dev/null"]`` as ``command`` instead. This lets our image's
-   ``docker-entrypoint.sh`` actually run — without it, ``caido-cli`` never
-   starts inside the container and ``bootstrap_caido`` retries against a
-   dead port.
-2. Append NET_ADMIN/NET_RAW to ``cap_add`` (required by ``nmap -sS`` and
-   other raw-socket tools).
+   ``docker-entrypoint.sh`` actually run, so the per-ecosystem toolchain PATH
+   is exported and the workspace is prepared before the keep-alive starts.
+2. Append NET_ADMIN/NET_RAW to ``cap_add`` (raw-socket tools in the
+   toolchain).
 3. Add ``host.docker.internal`` → host-gateway to ``extra_hosts`` so the
-   agent can reach host-served apps.
+   agent can reach a host-run RPC node or ``anvil`` fork.
 
 Pinned to ``openai-agents==0.14.6``. Bumping the SDK requires
 re-merging the parent body. Track upstream for an injection hook.
@@ -188,8 +187,8 @@ class StrixDockerSandboxClient(DockerSandboxClient):
         # supply ``tail -f /dev/null`` as ``command`` so the image's
         # ENTRYPOINT (``docker-entrypoint.sh``) runs setup, then ``exec
         # "$@"`` becomes ``exec tail -f /dev/null`` for the keep-alive.
-        # Without this, caido-cli + the in-container CA trust never get
-        # initialized.
+        # Without this, the entrypoint's PATH export and workspace prep never
+        # run.
         create_kwargs: dict[str, Any] = {
             "image": image,
             "detach": True,

@@ -516,10 +516,10 @@ async def create_agent(
     - Most agents need at least one ``skill`` to be useful.
     - Aim for **1-3 related skills** per agent. Up to 5 only when the
       task genuinely spans them.
-    - One skill = most focused (e.g., XSS-only). Five skills = upper
-      bound.
-    - Match the ``name`` to the focus (``XSS Specialist``,
-      ``SQLi Validator``, ``Auth Specialist``).
+    - One skill = most focused (e.g., reentrancy-only). Five skills =
+      upper bound.
+    - Match the ``name`` to the focus (``Reentrancy Specialist``,
+      ``Oracle Validator``, ``Access-Control Specialist``).
 
     **When to spawn vs do it yourself:**
 
@@ -541,7 +541,7 @@ async def create_agent(
         inherit_context: Default ``True``. The child receives the
             parent's input history as background; only set ``False``
             when starting a clean-slate task.
-        skills: List of skill names (e.g. ``["xss", "sql_injection"]``).
+        skills: List of skill names (e.g. ``["reentrancy", "access-control"]``).
             Max 5; prefer 1-3.
     """
     inner = _ctx(ctx)

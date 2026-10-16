@@ -94,19 +94,20 @@ def is_context_overflow(exc: BaseException) -> bool:
 
 
 _SUMMARY_INSTRUCTIONS = """\
-You are compacting the earlier part of an autonomous security-testing agent's \
+You are compacting the earlier part of an autonomous smart-contract audit agent's \
 conversation so it fits the model context window. Produce a dense, factual \
 record that lets the agent continue with no loss of important state.
 
 This is a security engagement: dropped findings mean lost vulnerabilities. Be \
 EXHAUSTIVE, not concise. Enumerate every distinct item as its own bullet — \
-never merge, deduplicate, generalise, or omit distinct findings, credentials, \
+never merge, deduplicate, generalise, or omit distinct findings, secrets, \
 or dead ends, even if they seem minor or repetitive. If the source mentions \
-five vulnerabilities, list five. Copy exact values verbatim: URLs, endpoints, \
-file paths, parameters, payloads, credentials, tokens, keys, hashes, cracked \
-passwords, software versions, and error messages — never paraphrase or \
-placeholder them. Do not invent anything and do not describe this compaction \
-process.
+five vulnerabilities, list five. Copy exact values verbatim: contract and \
+program addresses, function selectors, transaction hashes, file paths, \
+chain ids, payloads/calldata, private keys, mnemonics, tokens, keys/file \
+hashes, compiler and toolchain versions, and error messages — never paraphrase \
+or placeholder them. Do not invent anything and do not describe this \
+compaction process.
 
 Return Markdown with exactly these sections:
 
@@ -114,17 +115,18 @@ Return Markdown with exactly these sections:
 The overall goal and target scope.
 
 ## Vulnerabilities & Findings
-One bullet per DISTINCT vulnerability or finding (SQLi, XSS, SSRF, auth bypass, \
-misconfig, etc.). For each: type, exact location (URL/endpoint/param/file), the \
-verbatim payload or proof, confirmation status, and impact. List them all.
+One bullet per DISTINCT vulnerability or finding (reentrancy, access-control, \
+oracle-manipulation, arithmetic, etc.). For each: type, exact location \
+(contract/function/file:line), the verbatim proof (PoC code, transaction hash, \
+or trace), confirmation status, and impact. List them all.
 
 ## Credentials & Secrets
-One bullet per credential, secret, API key, token, hash, or cracked password, \
+One bullet per secret — private key, mnemonic, RPC/explorer API key, or token — \
 copied verbatim with where it applies. Write "(none)" only if truly none.
 
 ## System & Recon Details
-Architecture, tech stack, versions, discovered endpoints/paths/params, and \
-other weak points worth keeping.
+Chains, ecosystems, contracts/programs, deployment addresses, compiler and \
+toolchain versions, discovered entry points, and other weak points worth keeping.
 
 ## Work State
 - Completed: what has been verified or finished.
@@ -132,9 +134,9 @@ other weak points worth keeping.
 - Blocked: anything stuck and why.
 
 ## Failed Attempts & Dead Ends
-One bullet per approach already tried that did not work (including WAF blocks, \
-filtered inputs, non-exploitable leads) so they are not repeated. Write \
-"(none)" only if truly none.
+One bullet per approach already tried that did not work (including rejected \
+hypotheses, non-exploitable paths, and gas/logic blockers) so they are not \
+repeated. Write "(none)" only if truly none.
 
 ## Next Move
 The concrete next step(s) the agent intended to take.

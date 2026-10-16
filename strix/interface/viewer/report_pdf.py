@@ -417,7 +417,7 @@ def _cover(
     return [
         header,
         Spacer(1, 150),
-        Paragraph("PENETRATION TEST REPORT", styles["badge_label"]),
+        Paragraph("SMART CONTRACT AUDIT", styles["badge_label"]),
         Spacer(1, 20),
         Paragraph("Security Assessment", styles["cover_title"]),
         Paragraph(_esc(target), styles["cover_org"]),

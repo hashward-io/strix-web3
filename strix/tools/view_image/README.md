@@ -7,11 +7,9 @@ returns it as an image content block for vision-capable models.
   (upstream `agents` SDK)
 - **Wired in:** `strix/agents/factory.py` — added per-run via the SDK
   `Filesystem` capability.
-- **Strix defaults:** screenshots default to
-  `/workspace/.agent-browser-screenshots/` via `AGENT_BROWSER_SCREENSHOT_DIR`
-  (set in `containers/Dockerfile`; dir is created at container start in
-  `containers/docker-entrypoint.sh`).
-- **Skill:** screenshot workflow lives in `strix/skills/tooling/agent_browser.md`.
+- **Strix defaults:** reads any image the agent has written into the
+  sandbox workspace (e.g. a diagram, plot, or rendered contract graph
+  under `/workspace`).
 - **Recovery:** vision-not-supported model rejections are auto-recovered
   via `strix.core.sessions.strip_all_images_from_session`, invoked from
   `strix/core/execution.py`.

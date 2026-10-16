@@ -423,12 +423,13 @@ async def record_coverage(
     information is not proof of safety.
 
     Args:
-        surface: What you reviewed — an endpoint, route, parameter,
-            file, component, or host (e.g. ``"POST /api/orders/{id}"``,
-            ``"src/auth/session.py"``, ``"admin dashboard"``).
-        risk_area: What you were testing it for (e.g. ``"IDOR /
-            object-level authorization"``, ``"SQL injection"``,
-            ``"SSRF"``).
+        surface: What you reviewed — a contract, program, function,
+            entry point, module, or deployed address (e.g.
+            ``"Vault.withdraw"``, ``"programs/staking/src/lib.rs"``,
+            ``"0x... (proxy)"``).
+        risk_area: What you were testing it for (e.g.
+            ``"reentrancy"``, ``"access control"``,
+            ``"oracle manipulation"``).
         outcome: One of ``reported`` / ``no_issue_found`` /
             ``ruled_out`` / ``not_applicable`` / ``needs_follow_up``.
         evidence: How you know. Required for ``ruled_out``,

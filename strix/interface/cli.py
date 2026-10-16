@@ -42,7 +42,7 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
     console = Console()
 
     start_text = Text()
-    start_text.append("Penetration test initiated", style="bold #22c55e")
+    start_text.append("Audit initiated", style="bold #22c55e")
 
     target_text = Text()
     target_text.append("Target", style="dim")
@@ -168,7 +168,7 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
 
     def create_live_status() -> Panel:
         status_text = Text()
-        status_text.append("Penetration test in progress", style="bold #22c55e")
+        status_text.append("Audit in progress", style="bold #22c55e")
         status_text.append("\n\n")
 
         if not has_model_response(report_state):
@@ -241,7 +241,7 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
         console.print()
 
         final_report_text = Text()
-        final_report_text.append("Penetration test summary", style="bold #60a5fa")
+        final_report_text.append("Audit summary", style="bold #60a5fa")
 
         final_report_panel = Panel(
             Text.assemble(

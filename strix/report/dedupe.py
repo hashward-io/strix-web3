@@ -70,39 +70,40 @@ as any existing report.
 CRITICAL DEDUPLICATION RULES:
 
 1. SAME VULNERABILITY means:
-   - Same root cause (e.g., "missing input validation" not just "SQL injection")
-   - Same affected component/endpoint/file (exact match or clear overlap)
+   - Same root cause (e.g., "state updated after the external call" not just "reentrancy")
+   - Same affected component/contract/function/file (exact match or clear overlap)
    - Same exploitation method or attack vector
    - Would be fixed by the same code change/patch
 
 2. NOT DUPLICATES if:
-   - Different endpoints even with same vulnerability type (e.g., SQLi in /login vs /search)
-   - Different parameters in same endpoint (e.g., XSS in 'name' vs 'comment' field)
-   - Different root causes (e.g., stored XSS vs reflected XSS in same field)
+   - Different functions even with the same vulnerability type (e.g.,
+     reentrancy in `Vault.withdraw` vs `Staking.claim`)
+   - Different parameters/assets in the same function (e.g., missing check on `tokenA` vs `tokenB`)
+   - Different root causes (e.g., missing owner modifier vs missing `require` in the same function)
    - Different severity levels due to different impact
-   - One is authenticated, other is unauthenticated
+   - One requires a privileged role, the other is unprivileged
 
 3. ARE DUPLICATES even if:
    - Titles are worded differently
    - Descriptions have different level of detail
-   - PoC uses different payloads but exploits same issue
+   - PoC uses a different exploit path or harness but exploits the same issue
    - One report is more thorough than another
    - Minor variations in technical analysis
 
-4. DEPENDENCY-CVE reports use package identity:
-   - Same CVE and same package/ecosystem is a duplicate
-   - Same CVE but different package/ecosystem is NOT a duplicate
-   - Same package/ecosystem but different CVE is NOT a duplicate
+4. DEPENDENCY-ADVISORY reports use package identity:
+   - Same advisory and same package/ecosystem is a duplicate
+   - Same advisory but different package/ecosystem is NOT a duplicate
+   - Same package/ecosystem but different advisory is NOT a duplicate
 
 COMPARISON GUIDELINES:
 - Focus on the technical root cause, not surface-level similarities
-- Same vulnerability type (SQLi, XSS) doesn't mean duplicate - location matters
+- Same vulnerability type (reentrancy, access-control) doesn't mean duplicate - location matters
 - Consider the fix: would fixing one also fix the other?
 - When uncertain, lean towards NOT duplicate
 
 FIELDS TO ANALYZE:
 - title, description: General vulnerability info
-- target, endpoint, method: Exact location of vulnerability
+- target, endpoint: Exact location (the contract/program and the entry point)
 - technical_analysis: Root cause details
 - poc_description: How it's exploited
 - impact: What damage it can cause
@@ -113,7 +114,7 @@ Respond with a single JSON object and nothing else:
   "is_duplicate": true,
   "duplicate_id": "vuln-0001",
   "confidence": 0.95,
-  "reason": "Both reports describe SQL injection in /api/login via the username parameter"
+  "reason": "Both describe reentrancy in `Vault.withdraw` before the state update"
 }
 
 Or, if not a duplicate:

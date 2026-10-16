@@ -371,8 +371,8 @@ async def create_note(
     - ``plan`` — multi-step plans you want to track.
     - ``wiki`` — long-form repository or target maps.
 
-    Tags are free-form (e.g. ``["sqli", "auth", "critical"]``) — useful
-    for later ``list_notes(tags=...)`` filtering.
+    Tags are free-form (e.g. ``["reentrancy", "oracle", "critical"]``) —
+    useful for later ``list_notes(tags=...)`` filtering.
 
     Args:
         title: Short headline.
@@ -401,7 +401,7 @@ async def list_notes(
     """List existing notes — metadata-first by default.
 
     Filters compose: passing ``category="findings"`` and
-    ``tags=["sqli"]`` returns notes that are *both* in the findings
+    ``tags=["reentrancy"]`` returns notes that are *both* in the findings
     category AND have at least one of those tags.
 
     By default each entry includes a ``content_preview`` (first 280
