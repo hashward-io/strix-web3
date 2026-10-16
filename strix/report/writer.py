@@ -237,7 +237,7 @@ def render_vulnerability_md(report: dict[str, Any]) -> str:  # noqa: PLR0912, PL
         ("Fixed Version", dep_meta.get("fixed_version")),
         ("Introduced By", dep_meta.get("introduced_by")),
         ("Dependency Chain", dep_meta.get("dependency_path")),
-        ("Endpoint", report.get("endpoint")),
+        ("Entry Point", report.get("endpoint")),
         ("Method", report.get("method")),
         ("CVE", report.get("cve")),
         ("CWE", report.get("cwe")),
@@ -266,6 +266,12 @@ def render_vulnerability_md(report: dict[str, Any]) -> str:  # noqa: PLR0912, PL
     if report.get("evidence"):
         lines.append("## Evidence\n")
         lines.append(str(report["evidence"]))
+        lines.append("")
+
+    evidence_refs = report.get("http_exchange_ids")
+    if isinstance(evidence_refs, list) and evidence_refs:
+        lines.append("## On-chain Evidence\n")
+        lines.extend(f"- `{ref}`" for ref in evidence_refs)
         lines.append("")
 
     if report.get("impact"):

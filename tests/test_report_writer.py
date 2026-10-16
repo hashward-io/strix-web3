@@ -30,9 +30,8 @@ def _sample_report(**overrides: Any) -> dict[str, Any]:
         "timestamp": "2026-07-02 10:00:00 UTC",
         "description": "User input reaches SQL query unsanitized.",
         "impact": "Database read access.",
-        "target": "https://app.example.com",
-        "endpoint": "/api/login",
-        "method": "POST",
+        "target": "0x1111111111111111111111111111111111111111",
+        "endpoint": "Vault.withdraw",
     }
     base.update(overrides)
     return base
@@ -77,7 +76,18 @@ def test_render_vulnerability_md_includes_core_sections() -> None:
     assert "## Technical Analysis" in md
     assert "## Proof of Concept" in md
     assert "## Remediation" in md
-    assert "**Endpoint:** /api/login" in md
+    assert "**Entry Point:** Vault.withdraw" in md
+
+
+def test_render_vulnerability_md_includes_on_chain_evidence() -> None:
+    tx = "0x" + "ab" * 32
+    md = render_vulnerability_md(
+        _sample_report(http_exchange_ids=[tx, "forge test --match-test testDrain"]),
+    )
+
+    assert "## On-chain Evidence" in md
+    assert f"- `{tx}`" in md
+    assert "- `forge test --match-test testDrain`" in md
 
 
 def test_render_vulnerability_md_includes_dependency_fields() -> None:

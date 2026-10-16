@@ -571,8 +571,8 @@ def _finding_flowables(
     if vuln.get("cvss") is not None:
         meta_bits.append(f"<b>CVSS</b> {_esc(vuln.get('cvss'))}")
     meta_bits.extend(
-        f"<b>{key.title()}</b> {_esc(vuln.get(key))}"
-        for key in ("target", "endpoint", "method")
+        f"<b>{label}</b> {_esc(vuln.get(key))}"
+        for key, label in (("target", "Target"), ("endpoint", "Entry point"))
         if vuln.get(key)
     )
 
@@ -592,6 +592,17 @@ def _finding_flowables(
     poc_script = _strip_code_fence(vuln.get("poc_script_code"))
     story.extend(_field_block(styles, "PoC script", poc_script, code=True))
     story.extend(_field_block(styles, "Evidence", vuln.get("evidence"), code=True))
+
+    evidence_refs = vuln.get("http_exchange_ids")
+    if isinstance(evidence_refs, list) and evidence_refs:
+        story.extend(
+            _field_block(
+                styles,
+                "On-chain evidence",
+                "\n".join(str(ref) for ref in evidence_refs),
+                code=True,
+            )
+        )
 
     remediation = vuln.get("remediation_steps")
     if isinstance(remediation, list):
