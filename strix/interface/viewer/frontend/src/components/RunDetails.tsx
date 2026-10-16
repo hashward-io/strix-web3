@@ -60,7 +60,13 @@ export function RunDetails({
   // Configuration (launch inputs)
   const targets = arr(raw.targets_info).map((t) => {
     const o = rec(t);
-    const display = str(o.original) ?? str(rec(o.details).target_url) ?? "unknown target";
+    const details = rec(o.details);
+    const display =
+      str(o.original) ??
+      str(details.target_address) ??
+      str(details.target_repo) ??
+      str(details.target_path) ??
+      "unknown target";
     const type = str(o.type);
     return { display, type: type ? humanize(type) : null };
   });
