@@ -121,7 +121,7 @@ func Tool(data map[string]any) string {
 }
 
 // ---------------------------------------------------------------------------
-// Collapsing: output-heavy tools (terminal, proxy) render as short block
+// Collapsing: output-heavy tools (terminal, patches) render as short block
 // previews; clicking a tool in the trace expands it to the full render.
 // ---------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ const outputPreviewLines = 10
 
 // ToolPreviewLines returns how many lines of a tool's render are shown before
 // it is collapsed; 0 means the tool is never collapsed. Only tools whose
-// output can grow unbounded (terminal, patches, proxy) collapse.
+// output can grow unbounded (terminal, patches) collapse.
 func ToolPreviewLines(name string) int {
 	switch name {
 	case "exec_command", "write_stdin", "apply_patch",

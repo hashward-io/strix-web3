@@ -91,7 +91,7 @@ def format_vulnerability_report(report: dict[str, Any]) -> Text:  # noqa: PLR091
     endpoint = report.get("endpoint")
     if endpoint:
         text.append("\n\n")
-        text.append("Endpoint: ", style=field_style)
+        text.append("Entry point: ", style=field_style)
         text.append(endpoint)
 
     method = report.get("method")
