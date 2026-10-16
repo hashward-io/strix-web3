@@ -326,9 +326,9 @@ async def test_setup_preflights_model_before_starting(
         assert candidate.target == ["https://example.com", "/workspace/mounted"]
         candidate.targets_info = [
             {
-                "type": "web",
-                "details": {"target_url": "https://example.com"},
-                "original": "https://example.com",
+                "type": "deployed_contract",
+                "details": {"target_address": "0x1111111111111111111111111111111111111111"},
+                "original": "0x1111111111111111111111111111111111111111",
             },
             {
                 "type": "local_code",

@@ -10,7 +10,7 @@ AlgoKit is the canonical Algorand development toolchain: it scaffolds projects, 
 ## Install / build
 
 - Install AlgoKit: `curl -fsSL https://cli.algokit.io/install.sh | bash`, or `uv tool install algokit`; verify with `algokit --version` and `algokit doctor`.
-- Docker (Compose v2.5.0+) must be running for `algokit localnet`.
+- Docker (Compose v2.5.0+) must be running for `algokit localnet`. The Strix sandbox has **no Docker daemon**, so in-sandbox prefer pure-Python unit tests against a remote/local node, or an `algokit-utils` test that the user runs where Docker is available.
 - Python 3.12+ for PuyaPy; deps live in `pyproject.toml` (Poetry/uv). `algokit project bootstrap all` installs and builds.
 - The PuyaPy compiler may be project-local or resolved dynamically; pin its version for reproducible bytecode.
 

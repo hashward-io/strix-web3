@@ -26,9 +26,7 @@ Strix Web3 runs inside a Debian-based Docker container with a multi-ecosystem sm
 | ---- | ----------- |
 | [Solana CLI](https://github.com/anza-xyz/agave) | `solana`, `cargo build-sbf`, `solana-test-validator` |
 | [Anchor](https://github.com/coral-xyz/anchor) | `anchor build` / `anchor test` framework and local validator |
-| LiteSVM | Fast in-process SVM test harness |
-| Trident / `cargo fuzz` | Fuzzing for Rust programs |
-| `spl-token` | Token and Token-2022 CLI |
+| LiteSVM, Trident / `cargo fuzz`, `spl-token` | In-process SVM harness and Rust fuzzing (install on demand) |
 
 ## Move (Sui & Aptos)
 
@@ -36,7 +34,7 @@ Strix Web3 runs inside a Debian-based Docker container with a multi-ecosystem sm
 | ---- | ----------- |
 | `sui` | `sui move build` / `sui move test`, publish, object inspection |
 | `aptos` | `aptos move compile` / `aptos move test` |
-| Move Prover | `move prove` specification checking |
+| Move Prover | `move prove`; requires `boogie` + `z3` on `PATH` (install on demand) |
 
 ## Cairo / Starknet
 
@@ -45,15 +43,14 @@ Strix Web3 runs inside a Debian-based Docker container with a multi-ecosystem sm
 | [Scarb](https://github.com/software-mansion/scarb) | Package manager and build tool (`scarb build` / `scarb test`) |
 | [Starknet Foundry](https://github.com/foundry-rs/starknet-foundry) | `snforge` tests and `sncast` on-chain interactions |
 | `starknet-devnet` | Local Starknet node |
-| cairo-lint / amarna / caracal | Cairo linters and analyzers |
+| cairo-lint / amarna / caracal | Cairo linters and analyzers (install on demand) |
 
 ## CosmWasm / Cosmos
 
 | Tool | Description |
 | ---- | ----------- |
 | Rust + `wasm32-unknown-unknown` | Contract build target |
-| `cw-multitest` | Integration test harness |
-| `cosmwasm-check` / `cosmwasm-schema` | Wasm validation and schema generation |
+| `cosmwasm-check` | Wasm validation; `cw-multitest` / `cosmwasm-schema` are project dev-dependencies |
 
 ## TON
 
@@ -75,8 +72,8 @@ Strix Web3 runs inside a Debian-based Docker container with a multi-ecosystem sm
 | Tool | Description |
 | ---- | ----------- |
 | `circom` / [snarkjs](https://github.com/iden3/snarkjs) | Circuit compile and Groth16/PLONK setup, prove, verify |
-| `circomspect` / `ecne` | Circom static analysis and under-constraint detection |
-| [Nargo](https://github.com/noir-lang/noir) + `bb` | Noir build, test, execute, prove, verify |
+| `circomspect` | Circom static analysis (under-constrained signals); `picus` installs on demand |
+| Nargo (`nargo`) | Noir build, test, execute, prove, verify; `bb` backend installs on demand |
 
 ## Sway / Fuel
 
@@ -98,7 +95,7 @@ Strix Web3 runs inside a Debian-based Docker container with a multi-ecosystem sm
 | ---- | ----------- |
 | [AlgoKit](https://github.com/algorandfoundation/algokit-cli) | `algokit` CLI: init, compile, deploy, and project scaffolding |
 | `algokit-utils` | Python/TS test harness (`AlgorandClient`, `ApplicationClient`) |
-| `goal` | Node and account/app inspection against a localnet |
+| `goal` | Node and account/app inspection via `algokit localnet` (needs Docker, unavailable in-sandbox) |
 | `pytest` | Contract tests asserting balances, global/local state, and boxes |
 
 ## Cardano
@@ -106,16 +103,16 @@ Strix Web3 runs inside a Debian-based Docker container with a multi-ecosystem sm
 | Tool | Description |
 | ---- | ----------- |
 | [Aiken](https://github.com/aiken-lang/aiken) | `aiken build` / `check` / `test` / `fmt`, `plutus.json` blueprint |
-| `cardano-cli` / `cardano-testnet` | Local cluster and transaction construction |
-| Lucid / Mesh | TypeScript transaction builders for end-to-end proofs |
+| `cardano-cli` / `cardano-testnet` | Local cluster and transaction construction (install on demand) |
+| Lucid / Mesh | TypeScript transaction builders for end-to-end proofs (install on demand) |
 
 ## Bitcoin
 
 | Tool | Description |
 | ---- | ----------- |
 | `bitcoind` / `bitcoin-cli` | Regtest node and RPC for Script testing |
-| `rust-miniscript` / BDK | Miniscript compilation and policy analysis |
-| `ord` / runes | Ordinals and runes tooling |
+| `rust-miniscript` / BDK | Miniscript compilation and policy analysis (install on demand) |
+| `ord` / runes | Ordinals and runes tooling (install on demand) |
 
 ## Scripting & Decoding
 
@@ -127,5 +124,5 @@ Strix Web3 runs inside a Debian-based Docker container with a multi-ecosystem sm
 | Git | Repository history mining and diff scoping |
 
 <Note>
-  All tools are pre-configured and in `PATH`. The agent detects the target's ecosystem and selects the appropriate toolchain for each audit stage — build, recon, fuzzing, or proof-of-concept.
+  The core toolchains are pre-configured and in `PATH`. Some specialized analyzers, provers, and SDKs install on demand (marked above) — the agent installs them when a target needs them. It detects the target's ecosystem and selects the appropriate toolchain for each audit stage — build, recon, fuzzing, or proof-of-concept.
 </Note>

@@ -122,8 +122,8 @@ async def test_root_prompt_options_flow_into_root_agent(
         "scope_source": "user_scan_config",
         "authorized_targets": [
             {
-                "type": "web_application",
-                "value": "https://example.com",
+                "type": "deployed_contract",
+                "value": "0x1111111111111111111111111111111111111111",
                 "workspace_path": "",
             },
         ],
@@ -143,7 +143,7 @@ async def test_root_prompt_options_flow_into_root_agent(
     instructions_override = kwargs["instructions_override"]
     assert "SCOPE:" in instructions_override
     assert "AUTHORIZED TARGETS" in instructions_override
-    assert "https://example.com" in instructions_override
+    assert "0x1111111111111111111111111111111111111111" in instructions_override
     assert "CUSTOM SCAN PROMPT" in instructions_override
     assert instructions_override.count("SCOPE:") == 1
     assert instructions_override.index("CUSTOM SCAN PROMPT") < instructions_override.index("SCOPE:")
@@ -162,7 +162,7 @@ async def test_extra_system_prompt_context_cannot_override_scope_context(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Any,
 ) -> None:
-    scope_context = {"authorized_targets": [{"type": "web_application"}]}
+    scope_context = {"authorized_targets": [{"type": "deployed_contract"}]}
     captured = _patch_engine_scaffold(monkeypatch, tmp_path, scope_context)
 
     with pytest.raises(ValueError, match="authorized_targets"):
@@ -285,7 +285,9 @@ async def test_unknown_tool_calls_are_returned_to_the_model(
 def test_scope_is_rendered_once_at_the_end_of_the_prompt() -> None:
     prompt = render_system_prompt(
         system_prompt_context={
-            "authorized_targets": [{"type": "web_application", "value": "https://example.com"}],
+            "authorized_targets": [
+                {"type": "deployed_contract", "value": "0x1111111111111111111111111111111111111111"}
+            ],
         },
     )
 
@@ -315,7 +317,9 @@ def test_scope_is_sent_as_its_own_system_message_on_cache_point_routes() -> None
     settings = make_model_settings(None, model_name="anthropic/claude-sonnet-5-5")
     prompt = render_system_prompt(
         system_prompt_context={
-            "authorized_targets": [{"type": "web_application", "value": "https://target.invalid"}],
+            "authorized_targets": [
+                {"type": "deployed_contract", "value": "0x1111111111111111111111111111111111111111"}
+            ],
         },
     )
 
@@ -324,8 +328,8 @@ def test_scope_is_sent_as_its_own_system_message_on_cache_point_routes() -> None
     assert system is None
     assert isinstance(model_input, list)
     assert [item["role"] for item in model_input] == ["system", "system", "user"]
-    assert "https://target.invalid" not in model_input[0]["content"]
-    assert "https://target.invalid" in model_input[1]["content"]
+    assert "0x1111111111111111111111111111111111111111" not in model_input[0]["content"]
+    assert "0x1111111111111111111111111111111111111111" in model_input[1]["content"]
     assert "<cache_point>" not in model_input[0]["content"] + model_input[1]["content"]
 
 

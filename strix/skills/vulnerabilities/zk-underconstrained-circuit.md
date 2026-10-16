@@ -1,6 +1,6 @@
 ---
 name: zk-underconstrained-circuit
-description: ZK under-constrained circuits — missing boolean/range checks, <-- without constraints, dead constraints, unconstrained public inputs, ecne/circomspect detection
+description: ZK under-constrained circuits — missing boolean/range checks, <-- without constraints, dead constraints, unconstrained public inputs, circomspect/picus detection
 ---
 
 # Under-Constrained Circuits
@@ -33,17 +33,17 @@ A circuit proves what its **constraints** permit, not what the source code appea
 ## Detection tooling
 
 - `circomspect path/to/circuit.circom` (Trail of Bits linter) — reports under-constrained signals, unconstrained outputs, and common constraint omissions.
-- `ecne --r1cs circuit.r1cs` (formal under-constrained detection) — proves a signal is constrained by no equation, or finds witnesses violating the intended relation.
+- `picus --r1cs circuit.r1cs` (formal under-constrained detection, install on demand) — proves a signal is constrained by no equation, or finds witnesses violating the intended relation. (`ecne` is unmaintained; do not rely on it.)
 - `circom circuit.circom --r1cs --wasm --sym --inspect` — emits the R1CS plus an inspection report of non-quadratic/degenerate constraints.
 - `snarkjs r1cs info circuit.r1cs` — constraint/input/wire counts; a suspiciously low count hints at dropped constraints.
 
 ## Proof
 
-A working **unconstrained witness** is the standard: a malicious prover that satisfies all constraints while producing an out-of-spec output (e.g. a value the honest witness could never take). Show the concrete witness, the `snarkjs` (or `nargo`/`bb`) prove+verify, and the verifier accepting it. Testing the honest path passing is **not** proof; the forged witness is. A `circomspect`/`ecne` warning with no forgery stays a **lead**.
+A working **unconstrained witness** is the standard: a malicious prover that satisfies all constraints while producing an out-of-spec output (e.g. a value the honest witness could never take). Show the concrete witness, the `snarkjs` (or `nargo`/`bb`) prove+verify, and the verifier accepting it. Testing the honest path passing is **not** proof; the forged witness is. A `circomspect` warning with no forgery stays a **lead**.
 
 ## Fix
 
-Replace every free assignment with a full constraint (`out <== f(x)` or `out === f(x)`). Add boolean constraints (`s * (s - 1) === 0`) and `Num2Bits` range checks with recomposition. Ensure every public input is bound. Wire all template inputs. Re-run `circomspect` and `ecne` clean, and add negative tests that attempt a forged witness.
+Replace every free assignment with a full constraint (`out <== f(x)` or `out === f(x)`). Add boolean constraints (`s * (s - 1) === 0`) and `Num2Bits` range checks with recomposition. Ensure every public input is bound. Wire all template inputs. Re-run `circomspect` clean, and add negative tests that attempt a forged witness.
 
 ## Variants and adjacent bugs
 
@@ -61,12 +61,12 @@ Replace every free assignment with a full constraint (`out <== f(x)` or `out ===
 
 ## Leads vs findings
 
-- A `circomspect`/`ecne` warning is a **lead**; the forged witness is the finding.
+- A `circomspect` warning is a **lead**; the forged witness is the finding.
 - Show the out-of-spec witness accepted by `snarkjs groth16 verify`.
 - Severity is one of **Critical, High, Medium, Low, Informational**.
 
 ## Related skills
 
 - `ecosystems/zk` — Circom/Noir/Halo2/gnark model.
-- `tooling/zk-circom` — `circom`, `snarkjs`, `circomspect`, `ecne`.
+- `tooling/zk-circom` — `circom`, `snarkjs`, `circomspect`.
 - `vulnerabilities/zk-soundness-completeness` — forged witnesses and binding.

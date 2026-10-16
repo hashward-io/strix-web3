@@ -47,18 +47,18 @@ Strix Web3 agents come equipped with a multi-chain audit toolchain, selected per
 | Ecosystem | Toolkit |
 |-----------|---------|
 | EVM | Foundry (forge/cast/anvil), Slither, Aderyn, Echidna, Medusa, Halmos, Vyper, Hardhat, cargo-stylus |
-| Solana | Anchor, `cargo build-sbf`, `solana-test-validator`, LiteSVM, Trident/`cargo fuzz`, `spl-token` |
-| Move | `sui move`, `aptos move`, Move Prover |
-| Cairo | Scarb, `snforge`/`sncast`, `starknet-devnet`, cairo-lint, amarna, caracal |
-| CosmWasm | `wasm32` build, `cw-multitest`, `cosmwasm-check`, `wasmd` |
+| Solana | Anchor, `cargo build-sbf`, `solana-test-validator`; LiteSVM, Trident/`cargo fuzz`, `spl-token` (on demand) |
+| Move | `sui move`, `aptos move`; Move Prover (needs boogie + z3, on demand) |
+| Cairo | Scarb, `snforge`/`sncast`, `starknet-devnet`; cairo-lint, amarna, caracal (on demand) |
+| CosmWasm | `wasm32` build, `cosmwasm-check`; `cw-multitest`/`cosmwasm-schema` as project dev-deps |
 | TON | FunC/Tact compilers, blueprint, `@ton/sandbox` |
 | Substrate / ink! | `cargo contract`, `ink_e2e` |
-| ZK | `circom`/`snarkjs`/`circomspect`/`ecne`, `nargo` + `bb` |
+| ZK | `circom`/`snarkjs`/`circomspect`, `nargo` (Noir); `picus`/`bb` on demand |
 | Sway / Fuel | Forc, `fuel-core` |
 | NEAR | `cargo near`, `near-workspaces` |
-| Algorand | AlgoKit (`algokit`), `goal`, `algokit-utils` + `pytest` |
-| Cardano | `aiken`, `cardano-cli`/`cardano-testnet`, Lucid/Mesh |
-| Bitcoin | `bitcoin-cli`/`bitcoind` (regtest), `rust-miniscript`, ord/runes |
+| Algorand | AlgoKit (`algokit`), `algokit-utils` + `pytest` (localnet/Docker and `goal` unavailable in-sandbox) |
+| Cardano | `aiken` (`cardano-cli`/testnet, Lucid/Mesh install on demand) |
+| Bitcoin | `bitcoin-cli`/`bitcoind` (regtest); `rust-miniscript`, ord/runes (on demand) |
 
 The invariant catalog and coverage ledger are engine-wide: the protocol's must-hold properties and the negative space of the audit, tracked the same way on every chain.
 

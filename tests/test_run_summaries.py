@@ -47,7 +47,12 @@ def test_lists_runs_newest_first_with_target_status_and_findings(tmp_path: Path)
             "status": "completed",
             "start_time": "2026-10-04T10:00:00+00:00",
             "end_time": "2026-10-04T10:05:00+00:00",
-            "targets_info": [{"type": "web_application", "original": "https://example.com"}],
+            "targets_info": [
+                {
+                    "type": "deployed_contract",
+                    "original": "0x1111111111111111111111111111111111111111",
+                }
+            ],
         },
         modified=1_000,
         findings=2,
@@ -59,8 +64,14 @@ def test_lists_runs_newest_first_with_target_status_and_findings(tmp_path: Path)
             "status": "interrupted",
             "start_time": "2026-10-04T11:00:00+00:00",
             "targets_info": [
-                {"type": "web_application", "original": "https://example.com"},
-                {"type": "web_application", "original": "https://api.example.com"},
+                {
+                    "type": "deployed_contract",
+                    "original": "0x1111111111111111111111111111111111111111",
+                },
+                {
+                    "type": "deployed_contract",
+                    "original": "0x2222222222222222222222222222222222222222",
+                },
             ],
         },
         modified=3_000,
@@ -71,13 +82,13 @@ def test_lists_runs_newest_first_with_target_status_and_findings(tmp_path: Path)
 
     assert [run.run_name for run in runs] == ["example-com_2222", "example-com_1111"]
     newest, oldest = runs
-    assert newest.target == "https://example.com +1 more"
+    assert newest.target == "0x1111111111111111111111111111111111111111 +1 more"
     assert newest.status == "interrupted"
     assert newest.started_at == "2026-10-04T11:00:00+00:00"
     assert newest.ended_at == ""
     assert newest.findings == 0
     assert newest.resumable is True
-    assert oldest.target == "https://example.com"
+    assert oldest.target == "0x1111111111111111111111111111111111111111"
     assert oldest.findings == 2
     assert oldest.ended_at == "2026-10-04T10:05:00+00:00"
 
@@ -151,7 +162,7 @@ def test_title_is_the_instruction_else_the_most_severe_finding(tmp_path: Path) -
         json.dumps(
             [
                 {"title": "Verbose errors", "severity": "low"},
-                {"title": "SQL injection via id on /login", "severity": "critical"},
+                {"title": "Reentrancy in withdraw()", "severity": "critical"},
             ]
         ),
         encoding="utf-8",
@@ -159,5 +170,5 @@ def test_title_is_the_instruction_else_the_most_severe_finding(tmp_path: Path) -
 
     assert [run.title for run in list_run_summaries(cwd=tmp_path)] == [
         "focus on auth",
-        "SQL injection",
+        "Reentrancy in withdraw()",
     ]

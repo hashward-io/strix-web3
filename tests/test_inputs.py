@@ -390,23 +390,35 @@ def test_scan_targets_prefer_the_workspace_checkout_over_the_remote_url() -> Non
                     "workspace_subdir": "billing",
                 },
             },
-            {"type": "web_application", "details": {"target_url": "https://app.example.com"}},
+            {
+                "type": "deployed_contract",
+                "details": {"target_address": "0x2222222222222222222222222222222222222222"},
+            },
         ]
     }
 
-    assert build_scan_targets(config) == ["/workspace/billing", "https://app.example.com"]
+    assert build_scan_targets(config) == [
+        "/workspace/billing",
+        "0x2222222222222222222222222222222222222222",
+    ]
 
 
 def test_scan_targets_drop_empty_and_duplicate_entries() -> None:
     config = {
         "targets": [
-            {"type": "web_application", "details": {"target_url": "https://app.example.com"}},
-            {"type": "web_application", "details": {"target_url": "https://app.example.com"}},
-            {"type": "ip_address", "details": {}},
+            {
+                "type": "deployed_contract",
+                "details": {"target_address": "0x2222222222222222222222222222222222222222"},
+            },
+            {
+                "type": "deployed_contract",
+                "details": {"target_address": "0x2222222222222222222222222222222222222222"},
+            },
+            {"type": "local_code", "details": {}},
         ]
     }
 
-    assert build_scan_targets(config) == ["https://app.example.com"]
+    assert build_scan_targets(config) == ["0x2222222222222222222222222222222222222222"]
 
 
 def test_openrouter_attribution_rides_on_the_request_headers() -> None:

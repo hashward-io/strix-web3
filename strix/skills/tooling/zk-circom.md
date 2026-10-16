@@ -1,6 +1,6 @@
 ---
 name: zk-circom
-description: Circom toolchain — circuit compile with r1cs/wasm/sym, snarkjs Groth16 and PLONK setup/prove/verify, and circomspect/ecne/picus analysis
+description: Circom toolchain — circuit compile with r1cs/wasm/sym, snarkjs Groth16 and PLONK setup/prove/verify, and circomspect/picus analysis
 ---
 
 # Circom (zk-SNARK circuits)
@@ -11,7 +11,7 @@ Circom compiles arithmetic circuits to R1CS; `snarkjs` performs the trusted setu
 
 - `npm install -g circom` or `cargo install circom` (Rust `circom`); check `circom --version`.
 - `npm install -g snarkjs`; `snarkjs --version`.
-- Analyzers: `cargo install circomspect`; build `ecne` and `picus` from `github.com/Veridise`.
+- Analyzers: `circomspect` ships in the sandbox; `picus` (Veridise) installs with `cargo install --git https://github.com/Veridise/picus`. `ecne` is unmaintained — do not rely on it.
 - Circuit libraries: `npm install circomlib` (and `circomlib-matrix`).
 
 ## Core commands
@@ -44,8 +44,7 @@ snarkjs plonk verify verification_key.json public.json proof.json
 
 # static analysis
 circomspect circuit.circom
-ecne --r1cs build/circuit.r1cs
-picus --r1cs build/circuit.r1cs
+picus --r1cs build/circuit.r1cs   # install picus on demand (see above)
 ```
 
 ## Audit workflow
@@ -53,7 +52,7 @@ picus --r1cs build/circuit.r1cs
 1. Compile with `--r1cs --wasm --sym`; `snarkjs r1cs info` shows constraint, signal, and input counts.
 2. Read every `<==`, `<--`, and `===`: a `<--` (witness assignment) with no matching constraint is **under-constrained** — the classic Critical.
 3. Verify all signals feeding comparisons/`Num2Bits` are range-checked; an unconstrained `lessThan` result is a lead.
-4. Run `circomspect`, `ecne`, and `picus` for leads; treat them as hints, then hand-trace.
+4. Run `circomspect` (shipped) and `picus` if installed for leads; treat them as hints, then hand-trace.
 5. Reproduce an under-constraint with a malicious `input.json` that satisfies the constraints but forges a false statement.
 6. Check the trusted-setup transcript and that the deployed verifier matches the exported key.
 

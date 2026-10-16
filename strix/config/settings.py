@@ -186,11 +186,6 @@ class IntegrationSettings(BaseSettings):
         le=100,
         alias="STRIX_EXA_NUM_RESULTS",
     )
-    postman_api_key: str | None = Field(
-        default=None,
-        alias="POSTMAN_API_KEY",
-        repr=False,
-    )
 
 
 class ViewerSettings(BaseSettings):

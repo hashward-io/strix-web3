@@ -115,12 +115,8 @@ affecting the agents that do the actual testing.
   Number of Exa results to return, from `1` to `100`. Each result includes a title, a URL, and a short security-focused summary. To read a full page, the agent calls `web_get_contents` with the result URL. This setting applies only to the Exa provider.
 </ParamField>
 
-<ParamField path="POSTMAN_API_KEY" type="string">
-  Postman API key (`PMAK-…`). Enables fetching Postman collections by id as a target (`postman://<collection-uid>`), and Postman environments (`postman://<collection-uid>?env=<environment-uid>`) to resolve collection variables. Not needed when passing a local collection export file.
-</ParamField>
-
 <ParamField path="STRIX_TELEMETRY" default="1" type="string">
-  Telemetry toggle. Set to `0`, `false`, `no`, or `off` to disable telemetry (PostHog, Scarf, OTEL).
+  Accepted for backwards compatibility and has no effect. This self-hosted build collects no usage telemetry.
 </ParamField>
 
 <ParamField path="TRACELOOP_BASE_URL" type="string">

@@ -256,7 +256,10 @@ def test_read_target_list_file_rejects_empty_path(empty: str) -> None:
 def test_dedupe_keeps_distinct_targets_in_order() -> None:
     targets = [
         _local_target("/a"),
-        {"type": "web_application", "details": {"target_url": "https://x"}},
+        {
+            "type": "deployed_contract",
+            "details": {"target_address": "0x1111111111111111111111111111111111111111"},
+        },
         _local_target("/b"),
     ]
     assert dedupe_local_targets(targets) == targets

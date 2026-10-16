@@ -36,7 +36,16 @@ def test_mcp_config_flag_sets_loader_override(
     # parser sets, keeping the override from leaking into other tests.
     monkeypatch.delenv("STRIX_MCP_CONFIG", raising=False)
     monkeypatch.setattr(
-        sys, "argv", ["strix", "-t", "https://test.com/", "-n", "--mcp-config", str(config)]
+        sys,
+        "argv",
+        [
+            "strix",
+            "-t",
+            "0x1111111111111111111111111111111111111111",
+            "-n",
+            "--mcp-config",
+            str(config),
+        ],
     )
 
     args = cli_main.parse_arguments()
@@ -52,7 +61,16 @@ def test_mcp_config_flag_rejects_missing_file(
     monkeypatch.delenv("STRIX_MCP_CONFIG", raising=False)
     missing = tmp_path / "nope.json"
     monkeypatch.setattr(
-        sys, "argv", ["strix", "-t", "https://test.com/", "-n", "--mcp-config", str(missing)]
+        sys,
+        "argv",
+        [
+            "strix",
+            "-t",
+            "0x1111111111111111111111111111111111111111",
+            "-n",
+            "--mcp-config",
+            str(missing),
+        ],
     )
 
     with pytest.raises(SystemExit):
@@ -71,7 +89,7 @@ def test_mcp_server_flags_set_selection_env(monkeypatch: pytest.MonkeyPatch) -> 
         [
             "strix",
             "-t",
-            "https://test.com/",
+            "0x1111111111111111111111111111111111111111",
             "-n",
             "--mcp-server",
             "a",

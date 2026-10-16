@@ -31,7 +31,8 @@ def test_parse_arguments_accepts_target_list_file(
 ) -> None:
     target_list = tmp_path / "targets.txt"
     target_list.write_text(
-        "https://test1.com/\n\nhttp://test2.com:5789/\n",
+        "0x1111111111111111111111111111111111111111\n"
+        "\nsolana:So11111111111111111111111111111111111111112\n",
         encoding="utf-8",
     )
     _stub_settings(monkeypatch)
@@ -40,12 +41,12 @@ def test_parse_arguments_accepts_target_list_file(
     args = cli_main.parse_arguments()
 
     assert [target["original"] for target in args.targets_info] == [
-        "https://test1.com/",
-        "http://test2.com:5789/",
+        "0x1111111111111111111111111111111111111111",
+        "solana:So11111111111111111111111111111111111111112",
     ]
     assert [target["type"] for target in args.targets_info] == [
-        "web_application",
-        "web_application",
+        "deployed_contract",
+        "deployed_contract",
     ]
 
 
@@ -53,19 +54,25 @@ def test_parse_arguments_combines_target_and_target_list(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     target_list = tmp_path / "targets.txt"
-    target_list.write_text("http://test2.com:5789/\n", encoding="utf-8")
+    target_list.write_text("0x2222222222222222222222222222222222222222\n", encoding="utf-8")
     _stub_settings(monkeypatch)
     monkeypatch.setattr(
         sys,
         "argv",
-        ["strix", "-t", "https://test1.com/", "--target-list", str(target_list)],
+        [
+            "strix",
+            "-t",
+            "0x1111111111111111111111111111111111111111",
+            "--target-list",
+            str(target_list),
+        ],
     )
 
     args = cli_main.parse_arguments()
 
     assert [target["original"] for target in args.targets_info] == [
-        "https://test1.com/",
-        "http://test2.com:5789/",
+        "0x1111111111111111111111111111111111111111",
+        "0x2222222222222222222222222222222222222222",
     ]
 
 

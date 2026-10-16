@@ -166,20 +166,20 @@ amm-dex, lending, vaults-erc4626, staking-restaking, perps, bridges-messaging, g
 REFERENCE DATA (curated checklists; load on demand):
 reference/scsvs-checklist, reference/smart-contract-vulnerabilities, reference/web3bugs-taxonomy, reference/weird-erc20, reference/solana-security-checklist, reference/move-security-checklist, reference/cairo-security-checklist, reference/zk-security-checklist.
 
-TOOLCHAIN (select by detected ecosystem):
-- evm — foundry (forge/cast/anvil), slither, aderyn, echidna, medusa, halmos, vyper/boa, cargo-stylus.
-- solana — anchor, cargo build-sbf, solana-test-validator, LiteSVM, Trident/cargo-fuzz, spl-token.
-- move — sui move, aptos move, Move Prover.
-- cairo — scarb, snforge/starknet-foundry, amarna, caracal, cairo-lint.
-- cosmwasm — cargo wasm32 build, cw-multitest, cosmwasm-check.
-- ton — func/tact, blueprint, @ton/sandbox.
+TOOLCHAIN (select by detected ecosystem; * = install on demand, NOT preinstalled):
+- evm — foundry (forge/cast/anvil), slither, aderyn, echidna, medusa, halmos, vyper/titanoboa, cargo-stylus.
+- solana — solana CLI, cargo build-sbf, anchor/avm, solana-test-validator; *LiteSVM, *Trident, *cargo-fuzz, *spl-token.
+- move — sui move, aptos move; *Move Prover (`move prove` needs boogie + z3 first).
+- cairo — scarb, snforge/sncast; *amarna (`pip install amarna`), *caracal, *cairo-lint.
+- cosmwasm — cargo wasm32 build, cosmwasm-check; `cw-multitest`/`cosmwasm-schema` are crates you add to the project's dev-dependencies.
+- ton — tact compiler, blueprint, @ton/sandbox.
 - substrate — cargo contract, ink_e2e.
-- zk — circom/snarkjs/circomspect/ecne, nargo/bb.
+- zk — circom, snarkjs, circomspect, nargo (Noir); *picus, *bb. `ecne` is unmaintained and NOT shipped — do not try to install it.
 - sway — forc, fuel-core.
 - near — cargo near, near-workspaces.
-- bitcoin — bitcoin-cli/regtest, rust-miniscript, ord.
-- algorand — algokit localnet, algokit compile, `goal`, algokit-utils + pytest.
-- cardano — aiken build/check/test, cardano-cli/cardano-testnet, Lucid/Mesh.
+- bitcoin — bitcoind/bitcoin-cli on regtest; *rust-miniscript, *ord/runes.
+- algorand — algokit, `algokit compile`, algokit-utils + pytest; `algokit localnet` and `goal` need Docker, which is NOT available inside the sandbox — prefer pure-Python unit tests or a remote node.
+- cardano — aiken build/check/test; *cardano-cli/cardano-testnet, *Lucid/Mesh (npm).
 
 EVIDENCE QUALITY:
 - A failing invariant property (native fuzzer/Foundry/Echidna/Medusa/Trident) is a confirmed break — the strongest automated signal. Port the counterexample to a PoC and report it.
@@ -265,10 +265,10 @@ Solana:
 - Solana CLI (`solana`, `cargo build-sbf`), Anchor (`anchor build/test`), `solana-test-validator`, `spl-token`
 
 Move:
-- `sui move build/test`, `aptos move build/test`, Move Prover (`move prove`)
+- `sui move build/test`, `aptos move build/test`; Move Prover (`move prove`) needs boogie + z3 installed first
 
 Cairo / Starknet:
-- `scarb build/test`, `snforge`/`starknet-foundry` (`sncast`), `cairo-lint`, amarna, caracal
+- `scarb build/test`, `snforge`/`starknet-foundry` (`sncast`); `amarna` (`pip install amarna`), `caracal`, `cairo-lint` install on demand
 
 CosmWasm / Cosmos:
 - Rust + `wasm32-unknown-unknown`, `cw-multitest`, `cosmwasm-check`, `cosmwasm-schema`
@@ -280,10 +280,10 @@ Substrate / ink!:
 - `cargo contract build/test`, `ink_e2e`, `wasm32-unknown-unknown`
 
 ZK:
-- `circom`, `snarkjs`, `circomspect`, `ecne`, `nargo` (Noir) + `bb`
+- `circom`, `snarkjs`, `circomspect`, `nargo` (Noir); `bb` and `picus` install on demand (`ecne` is unmaintained and not shipped)
 
 Other chains:
-- Sway/Fuel (`forc`, `fuel-core`), NEAR (`cargo near`, `near-workspaces`), Bitcoin (`bitcoin-cli`, `rust-miniscript`), Algorand (`algokit`, `goal`), Cardano (`aiken`, `cardano-cli`)
+- Sway/Fuel (`forc`, `fuel-core`), NEAR (`cargo near`, `near-workspaces`), Bitcoin (`bitcoind`/`bitcoin-cli` on regtest; `rust-miniscript` on demand), Algorand (`algokit`, `algokit compile`; `algokit localnet`/`goal` need Docker, unavailable here), Cardano (`aiken`; `cardano-cli` on demand)
 
 Scripting & decoding:
 - Python 3 (venv with `web3`, `eth-abi`, `eth-utils`, `py-solc-x`; extend as needed)

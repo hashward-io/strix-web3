@@ -27,7 +27,7 @@ aiken docs                      # generate documentation from the blueprint
 ## The blueprint and addresses
 
 - `plutus.json` (CIP-57) is the compiled blueprint; tools load a validator by its hash.
-- A script's on-chain address is derived from the validator hash — `cardano-cli address build`, or Lucid's `validatorToAddress`.
+- A script's on-chain address is derived from the validator hash — Lucid's `validatorToAddress`, or `cardano-cli address build` (`cardano-cli` is not preinstalled; install it on demand).
 - Rebuild after every edit so the blueprint hash and address stay current.
 
 ## Writing a proof with `aiken test`

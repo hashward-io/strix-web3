@@ -28,9 +28,9 @@ def _write_run(base: Path, name: str, *, state: bool = True) -> None:
                 "start_time": "2026-10-04T10:00:00+00:00",
                 "targets_info": [
                     {
-                        "type": "web_application",
-                        "details": {"target_url": "https://example.com"},
-                        "original": "https://example.com",
+                        "type": "deployed_contract",
+                        "details": {"target_address": "0x1111111111111111111111111111111111111111"},
+                        "original": "0x1111111111111111111111111111111111111111",
                     }
                 ],
             }
@@ -95,8 +95,9 @@ def test_bare_resume_headless_lists_the_runs_instead_of_prompting(
 
     err = capsys.readouterr().err
     assert "--resume needs a run name in headless mode" in err
-    assert "example-com_1111  completed  2026-10-04T10:00:00  https://example.com" in err
-    assert "example-com_2222  completed  2026-10-04T10:00:00  https://example.com" in err
+    address = "0x1111111111111111111111111111111111111111"
+    assert f"example-com_1111  completed  2026-10-04T10:00:00  {address}" in err
+    assert f"example-com_2222  completed  2026-10-04T10:00:00  {address}" in err
     assert "example-com_2222" in err
 
 
@@ -105,7 +106,11 @@ def test_bare_resume_still_rejects_targets(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     _write_run(tmp_path / "strix_runs", "example-com_1111")
-    monkeypatch.setattr(sys, "argv", ["strix", "--resume", "-t", "https://example.com"])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["strix", "--resume", "-t", "0x1111111111111111111111111111111111111111"],
+    )
 
     with pytest.raises(SystemExit):
         cli_main.parse_arguments()

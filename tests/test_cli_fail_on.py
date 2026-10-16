@@ -72,7 +72,9 @@ def test_none_severity_passes_any_threshold() -> None:
 def test_parse_fail_on_is_case_insensitive(monkeypatch: pytest.MonkeyPatch) -> None:
     _stub_settings(monkeypatch)
     monkeypatch.setattr(
-        sys, "argv", ["strix", "-t", "https://test.com/", "-n", "--fail-on", "HIGH"]
+        sys,
+        "argv",
+        ["strix", "-t", "0x1111111111111111111111111111111111111111", "-n", "--fail-on", "HIGH"],
     )
 
     args = cli_main.parse_arguments()
@@ -82,7 +84,9 @@ def test_parse_fail_on_is_case_insensitive(monkeypatch: pytest.MonkeyPatch) -> N
 
 def test_parse_fail_on_defaults_to_none(monkeypatch: pytest.MonkeyPatch) -> None:
     _stub_settings(monkeypatch)
-    monkeypatch.setattr(sys, "argv", ["strix", "-t", "https://test.com/", "-n"])
+    monkeypatch.setattr(
+        sys, "argv", ["strix", "-t", "0x1111111111111111111111111111111111111111", "-n"]
+    )
 
     assert cli_main.parse_arguments().fail_on is None
 
@@ -92,7 +96,9 @@ def test_parse_fail_on_rejects_unknown_severity(
 ) -> None:
     _stub_settings(monkeypatch)
     monkeypatch.setattr(
-        sys, "argv", ["strix", "-t", "https://test.com/", "-n", "--fail-on", "severe"]
+        sys,
+        "argv",
+        ["strix", "-t", "0x1111111111111111111111111111111111111111", "-n", "--fail-on", "severe"],
     )
 
     with pytest.raises(SystemExit):
@@ -106,7 +112,11 @@ def test_parse_fail_on_requires_non_interactive(
 ) -> None:
     _stub_settings(monkeypatch)
     monkeypatch.setattr(cli_args, "terminal_attached", lambda: True)
-    monkeypatch.setattr(sys, "argv", ["strix", "-t", "https://test.com/", "--fail-on", "high"])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["strix", "-t", "0x1111111111111111111111111111111111111111", "--fail-on", "high"],
+    )
 
     with pytest.raises(SystemExit):
         cli_main.parse_arguments()
@@ -119,7 +129,11 @@ def test_parse_fail_on_without_a_terminal_waits_for_the_headless_fallback(
 ) -> None:
     _stub_settings(monkeypatch)
     monkeypatch.setattr(cli_args, "terminal_attached", lambda: False)
-    monkeypatch.setattr(sys, "argv", ["strix", "-t", "https://test.com/", "--fail-on", "high"])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["strix", "-t", "0x1111111111111111111111111111111111111111", "--fail-on", "high"],
+    )
 
     args = cli_main.parse_arguments()
 

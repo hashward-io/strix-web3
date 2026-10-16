@@ -1,4 +1,3 @@
-import ipaddress
 import json
 import logging
 import os
@@ -11,7 +10,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import unquote, urlparse
 
 import requests
 from rich.console import Console
@@ -20,7 +19,6 @@ from rich.text import Text
 
 from strix.config import load_settings
 from strix.telemetry import report_error
-from strix.utils.api_spec import detect_spec_format
 
 
 logger = logging.getLogger(__name__)
@@ -463,7 +461,7 @@ def _slugify_for_run_name(text: str, max_length: int = 32) -> str:
     return text or "audit"
 
 
-def _derive_target_label_for_run_name(targets_info: list[dict[str, Any]] | None) -> str:  # noqa: PLR0911
+def _derive_target_label_for_run_name(targets_info: list[dict[str, Any]] | None) -> str:
     if not targets_info:
         return "audit"
 
@@ -471,14 +469,6 @@ def _derive_target_label_for_run_name(targets_info: list[dict[str, Any]] | None)
     target_type = first.get("type")
     details = first.get("details", {}) or {}
     original = first.get("original", "") or ""
-
-    if target_type == "web_application":
-        url = details.get("target_url", original)
-        try:
-            parsed = urlparse(url)
-            return str(parsed.netloc or parsed.path or url)
-        except Exception:
-            return str(url)
 
     if target_type == "repository":
         repo = details.get("target_repo", original)
@@ -504,18 +494,6 @@ def _derive_target_label_for_run_name(targets_info: list[dict[str, Any]] | None)
         else:
             short = str(address)[:12]
         return f"{chain}-{short}" if chain else str(short)
-
-    if target_type == "ip_address":
-        return str(details.get("target_ip", original) or original)
-
-    if target_type == "api_spec":
-        if details.get("source") == "postman_api":
-            return "postman-collection"
-        spec_path = details.get("target_spec", original)
-        try:
-            return str(Path(spec_path).stem or spec_path)
-        except Exception:
-            return str(spec_path)
 
     return str(original or "audit")
 
@@ -1296,6 +1274,26 @@ def _parse_deployed_contract_target(target: str) -> dict[str, str] | None:
     return details
 
 
+def _address_from_url(url_path: str) -> dict[str, str] | None:
+    """Recover an on-chain address from a block-explorer URL path.
+
+    Explorers put the address in the path (``/address/0x…``, ``/account/<addr>``,
+    ``/token/0x…``). Web3 users paste these links, so return deployed-contract
+    details when a path segment is an unambiguous address. A bare 32-byte hex id
+    is rejected: it is as likely a transaction hash as a Move/Starknet contract,
+    so it is only accepted with a ``<chain>:<address>`` token.
+    """
+    for segment in reversed([part for part in url_path.split("/") if part]):
+        candidate = unquote(segment)
+        parsed = _parse_deployed_contract_target(candidate)
+        if parsed is None:
+            continue
+        if not parsed.get("ecosystem") and _WIDE_ADDRESS_RE.match(parsed.get("target_address", "")):
+            continue
+        return parsed
+    return None
+
+
 def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR0911
     if not target or not isinstance(target, str):
         raise ValueError("Target must be a non-empty string")
@@ -1306,49 +1304,27 @@ def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR09
     if deployed is not None:
         return "deployed_contract", deployed
 
-    if target.startswith("git@"):
-        return "repository", {"target_repo": target}
-
-    if target.startswith("git://"):
+    if target.startswith(("git@", "git://")):
         return "repository", {"target_repo": target}
 
     parsed = urlparse(target)
-    if parsed.scheme == "postman":
-        collection_uid = f"{parsed.netloc}{parsed.path}".strip("/")
-        if not collection_uid:
-            raise ValueError(
-                f"Missing Postman collection id in '{target}' (expected postman://<collection-uid>)"
-            )
-        details = {
-            "target_spec": target,
-            "spec_format": "postman",
-            "source": "postman_api",
-            "collection_uid": collection_uid,
-        }
-        query = parse_qs(parsed.query)
-        env_uid = (query.get("env") or query.get("environment") or [""])[0].strip()
-        if env_uid:
-            details["environment_uid"] = env_uid
-        return "api_spec", details
-
     if parsed.scheme in ("http", "https"):
         if parsed.username or parsed.password:
             return "repository", {"target_repo": target}
         if parsed.path.rstrip("/").endswith(".git"):
             return "repository", {"target_repo": target}
-        if parsed.query or parsed.fragment:
-            return "web_application", {"target_url": target}
+        # A block-explorer link carries the address in its path; recognize it
+        # before probing for a Git remote (which costs a network round trip).
+        if (onchain := _address_from_url(parsed.path)) is not None:
+            return "deployed_contract", onchain
         path_segments = [s for s in parsed.path.split("/") if s]
         if len(path_segments) >= 2 and _is_http_git_repo(target):
             return "repository", {"target_repo": target}
-        return "web_application", {"target_url": target}
-
-    try:
-        ip_obj = ipaddress.ip_address(target)
-    except ValueError:
-        pass
-    else:
-        return "ip_address", {"target_ip": str(ip_obj)}
+        raise ValueError(
+            f"'{target}' is a web URL, not a supported Web3 target. Pass the "
+            "contract's source (a local project directory or a Git repository), "
+            "or its on-chain address — optionally as '<chain>:<address>'."
+        )
 
     path = Path(target).expanduser()
     try:
@@ -1356,13 +1332,10 @@ def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR09
             if path.is_dir():
                 check_mountable_dir(path)
                 return "local_code", {"target_path": str(path.resolve())}
-            spec_format = detect_spec_format(path)
-            if spec_format is not None:
-                return "api_spec", {
-                    "target_spec": str(path.resolve()),
-                    "spec_format": spec_format,
-                }
-            raise ValueError(f"Path exists but is not a directory: {target}")
+            raise ValueError(
+                f"Path exists but is not a directory: {target} "
+                "(audit a project directory; attach individual files with --local-source)"
+            )
     except (OSError, RuntimeError) as e:
         raise ValueError(f"Invalid path: {target} - {e!s}") from e
 
@@ -1375,12 +1348,10 @@ def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR09
             full_url = f"https://{target}"
             if _is_http_git_repo(full_url):
                 return "repository", {"target_repo": full_url}
-            return "web_application", {"target_url": full_url}
-
-    if "." in target and "/" not in target and not target.startswith("."):
-        parts = target.split(".")
-        if len(parts) >= 2 and all(p and p.strip() for p in parts):
-            return "web_application", {"target_url": f"https://{target}"}
+            raise ValueError(
+                f"'{target}' looks like a web URL, not a supported Web3 target. "
+                "Pass a local project, a Git repository, or a deployed contract address."
+            )
 
     raise ValueError(
         f"Invalid target: {target}\n"
@@ -1391,8 +1362,7 @@ def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR09
         "- A Git repository URL (https://host/org/repo or git@host:org/repo.git)\n"
         "- A deployed on-chain target: EVM 0x<40 hex>, Solana base58, "
         "Sui/Aptos/Starknet 0x<64 hex>, Cosmos bech32, TON, Cardano addr1…, Algorand, "
-        "or Bitcoin — optionally <chain>:<address>\n"
-        "- A file or directory to add to the workspace"
+        "or Bitcoin — optionally <chain>:<address>"
     )
 
 
@@ -1623,103 +1593,6 @@ def dedupe_local_targets(targets_info: list[dict[str, Any]]) -> list[dict[str, A
             seen_paths.add(path)
             result.append(target)
     return result
-
-
-def _is_localhost_host(host: str) -> bool:
-    host_lower = host.lower().strip("[]")
-
-    if host_lower in ("localhost", "0.0.0.0", "::1"):  # nosec B104
-        return True
-
-    try:
-        ip = ipaddress.ip_address(host_lower)
-        if isinstance(ip, ipaddress.IPv4Address):
-            return ip.is_loopback  # 127.0.0.0/8
-        if isinstance(ip, ipaddress.IPv6Address):
-            return ip.is_loopback  # ::1
-    except ValueError:
-        pass
-
-    return False
-
-
-def rewrite_localhost_targets(targets_info: list[dict[str, Any]], host_gateway: str) -> None:
-    from yarl import URL
-
-    for target_info in targets_info:
-        target_type = target_info.get("type")
-        details = target_info.get("details", {})
-
-        if target_type == "web_application":
-            target_url = details.get("target_url", "")
-            try:
-                url = URL(target_url)
-            except (ValueError, TypeError):
-                continue
-
-            if url.host and _is_localhost_host(url.host):
-                details["target_url"] = str(url.with_host(host_gateway))
-
-        elif target_type == "ip_address":
-            target_ip = details.get("target_ip", "")
-            if target_ip and _is_localhost_host(target_ip):
-                details["target_ip"] = host_gateway
-
-
-#: API spec targets are copied into one workspace directory rather than mounted
-#: from wherever they happen to live on the host.
-API_SPEC_WORKSPACE_SUBDIR = "api-specs"
-
-
-def write_fetched_collection(collection: dict[str, Any], collection_uid: str) -> str:
-    """Write a collection fetched from the Postman API to a local file.
-
-    Returns the file path, so a ``postman://`` target continues as an ordinary
-    spec file from here on and the API key never leaves the host.
-    """
-    staging = Path(tempfile.gettempdir()) / "strix_api_specs" / "fetched"
-    staging.mkdir(parents=True, exist_ok=True)
-    path = staging / f"{sanitize_name(collection_uid)}.postman_collection.json"
-    path.write_text(json.dumps(collection, indent=2), encoding="utf-8")
-    return str(path)
-
-
-def stage_api_specs(targets_info: list[dict[str, Any]], run_name: str) -> list[dict[str, Any]]:
-    """Copy every ``api_spec`` target into one directory for the sandbox.
-
-    A spec is a single file the agent reads, not a tree it works in, so it is
-    copied to a per-run staging directory that is exposed at
-    ``/workspace/api-specs`` instead of mounting its host location. Each target's
-    ``workspace_path`` records where the agent will find it.
-    """
-    specs = [t for t in targets_info if t.get("type") == "api_spec"]
-    if not specs:
-        return []
-
-    staging = Path(tempfile.gettempdir()) / "strix_api_specs" / run_name
-    staging.mkdir(parents=True, exist_ok=True)
-
-    used: set[str] = set()
-    for target in specs:
-        details = target["details"]
-        source = Path(str(details["target_spec"]))
-        name = source.name
-        stem, suffix = source.stem, source.suffix
-        count = 1
-        while name in used:
-            count += 1
-            name = f"{stem}-{count}{suffix}"
-        used.add(name)
-        shutil.copy2(source, staging / name)
-        details["workspace_path"] = f"/workspace/{API_SPEC_WORKSPACE_SUBDIR}/{name}"
-
-    return [
-        {
-            "source_path": str(staging),
-            "workspace_subdir": API_SPEC_WORKSPACE_SUBDIR,
-            "protect_metadata": False,
-        }
-    ]
 
 
 def clone_repository(repo_url: str, run_name: str, dest_name: str | None = None) -> str:

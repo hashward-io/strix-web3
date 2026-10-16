@@ -45,7 +45,7 @@ sui client upgrade --gas-budget 100000000 --upgrade-capability <CAP_ID>
 aptos move compile
 aptos move test
 aptos move test --filter my_test
-aptos move prove            # Move Prover reads `spec` blocks in *.move
+aptos move prove            # Move Prover (needs boogie + z3 on PATH; install them on demand)
 aptos move build-publish-payload --json-output-file out.json
 aptos move publish
 
@@ -66,7 +66,7 @@ aptos init --network devnet
 2. `move build` and `move test` → green baseline; inline `#[test]` modules are often the only specification.
 3. Enumerate entry points: `entry`, `public`, `public(friend)`, `public(package)` — record exactly who may call each. See `ecosystems/move`.
 4. Sui: check object ownership, `transfer`, dynamic fields, and shared-object contention. Aptos: check signer capabilities and global-storage borrows.
-5. Run `move prove` where specs exist; treat every spec invariant as a testable claim.
+5. Run `move prove` where specs exist; treat every spec invariant as a testable claim. The Prover is not preinstalled — `aptos move prove` needs `boogie` and `z3` on `PATH` first (`dotnet tool install --global boogie` / `pip install z3-solver` or the release binary); skip it if you cannot install them and say so.
 6. Confirm High/Critical with a Move unit test or a devnet transaction.
 
 ## Pitfalls

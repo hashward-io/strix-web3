@@ -24,7 +24,10 @@ def test_parse_repo_full_name_handles_common_forms() -> None:
 def test_repository_context_none_for_non_repository_targets() -> None:
     state = ReportState(run_name="t")
     state.run_record["targets_info"] = [
-        {"type": "web_application", "details": {"target_url": "https://example.com"}}
+        {
+            "type": "deployed_contract",
+            "details": {"target_address": "0x1111111111111111111111111111111111111111"},
+        }
     ]
     assert state._sarif_repository_context() is None
 

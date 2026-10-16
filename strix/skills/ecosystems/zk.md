@@ -62,7 +62,7 @@ A ZK circuit is a program with two obligations: **completeness** (an honest prov
 
 ## Toolchain & build
 
-- **Circom:** `circom circuit.circom --r1cs --wasm --sym`; **`snarkjs`** (`groth16 setup/prove/verify`, `zkey`); `circomspect` (static), `ecne` (under-constrained-signal analysis), `picus`.
+- **Circom:** `circom circuit.circom --r1cs --wasm --sym`; **`snarkjs`** (`groth16 setup/prove/verify`, `zkey`); `circomspect` (static, shipped); `picus` (under-constrained-signal analysis, install on demand). `ecne` is unmaintained and not shipped.
 - **Noir:** `nargo test`/`prove`/`verify`/`check`/`info` (constraint counts); `bb` (Barretenberg) backend.
 - **Halo2:** Rust crate; `MockProver` in tests; `halo2_proofs`/`halo2-lib`.
 - **gnark:** Go; `test.NewAssert(t).Prover(...)`.
@@ -80,11 +80,11 @@ A ZK circuit is a program with two obligations: **completeness** (an honest prov
 
 ## Proof standard
 
-A test demonstrating the soundness break: for Circom/Noir, a crafted witness/proof for a **false** statement that verifies (or a true statement that fails); for on-chain, a Foundry test calling the verifier with the bad proof and asserting it should revert. A `circomspect`/`ecne` lead without a witness is a **lead**, not a finding.
+A test demonstrating the soundness break: for Circom/Noir, a crafted witness/proof for a **false** statement that verifies (or a true statement that fails); for on-chain, a Foundry test calling the verifier with the bad proof and asserting it should revert. A `circomspect` lead without a witness is a **lead**, not a finding.
 
 ## Testing
 
-- `circomspect circuit.circom` and `ecne` for under-constrained-signal leads.
+- `circomspect circuit.circom` for under-constrained-signal leads (install `picus` for the formal pass).
 - `snarkjs` end-to-end: setup → prove → verify with a manually crafted witness.
 - `nargo test` for witness/constraint unit tests; `nargo info` for constraint counts.
 - `MockProver` in Halo2 to find unconstrained cells; gnark test assertions.
