@@ -33,7 +33,7 @@ uv run strix -n -t ./protocol --scan-mode standard --max-budget 20   # headless;
 - Exit codes (headless): `0` no findings, `1` fatal error, `2` findings filed. A `0` only covers what was analyzed — check the report's coverage section and `run.json` (`status`, `llm_usage.cost` vs the budget) before calling a run clean.
 - Artifacts in `strix_runs/<run-name>/`: `audit_report.md`, `vulnerabilities/<id>.md`, `vulnerabilities.json`, `findings.sarif` (SARIF 2.1.0), `run.json`.
 - Scan modes: `quick`, `standard`, `deep`. Combine with `--scope-mode diff --diff-base <ref>` for a change-set review.
-- Targets: a local project directory (Foundry/Hardhat, Anchor/Solana, Move, Scarb/Cairo, CosmWasm, Tact/TON, ink!/Substrate, Circom/Noir, Forc/Sway, NEAR, Algorand, Aiken/Cardano, Bitcoin), a Git repository URL, or a deployed on-chain target — EVM `0x<40 hex>`, Solana base58, Sui/Aptos/Starknet `0x<64 hex>` (or short-form with a chain), Cosmos bech32, TON, Cardano `addr1…`, Algorand base32, or Bitcoin — optionally `<chain>:<address>`.
+- Targets: a local project directory (Foundry/Hardhat, Anchor/Solana, Move, Scarb/Cairo, CosmWasm, Tact/TON, ink!/Substrate, Circom/Noir, Forc/Sway, NEAR, Algorand, Aiken/Cardano, Bitcoin), a Git repository URL, or a deployed on-chain target — EVM `0x<40 hex>`, Solana base58, Sui/Aptos/Starknet `0x<64 hex>` (or short-form with a chain), Cosmos bech32, TON, Cardano `addr1…`, Algorand base32, NEAR account ID, Substrate SS58, Fuel `fuel1…`, or Bitcoin — optionally `<chain>:<address>`.
 - Only audit code the user is authorized to audit.
 
 ## What the engine checks

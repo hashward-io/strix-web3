@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 
 EVM_ADDRESS = "0x1111111111111111111111111111111111111111"
 SOLANA_ADDRESS = "So11111111111111111111111111111111111111112"
+SUBSTRATE_ADDRESS = "5C4iA2und8WV6mbvTBYupm2eZwtxk3wCYUM2SFHXSyQuapGp"
+SUBSTRATE_ACCOUNT_ID20 = "sKDJwGgP42ifhnUdJMqgNVjwJACq3hg"
 
 
 def test_evm_address_is_a_deployed_contract() -> None:
@@ -42,6 +44,10 @@ def test_evm_address_is_a_deployed_contract() -> None:
         ("sui:0x2", "move"),
         ("bitcoin:bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", "bitcoin"),
         ("cardano:addr1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", "cardano"),
+        ("near:contract.near", "near"),
+        ("near:contract", "near"),
+        ("polkadot:" + SUBSTRATE_ADDRESS, "substrate"),
+        ("fuel:fuel1" + "q" * 55, "sway"),
     ],
 )
 def test_chain_pinned_addresses_resolve_their_ecosystem(target: str, ecosystem: str) -> None:
@@ -57,6 +63,29 @@ def test_explorer_url_recovers_the_address() -> None:
 
     assert ttype == "deployed_contract"
     assert details["target_address"] == EVM_ADDRESS
+
+
+def test_bare_near_account_id_is_a_deployed_target() -> None:
+    ttype, details = infer_target_type("contract.near")
+
+    assert ttype == "deployed_contract"
+    assert details["target_address"] == "contract.near"
+    assert details["ecosystem"] == "near"
+
+
+@pytest.mark.parametrize(
+    ("target", "ecosystem"),
+    [
+        (SUBSTRATE_ADDRESS, "substrate"),
+        (SUBSTRATE_ACCOUNT_ID20, "substrate"),
+        ("fuel1" + "q" * 55, "sway"),
+    ],
+)
+def test_bare_substrate_and_fuel_addresses_are_inferred(target: str, ecosystem: str) -> None:
+    ttype, details = infer_target_type(target)
+
+    assert ttype == "deployed_contract"
+    assert details["ecosystem"] == ecosystem
 
 
 def test_explorer_url_with_query_still_recovers_the_address() -> None:

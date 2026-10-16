@@ -1179,8 +1179,9 @@ def infer_target_type(target: str) -> tuple[str, dict[str, str]]:  # noqa: PLR09
         "Circom/Noir, Forc/Sway, NEAR, Algorand, Aiken/Cardano, Bitcoin)\n"
         "- A Git repository URL (https://host/org/repo or git@host:org/repo.git)\n"
         "- A deployed on-chain target: EVM 0x<40 hex>, Solana base58, "
-        "Sui/Aptos/Starknet 0x<64 hex>, Cosmos bech32, TON, Cardano addr1…, Algorand, "
-        "or Bitcoin — optionally <chain>:<address>"
+        "Sui/Aptos/Starknet 0x<64 hex>, Cosmos bech32, TON, Cardano addr1…, "
+        "Algorand base32, NEAR account ID, Substrate SS58, Fuel fuel1…, or "
+        "Bitcoin — optionally <chain>:<address>"
     )
 
 

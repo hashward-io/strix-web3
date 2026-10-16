@@ -96,13 +96,13 @@ def _remote_authority(target: str) -> str:
     """
     if on_chain_identity(target) is not None:
         return ""
-    candidate = target if "://" in target else f"//{target}"
-    parts = urlsplit(candidate)
-    host = (parts.hostname or "").lower()
-    if not host:
-        return ""
-    scheme = (parts.scheme or "https").lower()
     try:
+        candidate = target if "://" in target else f"//{target}"
+        parts = urlsplit(candidate)
+        host = (parts.hostname or "").lower()
+        if not host:
+            return ""
+        scheme = (parts.scheme or "https").lower()
         port = str(parts.port) if parts.port else _DEFAULT_PORTS.get(scheme, "")
     except ValueError:
         return ""
@@ -115,7 +115,10 @@ def _normalize_remote_target(target: str) -> str:
     if not authority:
         return re.sub(r"\s+", " ", target.lower()).strip()
     candidate = target if "://" in target else f"//{target}"
-    path = urlsplit(candidate).path.rstrip("/")
+    try:
+        path = urlsplit(candidate).path.rstrip("/")
+    except ValueError:
+        return re.sub(r"\s+", " ", target.lower()).strip()
     return f"{authority}{path}"
 
 
@@ -160,6 +163,8 @@ def _target_identity(target: str) -> str:
     on_chain = on_chain_identity(target)
     if on_chain is not None:
         return on_chain
+    if target.startswith(("git@", "git://", "ssh://")):
+        return _normalize_git_remote(target)
     directory = _local_directory(target)
     if directory is None:
         return _normalize_remote_target(target).removesuffix(".git")
@@ -190,10 +195,16 @@ def _snap_to_scan_target(raw: str, scan_targets: list[str]) -> str:
     raw_deployed = parse_deployed_contract_target(raw)
     if raw_deployed is not None:
         raw_address = raw_deployed["target_address"].lower()
-        for target in scan_targets:
-            known = parse_deployed_contract_target(target)
-            if known is not None and known["target_address"].lower() == raw_address:
-                return target
+        address_matches = [
+            target
+            for target in scan_targets
+            if (known := parse_deployed_contract_target(target)) is not None
+            and known["target_address"].lower() == raw_address
+        ]
+        # A bare address can be shared across chains (especially EVM chains).
+        # Only snap when the address uniquely identifies a scan target.
+        if len(address_matches) == 1:
+            return address_matches[0]
 
     authority = _remote_authority(raw)
     if authority:

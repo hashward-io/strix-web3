@@ -344,6 +344,14 @@ def test_checkout_and_its_clone_url_are_one_identity(tmp_path: Path) -> None:
     assert _get_impl("https://github.com/acme/billing.git")["found"] is True
 
 
+def test_checkout_and_scp_remote_are_one_identity(tmp_path: Path) -> None:
+    repo = _make_repo(tmp_path)
+    _git(repo, "remote", "add", "origin", "git@github.com:acme/billing.git")
+    _save_impl(str(repo), _MODEL, "root")
+
+    assert _get_impl("git@github.com:acme/billing.git")["found"] is True
+
+
 def test_ssh_and_https_remotes_are_one_identity(tmp_path: Path) -> None:
     """One repository cloned over scp-style SSH and over HTTPS is one target."""
     over_ssh = _make_repo(tmp_path, "ssh-clone")
@@ -384,6 +392,14 @@ def test_chain_prefixed_address_does_not_crash() -> None:
     assert _get_impl(f"ethereum:{_EVM}")["found"] is False
 
 
+def test_malformed_url_authority_does_not_crash() -> None:
+    # urlsplit raises ValueError for malformed IPv6 brackets; target identity
+    # must still degrade to a normalized string instead of crashing the tool.
+    target = "https://[::1"
+    assert _save_impl(target, _MODEL, "root")["success"] is True
+    assert _get_impl(target)["found"] is True
+
+
 def test_deployed_address_spellings_share_one_model() -> None:
     # The chain token and the hex digits are each case-insensitive.
     _save_impl(f"ethereum:{_EVM}", _MODEL, "root")
@@ -397,6 +413,16 @@ def test_bare_address_snaps_onto_a_chain_qualified_scan_target() -> None:
 
     # An agent naming the bare address must land on the scan's own spelling.
     assert _get_impl(_EVM, scan_targets)["found"] is True
+
+
+def test_bare_address_does_not_snap_across_ambiguous_chains() -> None:
+    scan_targets = [f"ethereum:{_EVM}", f"base:{_EVM}"]
+    _save_impl(scan_targets[0], _MODEL, "root", scan_targets)
+
+    # A bare EVM address does not identify which of two same-address contracts
+    # is intended; never silently attach its model to the first chain.
+    assert threat_model_tools._snap_to_scan_target(_EVM, scan_targets) == _EVM
+    assert _get_impl(_EVM, scan_targets)["found"] is False
 
 
 def test_base58_address_is_case_sensitive() -> None:

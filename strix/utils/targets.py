@@ -3,12 +3,13 @@
 Both the interface layer (to route a target to a scan) and the audit tools (to
 key a threat model by target) need to answer "is this string a deployed
 contract, and which ecosystem is it?". Keeping the patterns and the parser here
-stops the two layers drifting apart; this module imports nothing but ``re`` so
-either layer can depend on it cheaply.
+stops the two layers drifting apart; it only uses the Python standard library,
+so either layer can depend on it cheaply.
 """
 
 from __future__ import annotations
 
+import hashlib
 import re
 from urllib.parse import unquote
 
@@ -26,6 +27,10 @@ COSMOS_ADDRESS_RE = re.compile(r"^[a-z][a-z0-9]{2,15}1[023456789acdefghjklmnpqrs
 BITCOIN_ADDRESS_RE = re.compile(r"^(?:bc1|tb1|bcrt1)[023456789acdefghjklmnpqrstuvwxyz]{11,}$")
 CARDANO_ADDRESS_RE = re.compile(r"^(?:addr1|addr_test1|stake1|stake_test1)[0-9a-z]{20,}$")
 ALGORAND_ADDRESS_RE = re.compile(r"^[A-Z2-7]{58}$")
+FUEL_ADDRESS_RE = re.compile(r"^fuel1[023456789acdefghjklmnpqrstuvwxyz]{20,}$")
+SUBSTRATE_ADDRESS_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{23,48}$")
+NEAR_ACCOUNT_ID_RE = re.compile(r"^[a-z0-9]+(?:[._-][a-z0-9]+)*$")
+NEAR_ADDRESS_RE = re.compile(r"^[a-z0-9]+(?:[._-][a-z0-9]+)*\.(?:near|testnet)$")
 
 #: Chain/ecosystem tokens we recognize in a ``<chain>:<address>`` spelling.
 CHAIN_ECOSYSTEMS: dict[str, str] = {
@@ -95,6 +100,8 @@ ADDRESS_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (BITCOIN_ADDRESS_RE, "bitcoin"),
     (CARDANO_ADDRESS_RE, "cardano"),
     (ALGORAND_ADDRESS_RE, "algorand"),
+    (FUEL_ADDRESS_RE, "sway"),
+    (NEAR_ADDRESS_RE, "near"),
     (COSMOS_ADDRESS_RE, "cosmwasm"),
 )
 
@@ -106,6 +113,10 @@ def ecosystem_from_chain(token: str) -> str:
 
 def looks_like_address(candidate: str) -> bool:
     """Whether ``candidate`` has the shape of an address in any ecosystem."""
+    if SUBSTRATE_ADDRESS_RE.match(candidate):
+        # Shape-only here allows a chain-pinned SS58 target to reach the parser;
+        # ecosystem classification below validates its checksum.
+        return True
     return any(
         pattern.match(candidate)
         for pattern in (
@@ -119,13 +130,20 @@ def looks_like_address(candidate: str) -> bool:
             BITCOIN_ADDRESS_RE,
             CARDANO_ADDRESS_RE,
             ALGORAND_ADDRESS_RE,
+            FUEL_ADDRESS_RE,
+            NEAR_ADDRESS_RE,
         )
     )
 
 
-def ecosystem_for_address(address: str, chain: str) -> str | None:
+def ecosystem_for_address(address: str, chain: str) -> str | None:  # noqa: PLR0911
     """Return the ecosystem for an address, ``""`` when it is an address of an
     unknown chain, or ``None`` when it is not an on-chain address at all."""
+    chain_ecosystem = ecosystem_from_chain(chain)
+    if chain_ecosystem == "substrate":
+        return "substrate" if _is_valid_ss58(address) else None
+    if _is_valid_ss58(address):
+        return "substrate"
     for pattern, ecosystem in ADDRESS_PATTERNS:
         if pattern.match(address):
             return ecosystem
@@ -136,7 +154,33 @@ def ecosystem_for_address(address: str, chain: str) -> str | None:
     if SHORT_HEX_RE.match(address):
         # Short-form hex is only meaningful when the chain token names the chain.
         return ecosystem_from_chain(chain) or None
+    if ecosystem_from_chain(chain) == "near" and NEAR_ACCOUNT_ID_RE.match(address):
+        # NEAR account IDs need a chain token unless their suffix identifies NEAR.
+        return "near"
     return None
+
+
+_BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
+
+def _is_valid_ss58(address: str) -> bool:
+    """Validate a 20- or 32-byte Substrate account ID and its SS58 checksum."""
+    if not SUBSTRATE_ADDRESS_RE.match(address):
+        return False
+    value = 0
+    for char in address:
+        value = value * 58 + _BASE58_ALPHABET.index(char)
+    leading_zeroes = len(address) - len(address.lstrip("1"))
+    decoded = (b"\0" * leading_zeroes) + (
+        value.to_bytes((value.bit_length() + 7) // 8, "big") if value else b""
+    )
+    if len(decoded) not in (23, 24, 35, 36):
+        return False
+    payload, checksum = decoded[:-2], decoded[-2:]
+    if len(payload) not in (21, 22, 33, 34):  # prefix byte(s) + 20/32-byte AccountId
+        return False
+    expected = hashlib.blake2b(b"SS58PRE" + payload, digest_size=64).digest()[:2]
+    return checksum == expected
 
 
 def parse_deployed_contract_target(target: str) -> dict[str, str] | None:
@@ -144,10 +188,11 @@ def parse_deployed_contract_target(target: str) -> dict[str, str] | None:
 
     Accepted spellings:
 
-    - An address alone: EVM ``0x<40 hex>``, Solana base58, Sui/Aptos/Starknet
-      ``0x<64 hex>``, Cosmos bech32 (``cosmos1...``), Cardano bech32
-      (``addr1...``/``stake1...``), Algorand base32, TON friendly/raw, or a
-      Bitcoin ``bc1...`` address.
+    - An address/account alone: EVM ``0x<40 hex>``, Solana base58,
+      Sui/Aptos/Starknet ``0x<64 hex>``, Cosmos bech32 (``cosmos1...``),
+      Cardano bech32 (``addr1...``/``stake1...``), Algorand base32, TON
+      friendly/raw, Fuel bech32 (``fuel1...``), a valid Substrate SS58
+      address, a NEAR account ending in ``.near``/``.testnet``, or Bitcoin.
     - ``<chain>:<address>`` — pin the chain, e.g. ``1:0x...``, ``solana:<base58>``,
       ``sui:0x<64 hex>``, ``starknet:0x...``. The chain token is stored verbatim
       and passed to the agent, which resolves it against its RPC configuration.
@@ -162,7 +207,11 @@ def parse_deployed_contract_target(target: str) -> dict[str, str] | None:
     if ":" in candidate and not candidate.startswith("0x"):
         chain_token, _, remainder = candidate.partition(":")
         remainder = remainder.strip()
-        if chain_token.strip() and looks_like_address(remainder):
+        chain_ecosystem = ecosystem_from_chain(chain_token)
+        if chain_token.strip() and (
+            looks_like_address(remainder)
+            or (chain_ecosystem == "near" and NEAR_ACCOUNT_ID_RE.match(remainder))
+        ):
             chain = chain_token.strip()
             address = remainder
 

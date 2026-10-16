@@ -12,7 +12,7 @@ strix (--target <target> | --target-list <path>) [options]
 ## Options
 
 <ParamField path="--target, -t" type="string">
-  Target to audit. Accepts a local project directory (Foundry/Hardhat, Anchor/Solana, Move, Scarb/Cairo, CosmWasm, Tact/TON, ink!/Substrate, Circom/Noir, Forc/Sway, NEAR, Algorand, Aiken/Cardano, Bitcoin), a Git repository URL, or a deployed on-chain target — EVM `0x<40 hex>`, Solana base58, Sui/Aptos/Starknet `0x<64 hex>` (or short-form with a chain), Cosmos bech32, TON, Cardano `addr1…`, Algorand, or Bitcoin — optionally prefixed with a chain such as `1:0x<40 hex>` or `sui:0x<64 hex>`. Can be specified multiple times. Fresh runs require at least one target source: `--target` or `--target-list`.
+  Target to audit. Accepts a local project directory (Foundry/Hardhat, Anchor/Solana, Move, Scarb/Cairo, CosmWasm, Tact/TON, ink!/Substrate, Circom/Noir, Forc/Sway, NEAR, Algorand, Aiken/Cardano, Bitcoin), a Git repository URL, or a deployed on-chain target — EVM `0x<40 hex>`, Solana base58, Sui/Aptos/Starknet `0x<64 hex>` (or short-form with a chain), Cosmos bech32, TON, Cardano `addr1…`, Algorand base32, NEAR account ID, Substrate SS58, Fuel `fuel1…`, or Bitcoin — optionally prefixed with a chain such as `1:0x<40 hex>`, `sui:0x<64 hex>`, or `near:contract.near`. Can be specified multiple times. Fresh runs require at least one target source: `--target` or `--target-list`.
 
   <Note>
     A local directory is mounted into the sandbox live and **writable**, so the agent edits your real files (`.git` excepted). Commit or stash first.

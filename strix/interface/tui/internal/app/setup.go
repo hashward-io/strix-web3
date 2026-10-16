@@ -100,7 +100,7 @@ func looksLikeTarget(token string) bool {
 	if idx := strings.Index(token, ":"); idx > 0 && idx < len(token)-1 {
 		chain := strings.ToLower(token[:idx])
 		rest := token[idx+1:]
-		if chainAliases[chain] && (looksLikeOnChainAddress(rest) || shortHexPattern.MatchString(rest)) {
+		if chainAliases[chain] && (looksLikeOnChainAddress(rest) || shortHexPattern.MatchString(rest) || (chain == "near" && nearAccountIDPattern.MatchString(rest))) {
 			return true
 		}
 	}
@@ -131,6 +131,7 @@ func looksLikeOnChainAddress(token string) bool {
 	return evmAddressPattern.MatchString(token) ||
 		hexAddressPattern.MatchString(token) ||
 		solanaAddressPattern.MatchString(token) ||
+		substrateAddressPattern.MatchString(token) ||
 		bech32AddressPattern.MatchString(token) ||
 		algorandAddressPattern.MatchString(token) ||
 		bitcoinLegacyPattern.MatchString(token) ||
@@ -144,7 +145,11 @@ var (
 	hexAddressPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{64}$`)
 	// Solana base58 (32-44 chars, excluding 0/O/I/l).
 	solanaAddressPattern = regexp.MustCompile(`^[1-9A-HJ-NP-Za-km-z]{32,44}$`)
-	// Cosmos/Cardano/NEAR bech32 and Bitcoin bech32 (bc1/tb1/bcrt1).
+	// Substrate SS58 account/contract addresses are base58, usually 35-48 chars.
+	substrateAddressPattern = regexp.MustCompile(`^[1-9A-HJ-NP-Za-km-z]{23,48}$`)
+	// NEAR account IDs are chain-qualified unless their suffix identifies NEAR.
+	nearAccountIDPattern = regexp.MustCompile(`^[a-z0-9]+(?:[._-][a-z0-9]+)*$`)
+	// Cosmos/Cardano/Fuel bech32 and Bitcoin bech32 (bc1/tb1/bcrt1).
 	bech32AddressPattern = regexp.MustCompile(`^(?:bc1|tb1|bcrt1|[a-z]{2,20}1)[0-9a-z]{20,}$`)
 	// Algorand base32 (58 uppercase A-Z/2-7 chars).
 	algorandAddressPattern = regexp.MustCompile(`^[A-Z2-7]{58}$`)
@@ -158,14 +163,21 @@ var (
 )
 
 // chainAliases are the “<chain>:“ prefixes accepted in the setup prompt's
-// “<chain>:<address>“ form (a subset of the engine's target aliases).
+// “<chain>:<address>“ form; keep these aligned with strix.utils.targets.
 var chainAliases = map[string]bool{
-	"evm": true, "ethereum": true, "eth": true, "bsc": true, "polygon": true,
-	"arbitrum": true, "optimism": true, "base": true, "avalanche": true,
-	"solana": true, "sol": true, "sui": true, "aptos": true, "starknet": true,
-	"cosmos": true, "cosmwasm": true, "osmosis": true, "ton": true,
-	"cardano": true, "algorand": true, "near": true, "polkadot": true,
-	"substrate": true, "bitcoin": true, "btc": true, "fuel": true, "sway": true,
+	"eth": true, "ethereum": true, "mainnet": true, "evm": true,
+	"arbitrum": true, "optimism": true, "base": true, "polygon": true,
+	"bsc": true, "avalanche": true, "avax": true, "linea": true,
+	"scroll": true, "zksync": true, "blast": true, "celo": true,
+	"sol": true, "solana": true, "sui": true, "aptos": true, "move": true,
+	"starknet": true, "cairo": true, "stark": true, "cosmos": true,
+	"cosmwasm": true, "osmosis": true, "osmo": true, "neutron": true,
+	"sei": true, "ton": true, "toncoin": true, "polkadot": true,
+	"substrate": true, "ink": true, "kusama": true, "fuel": true,
+	"sway": true, "near": true, "bitcoin": true, "btc": true,
+	"circom": true, "noir": true, "zk": true, "algorand": true,
+	"algo": true, "avm": true, "cardano": true, "ada": true,
+	"aiken": true, "plutus": true,
 }
 
 func isTonAddress(token string) bool {

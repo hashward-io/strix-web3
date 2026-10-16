@@ -377,7 +377,12 @@ func TestLooksLikeTargetRecognisesOnChainAddresses(t *testing.T) {
 		strings.Repeat("A", 58),                         // Algorand base32
 		"EQ" + strings.Repeat("A", 46),                  // TON friendly
 		"0:" + strings.Repeat("a", 64),                  // TON raw
+		"contract.near",                                 // NEAR account
+		"near:contract",                                 // chain-qualified NEAR account
+		"5" + strings.Repeat("C", 46),                   // Substrate SS58
+		"fuel1" + strings.Repeat("q", 55),               // Fuel bech32
 		"evm:0xabc",                                     // chain-qualified short form
+		"avax:0x" + strings.Repeat("a", 40),             // EVM chain alias
 		"solana:So11111111111111111111111111111111111111112",
 	}
 	for _, token := range targets {

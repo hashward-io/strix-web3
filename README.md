@@ -84,6 +84,9 @@ strix --target sui:0x2                                                # Sui pack
 strix --target starknet:0x049d36570d4e46f48e99674bd3fcc84644dd6b8a      # Starknet
 strix --target cardano:addr1qy2l9xpjs6z97lztgp3ywp4e8w2q0v6m0c9j0g8x0x3fz2c0j8  # Cardano validator
 strix --target algorand:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ  # Algorand app account
+strix --target near:protocol.near                                    # NEAR account
+strix --target polkadot:5C4iA2und8WV6mbvTBYupm2eZwtxk3wCYUM2SFHXSyQuapGp  # Substrate SS58
+strix --target fuel:fuel1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq  # Fuel
 
 # A proxy and its implementation together
 strix --target ./src --target 0xProxyAddress
