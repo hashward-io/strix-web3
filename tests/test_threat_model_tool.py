@@ -425,6 +425,14 @@ def test_bare_address_does_not_snap_across_ambiguous_chains() -> None:
     assert _get_impl(_EVM, scan_targets)["found"] is False
 
 
+def test_chain_qualified_address_does_not_snap_to_another_chain() -> None:
+    scan_targets = [f"ethereum:{_EVM}"]
+    _save_impl(scan_targets[0], _MODEL, "root", scan_targets)
+
+    # Same 20-byte value, different chain: explicit chain information wins.
+    assert _get_impl(f"base:{_EVM}", scan_targets)["found"] is False
+
+
 def test_base58_case_variant_does_not_snap_to_another_target() -> None:
     scan_targets = [f"solana:{_SOLANA}"]
     _save_impl(scan_targets[0], _MODEL, "root", scan_targets)

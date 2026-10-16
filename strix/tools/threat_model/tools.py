@@ -195,14 +195,17 @@ def _snap_to_scan_target(raw: str, scan_targets: list[str]) -> str:
     raw_deployed = parse_deployed_contract_target(raw)
     if raw_deployed is not None:
         raw_address = normalize_address(raw_deployed["target_address"])
+        raw_chain = raw_deployed.get("chain", "").strip().lower()
         address_matches = [
             target
             for target in scan_targets
             if (known := parse_deployed_contract_target(target)) is not None
             and normalize_address(known["target_address"]) == raw_address
+            and (not raw_chain or known.get("chain", "").strip().lower() == raw_chain)
         ]
-        # A bare address can be shared across chains (especially EVM chains).
-        # Only snap when the address uniquely identifies a scan target.
+        # A bare address can be shared across chains (especially EVM chains),
+        # and an explicit chain must never snap to a different chain. Only snap
+        # when the address and any supplied chain uniquely identify a target.
         if len(address_matches) == 1:
             return address_matches[0]
 
