@@ -164,28 +164,39 @@ def test_write_sarif_omits_fixes_without_fix_pairs(tmp_path: Path) -> None:
     assert "fixes" not in _read(tmp_path)["runs"][0]["results"][0]
 
 
-def test_write_sarif_adds_logical_location_for_endpoint(tmp_path: Path) -> None:
-    # DAST findings hang off an endpoint; it must be preserved as a logical
-    # location so the finding keeps an addressable anchor.
-    write_sarif(tmp_path, [_finding(endpoint="GET /api/users/{id}")])
+def test_write_sarif_adds_logical_location_for_entry_point(tmp_path: Path) -> None:
+    # A finding anchored to an entry point must keep it as a logical location
+    # so the finding has an addressable on-chain anchor.
+    write_sarif(tmp_path, [_finding(endpoint="Vault.withdraw")])
     locations = _read(tmp_path)["runs"][0]["results"][0]["locations"]
     logical = [
         entry
         for loc in locations
         for entry in loc.get("logicalLocations", [])
-        if entry.get("kind") == "endpoint"
+        if entry.get("kind") == "member"
     ]
-    assert logical == [{"fullyQualifiedName": "GET /api/users/{id}", "kind": "endpoint"}]
+    assert logical == [{"fullyQualifiedName": "Vault.withdraw", "kind": "member"}]
+
+
+def test_write_sarif_carries_on_chain_evidence_references(tmp_path: Path) -> None:
+    # The exploit tx hash / fork-test reference proves the finding; it must
+    # survive into the uploaded SARIF for triage.
+    tx = "0x" + "ab" * 32
+    write_sarif(tmp_path, [_finding(http_exchange_ids=[tx, "forge test --match-test testDrain"])])
+    strix = _read(tmp_path)["runs"][0]["results"][0]["properties"]["strix"]
+
+    assert strix["evidence_references"] == [tx, "forge test --match-test testDrain"]
 
 
 def test_write_sarif_synthetic_finding_falls_back_to_resource_logical_location(
     tmp_path: Path,
 ) -> None:
-    # No code location and no endpoint: the target becomes a resource logical
-    # location so a locationless finding still carries a meaningful anchor.
+    # No code location and no entry point: the target becomes a resource
+    # logical location so a locationless finding still carries an anchor.
+    target = "0x1111111111111111111111111111111111111111"
     write_sarif(
         tmp_path,
-        [_finding(code_locations=None, endpoint=None, target="https://api.example.com")],
+        [_finding(code_locations=None, endpoint=None, target=target)],
     )
     result = _read(tmp_path)["runs"][0]["results"][0]
     assert result["properties"]["synthetic_location"] is True
@@ -195,7 +206,7 @@ def test_write_sarif_synthetic_finding_falls_back_to_resource_logical_location(
         for entry in loc.get("logicalLocations", [])
         if entry.get("kind") == "resource"
     ]
-    assert logical == [{"fullyQualifiedName": "https://api.example.com", "kind": "resource"}]
+    assert logical == [{"fullyQualifiedName": target, "kind": "resource"}]
 
 
 def test_write_sarif_emits_version_control_provenance(tmp_path: Path) -> None:

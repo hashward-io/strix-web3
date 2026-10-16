@@ -560,6 +560,13 @@ def _result_properties(
     if isinstance(dependency_metadata, dict) and dependency_metadata:
         strix["dependency_metadata"] = dependency_metadata
 
+    # On-chain evidence references (exploit tx hash, fork-test name, block
+    # number) are identification, not exploit payload, so they belong in the
+    # uploaded SARIF where triage tooling can reach the chain.
+    evidence_references = report.get("http_exchange_ids")
+    if isinstance(evidence_references, list) and evidence_references:
+        strix["evidence_references"] = evidence_references
+
     # SARIF is written for external upload (code-scanning / ASPM), so it must
     # NOT carry the weaponized exploit payload — that stays a local run
     # artifact (vulnerabilities.json / the finding MD). We surface the PoC
@@ -773,10 +780,10 @@ def _build_locations(report: dict[str, Any]) -> tuple[list[dict[str, Any]], bool
 
     Physical locations come from validated ``code_locations``. When none
     are safe, the result is anchored to SECURITY.md (``is_synthetic``).
-    An ``endpoint`` (typical of DAST findings) is added as a
-    ``logicalLocations`` entry; a locationless, endpoint-less finding
-    gets a ``resource`` logical location carrying the target so the
-    finding keeps a human-meaningful anchor.
+    An ``endpoint`` (an on-chain entry point, e.g. ``Vault.withdraw``) is
+    added as a ``member`` logical location; a locationless,
+    entry-point-less finding gets a ``resource`` logical location
+    carrying the target so the finding keeps a human-meaningful anchor.
     """
     physical, dropped_location_count = _build_physical_locations(report.get("code_locations"))
     is_synthetic = not physical
@@ -784,9 +791,7 @@ def _build_locations(report: dict[str, Any]) -> tuple[list[dict[str, Any]], bool
 
     endpoint = _string_value(report.get("endpoint"))
     if endpoint:
-        locations.append(
-            {"logicalLocations": [{"fullyQualifiedName": endpoint, "kind": "endpoint"}]}
-        )
+        locations.append({"logicalLocations": [{"fullyQualifiedName": endpoint, "kind": "member"}]})
     elif is_synthetic:
         resource = _string_value(report.get("target")) or _string_value(report.get("title"))
         if resource:
