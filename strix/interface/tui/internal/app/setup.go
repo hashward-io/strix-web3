@@ -81,7 +81,8 @@ func (m Model) hasTarget(candidate string) bool {
 }
 
 // looksLikeTarget reports whether a whitespace-delimited token names something
-// scannable: a URL, repo, filesystem path, domain, or IP address.
+// auditable: a repo URL, a filesystem path, a deployed on-chain address, or a
+// domain/IP (kept for off-chain auxiliary hosts such as an RPC endpoint).
 func looksLikeTarget(token string) bool {
 	if token == "" {
 		return false
@@ -91,6 +92,17 @@ func looksLikeTarget(token string) bool {
 	}
 	if strings.HasPrefix(token, "/") || strings.HasPrefix(token, "./") || strings.HasPrefix(token, "~/") || strings.HasPrefix(token, "../") {
 		return true
+	}
+	if looksLikeOnChainAddress(token) {
+		return true
+	}
+	// ``<chain>:<address>`` — evm:0x…, solana:…, …
+	if idx := strings.Index(token, ":"); idx > 0 && idx < len(token)-1 {
+		chain := strings.ToLower(token[:idx])
+		rest := token[idx+1:]
+		if chainAliases[chain] && (looksLikeOnChainAddress(rest) || shortHexPattern.MatchString(rest)) {
+			return true
+		}
 	}
 	if ip := net.ParseIP(token); ip != nil {
 		return true
@@ -108,7 +120,57 @@ func looksLikeTarget(token string) bool {
 	return len(tld) >= 2 && !isNumeric(tld)
 }
 
-var domainPattern = regexp.MustCompile(`^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]{2,}$`)
+// looksLikeOnChainAddress mirrors the address shapes the engine supports
+// (strix.interface.utils.infer_target_type), so a bare deployed-contract
+// address in the setup prompt is added as a target rather than folded into the
+// instruction text.
+func looksLikeOnChainAddress(token string) bool {
+	if token == "" {
+		return false
+	}
+	return evmAddressPattern.MatchString(token) ||
+		hexAddressPattern.MatchString(token) ||
+		solanaAddressPattern.MatchString(token) ||
+		bech32AddressPattern.MatchString(token) ||
+		algorandAddressPattern.MatchString(token) ||
+		bitcoinLegacyPattern.MatchString(token) ||
+		isTonAddress(token)
+}
+
+var (
+	domainPattern = regexp.MustCompile(`^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9]{2,}$`)
+	// EVM (0x + 40 hex) and Sui/Aptos/Starknet (0x + 64 hex).
+	evmAddressPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{40}$`)
+	hexAddressPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{64}$`)
+	// Solana base58 (32-44 chars, excluding 0/O/I/l).
+	solanaAddressPattern = regexp.MustCompile(`^[1-9A-HJ-NP-Za-km-z]{32,44}$`)
+	// Cosmos/Cardano/NEAR bech32 and Bitcoin bech32 (bc1/tb1/bcrt1).
+	bech32AddressPattern = regexp.MustCompile(`^(?:bc1|tb1|bcrt1|[a-z]{2,20}1)[0-9a-z]{20,}$`)
+	// Algorand base32 (58 uppercase A-Z/2-7 chars).
+	algorandAddressPattern = regexp.MustCompile(`^[A-Z2-7]{58}$`)
+	// Bitcoin legacy/base58 P2PKH/P2SH.
+	bitcoinLegacyPattern = regexp.MustCompile(`^[13][1-9A-HJ-NP-Za-km-z]{25,39}$`)
+	// TON friendly (EQ…/UQ…, 48 chars) and raw (0:<64 hex>).
+	tonFriendlyPattern = regexp.MustCompile(`^(?:EQ|UQ|kQ|0Q)[A-Za-z0-9_-]{46}$`)
+	tonRawPattern      = regexp.MustCompile(`^0:[0-9a-fA-F]{64}$`)
+	// Short ``0x…`` hex accepted only when chain-qualified (evm:0xabc).
+	shortHexPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{1,64}$`)
+)
+
+// chainAliases are the “<chain>:“ prefixes accepted in the setup prompt's
+// “<chain>:<address>“ form (a subset of the engine's target aliases).
+var chainAliases = map[string]bool{
+	"evm": true, "ethereum": true, "eth": true, "bsc": true, "polygon": true,
+	"arbitrum": true, "optimism": true, "base": true, "avalanche": true,
+	"solana": true, "sol": true, "sui": true, "aptos": true, "starknet": true,
+	"cosmos": true, "cosmwasm": true, "osmosis": true, "ton": true,
+	"cardano": true, "algorand": true, "near": true, "polkadot": true,
+	"substrate": true, "bitcoin": true, "btc": true, "fuel": true, "sway": true,
+}
+
+func isTonAddress(token string) bool {
+	return tonFriendlyPattern.MatchString(token) || tonRawPattern.MatchString(token)
+}
 
 func isNumeric(value string) bool {
 	for _, char := range value {
@@ -371,7 +433,7 @@ func (m Model) setupHeaderView(fit setupFit) string {
 		rows = append(rows, center.Render(lipgloss.NewStyle().Bold(true).Foreground(brightGreen).Render("STRIX")))
 	}
 	if fit.tagline {
-		rows = append(rows, center.Render(render.Dim().Render("Open-source AI hackers for your apps")))
+		rows = append(rows, center.Render(render.Dim().Render("Open-source AI smart-contract auditor")))
 	}
 	return strings.Join(rows, "\n")
 }

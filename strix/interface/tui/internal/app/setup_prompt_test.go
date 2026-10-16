@@ -361,3 +361,58 @@ func TestSkippingTheMountKeepsTheScanRunning(t *testing.T) {
 		t.Fatalf("the held prompt was not released: %q", model.pendingPrompt)
 	}
 }
+
+// A bare deployed-contract address (any supported chain) must be recognised as
+// a target so the setup prompt adds it rather than folding it into the
+// instruction; the chain-qualified short form works too.
+func TestLooksLikeTargetRecognisesOnChainAddresses(t *testing.T) {
+	targets := []string{
+		"0x" + strings.Repeat("a1", 20),                 // EVM (40 hex)
+		"0x" + strings.Repeat("ab", 32),                 // Sui/Aptos/Starknet (64 hex)
+		"So11111111111111111111111111111111111111112",   // Solana base58
+		"cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu", // Cosmos bech32
+		"addr1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",  // Cardano bech32
+		"bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",    // Bitcoin bech32
+		"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",            // Bitcoin legacy
+		strings.Repeat("A", 58),                         // Algorand base32
+		"EQ" + strings.Repeat("A", 46),                  // TON friendly
+		"0:" + strings.Repeat("a", 64),                  // TON raw
+		"evm:0xabc",                                     // chain-qualified short form
+		"solana:So11111111111111111111111111111111111111112",
+	}
+	for _, token := range targets {
+		if !looksLikeTarget(token) {
+			t.Errorf("looksLikeTarget(%q) = false, want true", token)
+		}
+	}
+}
+
+func TestLooksLikeTargetRejectsProse(t *testing.T) {
+	for _, token := range []string{"reentrancy", "the", "check", "0xdeadbeef", "evm:notanaddress"} {
+		if looksLikeTarget(token) {
+			t.Errorf("looksLikeTarget(%q) = true, want false", token)
+		}
+	}
+}
+
+// A prompt naming a bare contract address adds it as a target and launches,
+// without asking to mount the working directory.
+func TestSetupPromptWithContractAddressLaunches(t *testing.T) {
+	connection := &recordingConn{}
+	model := New(&Client{conn: connection})
+	model.snapshot = protocol.Snapshot{SetupMode: true, WorkingDir: "/Users/me/code/protocol"}
+
+	address := "0x" + strings.Repeat("a1", 20)
+	_, cmd := model.submit("audit " + address + " for reentrancy")
+	envelopes := drainCommands(t, cmd, connection)
+	types := commandTypes(envelopes)
+
+	for _, want := range []string{"setup.add_target", "setup.set_instruction", "setup.start"} {
+		if !contains(types, want) {
+			t.Fatalf("missing %s in %v", want, types)
+		}
+	}
+	if _, found := startPayloadFlag(t, envelopes, "mount_working_dir"); found {
+		t.Fatalf("an address-targeted prompt must not ask to mount: %v", types)
+	}
+}

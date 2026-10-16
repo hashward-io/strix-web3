@@ -75,7 +75,7 @@ func renderReport(args map[string]any, result any, heading, pending string) stri
 			lipgloss.NewStyle().Bold(true).Foreground(CVSSColor(score)).Render(StringValue(resultMap["cvss_score"])))
 	}
 	field("Target", StringValue(args["target"]))
-	field("Endpoint", StringValue(args["endpoint"]))
+	field("Entry point", StringValue(args["endpoint"]))
 	field("Method", StringValue(args["method"]))
 	field("CVE", StringValue(args["cve"]))
 	field("CWE", StringValue(args["cwe"]))

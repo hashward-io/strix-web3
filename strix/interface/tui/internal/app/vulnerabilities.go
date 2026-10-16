@@ -187,7 +187,7 @@ func (m *Model) keepVulnerabilitySelectionInWindow() {
 }
 
 // statsView ports build_tui_stats_text + the version line appended in
-// _update_stats_display: model, token/cost line, optional Caido URL, version.
+// _update_stats_display: model, token/cost line, version.
 func (m Model) modalView() string {
 	switch m.modal {
 	case modalHelp:
@@ -346,7 +346,7 @@ func vulnerabilityBody(v map[string]any) string {
 		field("Introduced By", render.StringValue(dep["introduced_by"]))
 		field("Dependency Chain", render.StringValue(dep["dependency_path"]))
 	}
-	field("Endpoint", render.StringValue(v["endpoint"]))
+	field("Entry point", render.StringValue(v["endpoint"]))
 	field("Method", render.StringValue(v["method"]))
 	field("CVE", render.StringValue(v["cve"]))
 	field("CWE", render.StringValue(v["cwe"]))

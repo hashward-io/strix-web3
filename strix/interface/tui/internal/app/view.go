@@ -435,8 +435,8 @@ func (m Model) splashView() string {
 		lipgloss.NewStyle().Bold(true).Foreground(green).Render("Strix") +
 		lipgloss.NewStyle().Bold(true).Foreground(white).Render("!")
 	version := lipgloss.NewStyle().Foreground(white).Faint(true).Render("v" + appVersion)
-	tagline := lipgloss.NewStyle().Foreground(white).Faint(true).Render("Open-source AI hackers for your apps")
-	url := lipgloss.NewStyle().Bold(true).Foreground(green).Render("strix.ai")
+	tagline := lipgloss.NewStyle().Foreground(white).Faint(true).Render("Open-source AI smart-contract auditor")
+	url := lipgloss.NewStyle().Bold(true).Foreground(green).Render("github.com/hashward-io/strix-web3")
 	// The wordmark is shared with the launch screen so the two read as one moment.
 	content := wordmark() + "\n\n" +
 		welcome + "\n" + version + "\n" + tagline + "\n\n" +

@@ -402,7 +402,7 @@ _CALLBACK_HTML = """<!doctype html>
     <p class="msg">Strix is connected to your ChatGPT subscription. Head back to your
       terminal — your security test runs there.</p>
     <div class="rule"></div>
-    <p class="tagline">Autonomous AI hackers that <b>find and fix</b> your app's
+    <p class="tagline">Autonomous AI auditors that <b>find and fix</b> your smart-contract
       vulnerabilities.</p>
     <nav class="links">
       <a href="https://strix.ai" target="_blank" rel="noopener">strix.ai</a>

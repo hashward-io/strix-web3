@@ -77,7 +77,7 @@ func vulnerabilityMarkdownReport(v map[string]any) string {
 		field("Introduced By", render.StringValue(dep["introduced_by"]))
 		field("Dependency Chain", render.StringValue(dep["dependency_path"]))
 	}
-	field("Endpoint", render.StringValue(v["endpoint"]))
+	field("Entry point", render.StringValue(v["endpoint"]))
 	field("Method", render.StringValue(v["method"]))
 	field("CVE", render.StringValue(v["cve"]))
 	field("CWE", render.StringValue(v["cwe"]))

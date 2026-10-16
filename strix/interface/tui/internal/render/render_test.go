@@ -148,7 +148,7 @@ func TestToolDispatchCoversKnownTools(t *testing.T) {
 		{
 			"finish_scan",
 			tool("finish_scan", map[string]any{"executive_summary": "All done"}, nil, "completed"),
-			[]string{"Penetration test completed", "All done"},
+			[]string{"Audit completed", "All done"},
 		},
 		{
 			"think",

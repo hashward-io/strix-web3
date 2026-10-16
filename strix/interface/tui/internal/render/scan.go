@@ -10,7 +10,7 @@ import (
 
 func renderFinishScan(args map[string]any) string {
 	var b strings.Builder
-	b.WriteString(Col(Green).Render("◆ ") + Bold(Green).Render("Penetration test completed"))
+	b.WriteString(Col(Green).Render("◆ ") + Bold(Green).Render("Audit completed"))
 	section := func(label, value string) {
 		if value != "" {
 			b.WriteString("\n\n" + Bold(Field).Render(label) + "\n" + renderAssistantMarkdown(value))
