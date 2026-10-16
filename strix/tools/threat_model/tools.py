@@ -31,7 +31,7 @@ from urllib.parse import urlsplit
 from agents import RunContextWrapper, function_tool
 
 from strix.core.agents import AgentCoordinator
-from strix.utils.targets import on_chain_identity, parse_deployed_contract_target
+from strix.utils.targets import normalize_address, on_chain_identity, parse_deployed_contract_target
 
 
 logger = logging.getLogger(__name__)
@@ -194,12 +194,12 @@ def _snap_to_scan_target(raw: str, scan_targets: list[str]) -> str:
     # the chain token, so ``0x…`` snaps onto the scan's ``<chain>:0x…``.
     raw_deployed = parse_deployed_contract_target(raw)
     if raw_deployed is not None:
-        raw_address = raw_deployed["target_address"].lower()
+        raw_address = normalize_address(raw_deployed["target_address"])
         address_matches = [
             target
             for target in scan_targets
             if (known := parse_deployed_contract_target(target)) is not None
-            and known["target_address"].lower() == raw_address
+            and normalize_address(known["target_address"]) == raw_address
         ]
         # A bare address can be shared across chains (especially EVM chains).
         # Only snap when the address uniquely identifies a scan target.

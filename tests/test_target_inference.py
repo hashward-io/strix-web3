@@ -178,7 +178,9 @@ def test_on_chain_identity_folds_hex_and_chain_case() -> None:
 def test_on_chain_identity_preserves_base58_case() -> None:
     # Base58 is case-sensitive: the two spellings are different contracts.
     assert on_chain_identity(SOLANA_ADDRESS) == SOLANA_ADDRESS
-    assert on_chain_identity(SOLANA_ADDRESS.lower()) != on_chain_identity(SOLANA_ADDRESS)
+    lower_identity = on_chain_identity(SOLANA_ADDRESS.lower())
+    assert lower_identity is not None
+    assert lower_identity != on_chain_identity(SOLANA_ADDRESS)
 
 
 def test_on_chain_identity_is_none_for_non_targets() -> None:

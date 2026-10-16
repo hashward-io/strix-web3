@@ -285,11 +285,16 @@ def on_chain_identity(target: str) -> str | None:
     details = parse_deployed_contract_target(target)
     if details is None:
         return None
-    address = details["target_address"]
-    if address.startswith("0x") or ":" in address:  # hex, or TON raw ``<wc>:<hex>``
-        address = address.lower()
+    address = normalize_address(details["target_address"])
     chain = details.get("chain", "").strip().lower()
     return f"{chain}:{address}" if chain else address
+
+
+def normalize_address(address: str) -> str:
+    """Normalize only case-insensitive address encodings (hex and TON raw)."""
+    if address.startswith("0x") or ":" in address:  # hex, or TON raw ``<wc>:<hex>``
+        address = address.lower()
+    return address
 
 
 __all__ = [
@@ -299,6 +304,7 @@ __all__ = [
     "ecosystem_for_address",
     "ecosystem_from_chain",
     "looks_like_address",
+    "normalize_address",
     "on_chain_identity",
     "parse_deployed_contract_target",
 ]

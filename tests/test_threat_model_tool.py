@@ -425,6 +425,16 @@ def test_bare_address_does_not_snap_across_ambiguous_chains() -> None:
     assert _get_impl(_EVM, scan_targets)["found"] is False
 
 
+def test_base58_case_variant_does_not_snap_to_another_target() -> None:
+    scan_targets = [f"solana:{_SOLANA}"]
+    _save_impl(scan_targets[0], _MODEL, "root", scan_targets)
+    lower = _SOLANA.lower()
+
+    # Solana keys are base58 and case-sensitive; this is another valid key,
+    # not a spelling variant of the scan target.
+    assert _get_impl(lower, scan_targets)["found"] is False
+
+
 def test_base58_address_is_case_sensitive() -> None:
     _save_impl(f"solana:{_SOLANA}", _MODEL, "root")
     assert _get_impl(f"solana:{_SOLANA}")["found"] is True
