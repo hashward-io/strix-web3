@@ -11,7 +11,7 @@ CosmWasm contracts are Rust WASM modules called by the Cosmos SDK over JSON mess
 
 - A CosmWasm contract (`src/contract.rs`, `Cargo.toml` with `cosmwasm-std`, `cw-*`).
 - A Cosmos SDK module (Go) or a chain upgrade handler.
-- You need the bug-class map before narrowing to `tooling/cw-multitest`.
+- You need the bug-class map before narrowing to `tooling/cosmwasm`.
 
 ## Entry points
 

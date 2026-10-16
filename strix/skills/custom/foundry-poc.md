@@ -51,4 +51,4 @@ If the target cannot be forked (novel contracts, no deployment), deploy the in-s
 
 ## Verify the fix
 
-After applying a fix, re-run the PoC and confirm it no longer succeeds (`analysis/fix-verification`).
+After applying a fix, re-run the PoC and confirm it no longer succeeds (`analysis/fix_verification`).

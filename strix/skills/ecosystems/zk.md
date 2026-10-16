@@ -11,7 +11,7 @@ A ZK circuit is a program with two obligations: **completeness** (an honest prov
 
 - A Circom `.circom`, Noir `.nr`, Halo2 (Rust), or gnark (Go) circuit; a prover/verifier pair; an on-chain proof verifier.
 - Code that generates or verifies proofs, hashes, Merkle trees, range checks, or fixed-point arithmetic inside a circuit.
-- You need the bug-class map before narrowing to `tooling/circom` or `tooling/noir`.
+- You need the bug-class map before narrowing to `tooling/zk-circom` or `tooling/zk-noir`.
 
 ## The core mental model
 

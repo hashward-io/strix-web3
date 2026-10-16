@@ -33,7 +33,7 @@ Slither is a fast static analyzer. It finds real bugs and a lot of noise. Its va
 1. **Reproduce before believing.** For each finding, open the cited location and trace the path. A detector that flags a guarded call is a false positive.
 2. **Access-control false positives.** `protected` / `unprotected` are common false positives when a modifier lives on a base contract — check the inheritance.
 3. **Reentrancy false positives.** Flagged when state is updated after a call, but the callee is trusted (a known token) or guarded elsewhere — verify the callee.
-4. **Severity inflation.** Slither's severity is heuristic; reassign using `analysis/severity-calibration`.
+4. **Severity inflation.** Slither's severity is heuristic; reassign using `analysis/severity_calibration`.
 5. **Coverage.** A clean Slither run is not a clean audit; it does not reason about economics, oracle manipulation, live protocol state, or cross-contract intent.
 
 ## Workflow

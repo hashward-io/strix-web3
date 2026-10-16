@@ -28,7 +28,7 @@ Aderyn is a Rust-based static analyzer (Cyfrin) with an AST pass and a set of de
 
 1. **Same discipline as Slither** (`tooling/slither`): reproduce before believing; treat each hit as a lead.
 2. **Cross-reference with Slither.** Aderyn and Slither flag overlapping but non-identical sets; run both and take the union as leads.
-3. **Severity** is heuristic — reassign with `analysis/severity-calibration`.
+3. **Severity** is heuristic — reassign with `analysis/severity_calibration`.
 4. **Coverage.** Aderyn reasons about syntax and patterns, not economics, live state, or protocol intent.
 
 ## Workflow

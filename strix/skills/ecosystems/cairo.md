@@ -11,7 +11,7 @@ Cairo 1 (Cairo 2.x) compiles to Sierra, then CASM, and runs on Starknet's Cairo 
 
 - A Starknet contract (`#[starknet::contract]`, `Scarb.toml`) in Cairo 1/2 (not legacy Cairo 0).
 - Code with `felt252`, `u256`, `i128`, storage maps, `class_hash`, or `#[l1_handler]`.
-- You need the bug-class map before narrowing to `tooling/scarb` or `tooling/snforge`.
+- You need the bug-class map before narrowing to `tooling/cairo-scarb`.
 
 ## Language surfaces
 
