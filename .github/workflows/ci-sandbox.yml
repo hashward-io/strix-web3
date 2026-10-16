@@ -11,6 +11,10 @@ on:
     paths:
       - "containers/**"
       - ".github/workflows/ci-sandbox.yml"
+  schedule:
+    # Weekly full multi-chain build so toolchain bit-rot (upstream releases,
+    # base-image drift) is caught even when containers/ is untouched.
+    - cron: "0 4 * * 0"
   workflow_dispatch:
 
 permissions:
@@ -23,6 +27,7 @@ concurrency:
 jobs:
   image:
     name: Build sandbox image
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -58,7 +63,7 @@ jobs:
 
   full:
     name: Build full multi-chain image
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
@@ -83,11 +88,32 @@ jobs:
           docker run --rm strix-sandbox:ci bash -lc '
             set -euo pipefail
             forge --version
+            cast --version
+            anvil --version
             slither --version
             aderyn --version
             echidna --version
             medusa --version
             solana --version
-            aiken --version
+            anchor --version
+            sui --version
+            aptos --version
+            scarb --version
+            snforge --version
+            sncast --version
+            cosmwasm-check --version
+            circom --version
+            circomspect --version
+            nargo --version
+            snarkjs --version
+            tact --version
+            cargo contract --version
+            forc --version
+            fuel-core --version
+            cargo near --version
+            cargo stylus --version
             algokit --version
+            aiken --version
+            bitcoind --version
+            bitcoin-cli --version
           '
