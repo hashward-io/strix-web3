@@ -14,7 +14,7 @@ import pytest
 
 from strix.interface import utils
 from strix.interface.utils import infer_target_type
-from strix.utils.targets import on_chain_identity
+from strix.utils.targets import on_chain_identity, parse_deployed_contract_target
 
 
 if TYPE_CHECKING:
@@ -43,6 +43,7 @@ def test_evm_address_is_a_deployed_contract() -> None:
         ("starknet:0x1111111111111111111111111111111111111111111111111111111111111111", "cairo"),
         ("sui:0x2", "move"),
         ("bitcoin:bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", "bitcoin"),
+        ("bitcoin:1BoatSLRHtKNngkdXEeobR76b53LETtpyT", "bitcoin"),
         ("cardano:addr1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", "cardano"),
         ("near:contract.near", "near"),
         ("near:contract", "near"),
@@ -79,6 +80,7 @@ def test_bare_near_account_id_is_a_deployed_target() -> None:
         (SUBSTRATE_ADDRESS, "substrate"),
         (SUBSTRATE_ACCOUNT_ID20, "substrate"),
         ("fuel1" + "q" * 55, "sway"),
+        ("1BoatSLRHtKNngkdXEeobR76b53LETtpyT", "bitcoin"),
     ],
 )
 def test_bare_substrate_and_fuel_addresses_are_inferred(target: str, ecosystem: str) -> None:
@@ -86,6 +88,19 @@ def test_bare_substrate_and_fuel_addresses_are_inferred(target: str, ecosystem: 
 
     assert ttype == "deployed_contract"
     assert details["ecosystem"] == ecosystem
+
+
+def test_bare_legacy_bitcoin_address_is_inferred() -> None:
+    ttype, details = infer_target_type("1BoatSLRHtKNngkdXEeobR76b53LETtpyT")
+
+    assert ttype == "deployed_contract"
+    assert details["ecosystem"] == "bitcoin"
+
+
+def test_invalid_base58check_address_is_not_misclassified() -> None:
+    # Same shape as a Bitcoin legacy address, but the last character corrupts
+    # the checksum; do not fall through and misclassify it as a Solana key.
+    assert parse_deployed_contract_target("1BoatSLRHtKNngkdXEeobR76b53LETtpyU") is None
 
 
 def test_explorer_url_with_query_still_recovers_the_address() -> None:

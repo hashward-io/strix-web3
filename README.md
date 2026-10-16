@@ -87,6 +87,7 @@ strix --target algorand:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HF
 strix --target near:protocol.near                                    # NEAR account
 strix --target polkadot:5C4iA2und8WV6mbvTBYupm2eZwtxk3wCYUM2SFHXSyQuapGp  # Substrate SS58
 strix --target fuel:fuel1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq  # Fuel
+strix --target 1BoatSLRHtKNngkdXEeobR76b53LETtpyT                 # Bitcoin P2PKH
 
 # A proxy and its implementation together
 strix --target ./src --target 0xProxyAddress

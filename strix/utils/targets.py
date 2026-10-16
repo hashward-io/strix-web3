@@ -25,6 +25,7 @@ TON_FRIENDLY_RE = re.compile(r"^(?:EQ|UQ|kQ|0Q)[A-Za-z0-9_-]{46}$")
 TON_RAW_RE = re.compile(r"^-?\d+:[0-9a-fA-F]{64}$")
 COSMOS_ADDRESS_RE = re.compile(r"^[a-z][a-z0-9]{2,15}1[023456789acdefghjklmnpqrstuvwxyz]{11,}$")
 BITCOIN_ADDRESS_RE = re.compile(r"^(?:bc1|tb1|bcrt1)[023456789acdefghjklmnpqrstuvwxyz]{11,}$")
+BITCOIN_LEGACY_ADDRESS_RE = re.compile(r"^[13][1-9A-HJ-NP-Za-km-z]{25,34}$")
 CARDANO_ADDRESS_RE = re.compile(r"^(?:addr1|addr_test1|stake1|stake_test1)[0-9a-z]{20,}$")
 ALGORAND_ADDRESS_RE = re.compile(r"^[A-Z2-7]{58}$")
 FUEL_ADDRESS_RE = re.compile(r"^fuel1[023456789acdefghjklmnpqrstuvwxyz]{20,}$")
@@ -96,7 +97,6 @@ ADDRESS_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (EVM_ADDRESS_RE, "evm"),
     (TON_FRIENDLY_RE, "ton"),
     (TON_RAW_RE, "ton"),
-    (SOLANA_ADDRESS_RE, "solana"),
     (BITCOIN_ADDRESS_RE, "bitcoin"),
     (CARDANO_ADDRESS_RE, "cardano"),
     (ALGORAND_ADDRESS_RE, "algorand"),
@@ -128,6 +128,7 @@ def looks_like_address(candidate: str) -> bool:
             TON_RAW_RE,
             COSMOS_ADDRESS_RE,
             BITCOIN_ADDRESS_RE,
+            BITCOIN_LEGACY_ADDRESS_RE,
             CARDANO_ADDRESS_RE,
             ALGORAND_ADDRESS_RE,
             FUEL_ADDRESS_RE,
@@ -144,6 +145,10 @@ def ecosystem_for_address(address: str, chain: str) -> str | None:  # noqa: PLR0
         return "substrate" if _is_valid_ss58(address) else None
     if _is_valid_ss58(address):
         return "substrate"
+    if _is_valid_bitcoin_legacy(address):
+        return "bitcoin"
+    if SOLANA_ADDRESS_RE.match(address) and len(_decode_base58(address) or b"") == 32:
+        return "solana"
     for pattern, ecosystem in ADDRESS_PATTERNS:
         if pattern.match(address):
             return ecosystem
@@ -163,23 +168,44 @@ def ecosystem_for_address(address: str, chain: str) -> str | None:  # noqa: PLR0
 _BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 
-def _is_valid_ss58(address: str) -> bool:
-    """Validate a 20- or 32-byte Substrate account ID and its SS58 checksum."""
-    if not SUBSTRATE_ADDRESS_RE.match(address):
-        return False
+def _decode_base58(address: str) -> bytes | None:
+    """Decode a base58 string, preserving leading zero bytes."""
+    if any(char not in _BASE58_ALPHABET for char in address):
+        return None
     value = 0
     for char in address:
         value = value * 58 + _BASE58_ALPHABET.index(char)
     leading_zeroes = len(address) - len(address.lstrip("1"))
-    decoded = (b"\0" * leading_zeroes) + (
+    return (b"\0" * leading_zeroes) + (
         value.to_bytes((value.bit_length() + 7) // 8, "big") if value else b""
     )
+
+
+def _is_valid_ss58(address: str) -> bool:
+    """Validate a 20- or 32-byte Substrate account ID and its SS58 checksum."""
+    if not SUBSTRATE_ADDRESS_RE.match(address):
+        return False
+    decoded = _decode_base58(address)
+    if decoded is None:
+        return False
     if len(decoded) not in (23, 24, 35, 36):
         return False
     payload, checksum = decoded[:-2], decoded[-2:]
     if len(payload) not in (21, 22, 33, 34):  # prefix byte(s) + 20/32-byte AccountId
         return False
     expected = hashlib.blake2b(b"SS58PRE" + payload, digest_size=64).digest()[:2]
+    return checksum == expected
+
+
+def _is_valid_bitcoin_legacy(address: str) -> bool:
+    """Validate a P2PKH/P2SH Base58Check address."""
+    if not BITCOIN_LEGACY_ADDRESS_RE.match(address):
+        return False
+    decoded = _decode_base58(address)
+    if decoded is None or len(decoded) != 25:
+        return False
+    payload, checksum = decoded[:-4], decoded[-4:]
+    expected = hashlib.sha256(hashlib.sha256(payload).digest()).digest()[:4]
     return checksum == expected
 
 
