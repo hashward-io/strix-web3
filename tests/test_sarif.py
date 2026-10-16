@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
-from strix.report.sarif import write_sarif
+from strix.report.sarif import _class_fingerprint, _class_keyword, write_sarif
 
 
 if TYPE_CHECKING:
@@ -382,3 +382,22 @@ def test_calibration_metadata_survives_into_result_properties(tmp_path: Path) ->
     assert strix["confidence_rationale"] == "Reproduced once out of three attempts."
     assert strix["severity_change_conditions"] == "Critical if the WAF rule is removed."
     assert strix["fix_verification"] == "Not retested."
+
+
+def test_class_keyword_recognises_smart_contract_classes() -> None:
+    # The class fingerprint's keyword catalogue must cover Web3 bug classes so
+    # cross-rename dismissal carryover works for smart-contract findings.
+    assert _class_keyword("Reentrancy in Vault.withdraw") == "reentrancy"
+    assert _class_keyword("Oracle manipulation in PriceFeed.getPrice") == "oracle manipulation"
+    assert _class_keyword("Integer overflow in Token.mint") == "integer overflow"
+    assert _class_keyword("Missing access control on setOracle") == "missing access control"
+    assert _class_keyword("Unchecked external call in Vault.withdraw") == "unchecked external call"
+
+
+def test_class_fingerprint_distinct_for_distinct_smart_contract_classes() -> None:
+    # Same rule id, same synthetic anchor, different bug class -> different
+    # class fingerprint, so the two findings do not collapse.
+    reentrancy = _class_fingerprint("CWE-841", {"title": "Reentrancy in Vault.withdraw"})
+    oracle = _class_fingerprint("CWE-841", {"title": "Oracle manipulation in PriceFeed"})
+    assert reentrancy is not None and oracle is not None
+    assert reentrancy != oracle

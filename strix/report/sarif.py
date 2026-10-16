@@ -173,6 +173,27 @@ _CWE_TO_STRIDE: dict[str, tuple[str, ...]] = {
     # Multi-leg
     "22": ("T", "I"),  # Path Traversal — write/read arbitrary paths (T) + file disclosure (I)
     "611": ("I", "T"),  # XML External Entity (XXE)
+    # Smart-contract classes (reentrancy, arithmetic, oracle, signature, storage)
+    "252": ("T",),  # Unchecked Return Value — unchecked external call result
+    "347": ("S", "T"),  # Improper Verification of Cryptographic Signature — replay/forgery
+    "354": ("T",),  # Improper Validation of Integrity Check Value
+    "362": ("T",),  # Concurrent Execution w/ Improper Synchronization — reentrancy
+    "367": ("T",),  # Time-of-check Time-of-use (TOCTOU) Race Condition
+    "369": ("D",),  # Division by Zero
+    "456": ("T",),  # Uninitialized Variable
+    "662": ("T",),  # Improper Synchronization
+    "665": ("E",),  # Improper Initialization — unprotected initializer/proxy
+    "682": ("T",),  # Incorrect Calculation — share/payoff math
+    "754": ("T",),  # Improper Check for Unusual or Exceptional Conditions
+    "835": ("D",),  # Loop with Unreachable Exit Condition (Infinite Loop)
+    "841": ("T",),  # Improper Enforcement of Behavioral Workflow — reentrancy/ordering
+    "843": ("E", "T"),  # Type Confusion
+    "190": ("T",),  # Integer Overflow or Wraparound
+    "191": ("T",),  # Integer Underflow (Wrap or Wraparound)
+    "129": ("T",),  # Improper Validation of Array Index
+    "668": ("I",),  # Exposure of Resource to Wrong Sphere
+    "1284": ("T",),  # Improper Validation of Specified Quantity in Input
+    "1339": ("T",),  # Insufficient Precision or Accuracy of a Real Number
 }
 
 # Default for unmapped / no-CWE findings: tampering + information-disclosure is
@@ -956,6 +977,48 @@ _VULN_CLASS_KEYWORDS = (
     "regex denial of service",
     "redos",
     "supply chain",
+    # Smart-contract classes (Web3). Precise multi-word forms first.
+    "oracle manipulation",
+    "price manipulation",
+    "price oracle",
+    "flash loan",
+    "flashloan",
+    "donation attack",
+    "first depositor",
+    "share inflation",
+    "signature replay",
+    "signature malleability",
+    "signature verification",
+    "missing access control",
+    "account validation",
+    "unchecked external call",
+    "unchecked return value",
+    "unchecked return",
+    "storage collision",
+    "integer overflow",
+    "integer underflow",
+    "arithmetic overflow",
+    "arithmetic underflow",
+    "precision loss",
+    "rounding error",
+    "division by zero",
+    "divide by zero",
+    "governance attack",
+    "upgradeability",
+    "reentrancy",
+    "reentrant",
+    "nonce reuse",
+    "gas griefing",
+    "cross-contract",
+    "front-running",
+    "front running",
+    "sandwich",
+    "mev",
+    "truncation",
+    "rounding",
+    "overflow",
+    "underflow",
+    "pda",
 )
 
 
@@ -974,8 +1037,9 @@ def _primary_fingerprint(
       - first SARIF location's URI + startLine — these come from
         Strix's ``code_locations[].file`` and ``start_line`` which
         are sourced from the actual finding evidence, not synthesized
-      - HTTP method + endpoint when present (BOLA/IDOR/missing-authz
-        findings carry these explicitly in the report dict)
+      - entry point (``endpoint``) + ``method`` when present (on-chain
+        findings carry the function/selector as the entry point; web-era
+        findings carried an HTTP method + URL path)
 
     Synthetic-anchored findings (``is_synthetic=True``) all share
     uri="SECURITY.md" and have no real start_line. Hashing by

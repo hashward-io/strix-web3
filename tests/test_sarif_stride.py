@@ -114,3 +114,25 @@ def test_every_leg_letter_is_valid() -> None:
     for legs in _CWE_TO_STRIDE.values():
         assert set(legs) <= valid, f"invalid STRIDE leg in {legs}"
     assert set(_DEFAULT_STRIDE_LEGS) <= valid
+
+
+@pytest.mark.parametrize(
+    ("cwe", "expected"),
+    [
+        ("CWE-190", "T"),  # integer overflow
+        ("CWE-191", "T"),  # integer underflow
+        ("CWE-682", "T"),  # incorrect calculation
+        ("CWE-362", "T"),  # race condition (reentrancy)
+        ("CWE-367", "T"),  # TOCTOU
+        ("CWE-841", "T"),  # behavioral workflow (reentrancy/ordering)
+        ("CWE-347", "S"),  # signature verification -> spoofing
+        ("CWE-665", "E"),  # improper initialization -> elevation
+        ("CWE-843", "E"),  # type confusion -> elevation
+        ("CWE-835", "D"),  # infinite loop -> denial of service
+        ("CWE-369", "D"),  # divide by zero -> denial of service
+        ("CWE-668", "I"),  # wrong sphere -> information disclosure
+    ],
+)
+def test_stride_smart_contract_cwes(cwe: str, expected: str) -> None:
+    """Smart-contract CWEs map to legs that match their exploit impact."""
+    assert f"stride:{expected}" in _rule_tags(build_sarif_report([_finding(cwe=cwe)]))
